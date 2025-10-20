@@ -37,7 +37,7 @@ export const sportSections: SportSection[] = [
       "Формирование здоровых привычек",
     ],
     prerequisites: "Готовность соблюдать технику и рекомендации тренера.",
-    imagePath: "./data/images/athletic-gymnastics.jpg",
+    imagePath: "./data/images/athleticGymnastics.jpg",
   },
   {
     id: "basketball",
@@ -171,7 +171,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Высокий расход калорий", "Рост уверенности"],
     prerequisites: "Необходима готовность к контактной работе и защите.",
-    imagePath: "./data/images/muay-thai.jpg",
+    imagePath: "./data/images/muayThai.jpg",
   },
   {
     id: "track-and-field",
@@ -206,7 +206,7 @@ export const sportSections: SportSection[] = [
       "Тренировки на свежем воздухе",
       "Укрепление сердечно-сосудистой системы",
     ],
-    imagePath: "./data/images/track-and-field.jpg",
+    imagePath: "./data/images/trackAndField.jpg",
   },
   {
     id: "futsal",
@@ -283,7 +283,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Коррекция осанки", "Снятие эмоционального напряжения"],
     prerequisites: "Нужна готовность заниматься хореографией.",
-    imagePath: "./data/images/rhythmic-gymnastics.jpg",
+    imagePath: "./data/images/rhythmicGymnastics.jpg",
   },
   {
     id: "special-medical",
@@ -311,7 +311,7 @@ export const sportSections: SportSection[] = [
       "Индивидуальное дозирование нагрузки",
     ],
     prerequisites: "Требуется допуск врача и периодические осмотры.",
-    imagePath: "./data/images/special-medical.jpg",
+    imagePath: "./data/images/specialMedical.jpg",
   },
   {
     id: "football",

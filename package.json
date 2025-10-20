@@ -1,0 +1,21 @@
+{
+  "name": "bsuir-sport-marketing-bot",
+  "version": "0.1.0",
+  "description": "Telegram bot prototype for recommending educational sports sections based on user preferences and physical data.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5"
+  }
+}

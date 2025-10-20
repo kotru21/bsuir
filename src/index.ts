@@ -45,6 +45,30 @@ const stage = new Scenes.Stage<RecommendationContext>([onboardingScene]);
 
 const bot = new Telegraf<RecommendationContext>(BOT_TOKEN);
 
+function resolveImagePath(image: string): string | null {
+  // Try as given (relative to cwd)
+  const abs = path.resolve(process.cwd(), image);
+  if (fs.existsSync(abs)) return abs;
+
+  // Try relative to src/ (useful when running from project root and images live in src/data/images)
+  const altSrc = path.resolve(
+    process.cwd(),
+    "src",
+    image.replace(/^\.\/[\\/]?/, "")
+  );
+  if (fs.existsSync(altSrc)) return altSrc;
+
+  // Try relative to dist/ (useful after tsc build and running from dist)
+  const altDist = path.resolve(
+    process.cwd(),
+    "dist",
+    image.replace(/^\.\/[\\/]?/, "")
+  );
+  if (fs.existsSync(altDist)) return altDist;
+
+  return null;
+}
+
 function setupProcessErrorHandling(): void {
   if (!nodeProcess?.on) {
     return;
@@ -122,8 +146,8 @@ bot.command(
     ].join("\n");
 
     if (image) {
-      const abs = path.resolve(process.cwd(), image);
-      if (!fs.existsSync(abs)) {
+      const abs = resolveImagePath(image);
+      if (!abs) {
         await ctx.reply("Изображение не найдено на сервере.");
         return;
       }
@@ -183,8 +207,8 @@ bot.action(
       const cb = ctx.callbackQuery as any;
       const msg = cb && cb.message;
       if (image) {
-        const abs = path.resolve(process.cwd(), image);
-        if (!fs.existsSync(abs)) {
+        const abs = resolveImagePath(image);
+        if (!abs) {
           await ctx.answerCbQuery?.("Изображение не найдено на сервере.", {
             show_alert: true,
           });

@@ -70,17 +70,17 @@ tsconfig.json           # TypeScript compiler configuration
 If you prefer to store section images locally (recommended for offline hosting), place image files in `src/data/images`.
 
 - Default filenames (used by `src/data/sections.ts`):
-  - athletic-gymnastics.jpg
+  - athleticGymnastics.jpg
   - basketball.jpg
   - wrestling.jpg
   - volleyball.jpg
   - aikido.jpg
-  - muay-thai.jpg
-  - track-and-field.jpg
+  - muayThai.jpg
+  - trackAndField.jpg
   - futsal.jpg
   - swimming.jpg
-  - rhythmic-gymnastics.jpg
-  - special-medical.jpg
+  - rhythmicGymnastics.jpg
+  - specialMedical.jpg
   - football.jpg
 
 After placing images, run the bot as usual (`npm run dev`). The `/sections` command will show the slider using these local files.

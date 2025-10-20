@@ -37,6 +37,7 @@ export const sportSections: SportSection[] = [
       "Формирование здоровых привычек",
     ],
     prerequisites: "Готовность соблюдать технику и рекомендации тренера.",
+    imagePath: "./data/images/athletic-gymnastics.jpg",
   },
   {
     id: "basketball",
@@ -67,6 +68,7 @@ export const sportSections: SportSection[] = [
       "Тактическое мышление",
       "Высокий расход энергии",
     ],
+    imagePath: "./data/images/basketball.jpg",
   },
   {
     id: "wrestling",
@@ -94,6 +96,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Самодисциплина", "Устойчивость к стрессу"],
     prerequisites: "Комфортное отношение к тесному контакту.",
+    imagePath: "./data/images/wrestling.jpg",
   },
   {
     id: "volleyball",
@@ -118,6 +121,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Быстрые реакции", "Щадящая нагрузка на суставы"],
     prerequisites: "Необходима регулярность для закрепления навыков.",
+    imagePath: "./data/images/volleyball.jpg",
   },
   {
     id: "aikido",
@@ -142,6 +146,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Снижение стресса", "Осознанность тела"],
     prerequisites: "Готовность работать в парах и изучать терминологию.",
+    imagePath: "./data/images/aikido.jpg",
   },
   {
     id: "muay-thai",
@@ -166,6 +171,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Высокий расход калорий", "Рост уверенности"],
     prerequisites: "Необходима готовность к контактной работе и защите.",
+    imagePath: "./data/images/muay-thai.jpg",
   },
   {
     id: "track-and-field",
@@ -200,6 +206,7 @@ export const sportSections: SportSection[] = [
       "Тренировки на свежем воздухе",
       "Укрепление сердечно-сосудистой системы",
     ],
+    imagePath: "./data/images/track-and-field.jpg",
   },
   {
     id: "futsal",
@@ -220,6 +227,7 @@ export const sportSections: SportSection[] = [
       longTerm: "Будете уверенно играть весь матч в высоком темпе.",
     },
     extraBenefits: ["Развитие ускорений", "Слаженность команды под давлением"],
+    imagePath: "./data/images/futsal.jpg",
   },
   {
     id: "swimming",
@@ -247,6 +255,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Коррекция осанки", "Минимальная ударная нагрузка"],
     prerequisites: "Нужна готовность регулярно посещать бассейн.",
+    imagePath: "./data/images/swimming.jpg",
   },
   {
     id: "rhythmic-gymnastics",
@@ -274,6 +283,7 @@ export const sportSections: SportSection[] = [
     },
     extraBenefits: ["Коррекция осанки", "Снятие эмоционального напряжения"],
     prerequisites: "Нужна готовность заниматься хореографией.",
+    imagePath: "./data/images/rhythmic-gymnastics.jpg",
   },
   {
     id: "special-medical",
@@ -301,6 +311,7 @@ export const sportSections: SportSection[] = [
       "Индивидуальное дозирование нагрузки",
     ],
     prerequisites: "Требуется допуск врача и периодические осмотры.",
+    imagePath: "./data/images/special-medical.jpg",
   },
   {
     id: "football",
@@ -328,5 +339,6 @@ export const sportSections: SportSection[] = [
         "Сможете поддерживать высокий темп весь матч и выполнять норматив Купера.",
     },
     extraBenefits: ["Командная сплоченность", "Высокий расход энергии"],
+    imagePath: "./data/images/football.jpg",
   },
 ];

@@ -40,6 +40,7 @@ export interface SportSection {
   expectedResults: SectionTimeline;
   extraBenefits?: string[];
   prerequisites?: string;
+  imagePath?: string;
   locationHint?: string;
 }
 

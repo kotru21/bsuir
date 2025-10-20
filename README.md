@@ -64,3 +64,23 @@ tsconfig.json           # TypeScript compiler configuration
 - Add multi-language support (e.g., Russian/English toggles).
 - Expand analytics to log anonymised questionnaire results for marketing insights.
 - Integrate admin commands for updating section metadata via chat.
+
+## Local images for sections
+
+If you prefer to store section images locally (recommended for offline hosting), place image files in `src/data/images`.
+
+- Default filenames (used by `src/data/sections.ts`):
+  - athletic-gymnastics.jpg
+  - basketball.jpg
+  - wrestling.jpg
+  - volleyball.jpg
+  - aikido.jpg
+  - muay-thai.jpg
+  - track-and-field.jpg
+  - futsal.jpg
+  - swimming.jpg
+  - rhythmic-gymnastics.jpg
+  - special-medical.jpg
+  - football.jpg
+
+After placing images, run the bot as usual (`npm run dev`). The `/sections` command will show the slider using these local files.

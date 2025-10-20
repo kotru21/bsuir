@@ -121,6 +121,22 @@ export function buildRecommendationKeyboard(
   ]);
 }
 
+export function buildSectionsKeyboard(
+  index: number,
+  total: number,
+  sectionId: string
+): ReturnType<typeof Markup.inlineKeyboard> {
+  const prevIndex = (index - 1 + total) % total;
+  const nextIndex = (index + 1) % total;
+  return Markup.inlineKeyboard([
+    [
+      Markup.button.callback("\u23ee\ufe0f", `sections:${prevIndex}`),
+      Markup.button.callback(`${index + 1}/${total}`, `sections:noop`),
+      Markup.button.callback("\u23ed\ufe0f", `sections:${nextIndex}`),
+    ],
+    [Markup.button.callback("Подробнее", `rec:${sectionId}`)],
+  ]);
+}
 export function buildCompletionKeyboard(): ReturnType<typeof Markup.keyboard> {
   return Markup.keyboard([["/start", "/sections"]])
     .oneTime()

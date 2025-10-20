@@ -1,6 +1,11 @@
 import { Scenes } from "telegraf";
 import { fallbackSection, recommendSections } from "../../recommendation.js";
-import type { GoalTag, TrainingFormat, UserProfile } from "../../types.js";
+import type {
+  GoalTag,
+  TrainingFormat,
+  UserProfile,
+  RecommendationResult,
+} from "../../types.js";
 import {
   AGE_DEFAULT,
   AGE_MAX,
@@ -48,10 +53,19 @@ async function sendAgeSlider(
   }
   const text = buildAgeSliderText(temp.ageValue);
   const keyboard = buildAgeKeyboard(temp.ageValue);
-  if (mode === "edit" && ctx.callbackQuery?.message) {
-    await ctx.editMessageText(text, keyboard);
-  } else {
-    await sendPromptMessage(ctx, text, keyboard);
+  try {
+    if (mode === "edit" && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(text, keyboard);
+    } else {
+      await sendPromptMessage(ctx, text, keyboard);
+    }
+  } catch (err) {
+    console.error("sendAgeSlider error:", err);
+    try {
+      await ctx.reply("Не удалось показать слайдер возраста.");
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -68,10 +82,19 @@ async function sendFitnessSlider(
   }
   const text = buildFitnessSliderText(temp.fitnessIndex);
   const keyboard = buildFitnessKeyboard(temp.fitnessIndex);
-  if (mode === "edit" && ctx.callbackQuery?.message) {
-    await ctx.editMessageText(text, keyboard);
-  } else {
-    await sendPromptMessage(ctx, text, keyboard);
+  try {
+    if (mode === "edit" && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(text, keyboard);
+    } else {
+      await sendPromptMessage(ctx, text, keyboard);
+    }
+  } catch (err) {
+    console.error("sendFitnessSlider error:", err);
+    try {
+      await ctx.reply("Не удалось показать выбор уровня.");
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -85,10 +108,19 @@ async function sendFormatPrompt(
   }
   const text = formatSelectionText(temp.formatSelection);
   const keyboard = buildFormatKeyboard(temp.formatSelection);
-  if (mode === "edit" && ctx.callbackQuery?.message) {
-    await ctx.editMessageText(text, keyboard);
-  } else {
-    await sendPromptMessage(ctx, text, keyboard);
+  try {
+    if (mode === "edit" && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(text, keyboard);
+    } else {
+      await sendPromptMessage(ctx, text, keyboard);
+    }
+  } catch (err) {
+    console.error("sendFormatPrompt error:", err);
+    try {
+      await ctx.reply("Не удалось показать выбор формата.");
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -102,10 +134,19 @@ async function sendGoalPrompt(
   }
   const text = goalSelectionText(temp.goalSelection);
   const keyboard = buildGoalKeyboard(temp.goalSelection);
-  if (mode === "edit" && ctx.callbackQuery?.message) {
-    await ctx.editMessageText(text, keyboard);
-  } else {
-    await sendPromptMessage(ctx, text, keyboard);
+  try {
+    if (mode === "edit" && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(text, keyboard);
+    } else {
+      await sendPromptMessage(ctx, text, keyboard);
+    }
+  } catch (err) {
+    console.error("sendGoalPrompt error:", err);
+    try {
+      await ctx.reply("Не удалось показать выбор целей.");
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -124,8 +165,9 @@ async function cleanupPromptMessage(ctx: RecommendationContext): Promise<void> {
   }
   try {
     await ctx.telegram.deleteMessage(promptChatId, promptMessageId);
-  } catch {
+  } catch (err) {
     // игнорируем ошибки удаления: сообщение могло быть удалено ранее
+    console.error("cleanupPromptMessage delete error:", err);
   }
   temp.promptMessageId = undefined;
   temp.promptChatId = undefined;
@@ -155,9 +197,30 @@ async function sendTransientMessage(
   }, 6000);
 }
 
+// Добавим safeStep — обёртку для шагов сцены, чтобы логировать ошибку и корректно завершать сцену
+function safeStep(step: any) {
+  return async (ctx: RecommendationContext, ...rest: any[]) => {
+    try {
+      return await step(ctx, ...rest);
+    } catch (err) {
+      console.error("Scene step error:", err);
+      try {
+        await ctx.reply("Произошла внутренняя ошибка. Попробуйте позже.");
+      } catch {
+        // ignore
+      }
+      try {
+        return ctx.scene.leave();
+      } catch {
+        // ignore
+      }
+    }
+  };
+}
+
 export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
   "onboarding",
-  async (ctx: RecommendationContext) => {
+  safeStep(async (ctx: RecommendationContext) => {
     const session = ctx.session as RecommendationSession;
     session.profile = {};
     session.temp = {};
@@ -166,8 +229,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     );
     await sendAgeSlider(ctx, "new");
     return ctx.wizard.next();
-  },
-  async (ctx: RecommendationContext) => {
+  }),
+  safeStep(async (ctx: RecommendationContext) => {
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(
@@ -210,8 +273,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     temp.ageValue = clampAge((temp.ageValue ?? AGE_DEFAULT) + delta);
     await ctx.answerCbQuery?.(`Возраст: ${temp.ageValue} лет`);
     await sendAgeSlider(ctx, "edit");
-  },
-  async (ctx: RecommendationContext) => {
+  }),
+  safeStep(async (ctx: RecommendationContext) => {
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(
@@ -253,8 +316,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     tempState.promptChatId = undefined;
     await sendFitnessSlider(ctx, "new");
     return ctx.wizard.next();
-  },
-  async (ctx: RecommendationContext) => {
+  }),
+  safeStep(async (ctx: RecommendationContext) => {
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(
@@ -310,8 +373,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       return ctx.wizard.next();
     }
     await ctx.answerCbQuery?.();
-  },
-  async (ctx: RecommendationContext) => {
+  }),
+  safeStep(async (ctx: RecommendationContext) => {
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(ctx, "Выберите форматы занятий кнопками.");
@@ -359,8 +422,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       await ctx.answerCbQuery?.("Добавлено в список.");
     }
     await sendFormatPrompt(ctx, "edit");
-  },
-  async (ctx: RecommendationContext) => {
+  }),
+  safeStep(async (ctx: RecommendationContext) => {
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(
@@ -419,8 +482,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       await ctx.answerCbQuery?.("Цель добавлена.");
     }
     await sendGoalPrompt(ctx, "edit");
-  },
-  async (ctx: RecommendationContext) => {
+  }),
+  safeStep(async (ctx: RecommendationContext) => {
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(
@@ -455,8 +518,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       competitionKeyboard
     );
     return ctx.wizard.next();
-  },
-  async (ctx: RecommendationContext) => {
+  }),
+  safeStep(async (ctx: RecommendationContext) => {
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(
@@ -499,12 +562,22 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       interestedInCompetition: sessionProfile.interestedInCompetition ?? false,
     };
 
-    const recommendations = recommendSections(profile, 3);
+    let recommendations: RecommendationResult[] = [];
+    try {
+      recommendations = recommendSections(profile, 3);
+    } catch (err) {
+      console.error("recommendSections error:", err);
+    }
     const temp = ensureTemp(ctx);
     temp.recommendations = recommendations;
 
     if (!recommendations.length) {
-      const fallback = fallbackSection(profile);
+      let fallback: RecommendationResult | null = null;
+      try {
+        fallback = fallbackSection(profile);
+      } catch (err) {
+        console.error("fallbackSection error:", err);
+      }
       if (fallback) {
         temp.recommendations = [fallback];
         const summary = renderRecommendationSummary(1, fallback);
@@ -533,5 +606,5 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     );
 
     return ctx.scene.leave();
-  }
+  })
 );

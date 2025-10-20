@@ -153,27 +153,52 @@ export function recommendSections(
   profile: UserProfile,
   limit = 3
 ): RecommendationResult[] {
-  const scored = sportSections
-    .map((section) => computeScore(section, profile))
-    .filter(
-      (result): result is RecommendationResult =>
-        result !== null && result.score > 0
-    )
-    .sort((a, b) => b.score - a.score);
+  if (!profile || typeof profile !== "object") {
+    console.error("recommendSections: invalid profile", profile);
+    return [];
+  }
 
-  return scored.slice(0, limit);
+  try {
+    const scored = sportSections
+      .map((section) => computeScore(section, profile))
+      .filter(
+        (result): result is RecommendationResult =>
+          result !== null && result.score > 0
+      )
+      .sort((a, b) => b.score - a.score);
+
+    return scored.slice(0, limit);
+  } catch (err) {
+    console.error("recommendSections error:", err);
+    return [];
+  }
 }
 
 export function fallbackSection(
   profile: UserProfile
 ): RecommendationResult | null {
-  const eligible = sportSections
-    .map((section) => computeScore(section, profile))
-    .filter((result): result is RecommendationResult => result !== null);
+  if (!profile || typeof profile !== "object") {
+    console.error("fallbackSection: invalid profile", profile);
+    return null;
+  }
 
-  return eligible.sort((a, b) => b.score - a.score)[0] ?? null;
+  try {
+    const eligible = sportSections
+      .map((section) => computeScore(section, profile))
+      .filter((result): result is RecommendationResult => result !== null);
+
+    return eligible.sort((a, b) => b.score - a.score)[0] ?? null;
+  } catch (err) {
+    console.error("fallbackSection error:", err);
+    return null;
+  }
 }
 
 export function listAllSections(): SportSection[] {
-  return sportSections;
+  try {
+    return sportSections;
+  } catch (err) {
+    console.error("listAllSections error:", err);
+    return [];
+  }
 }

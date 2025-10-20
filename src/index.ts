@@ -34,61 +34,90 @@ const bot = new Telegraf<RecommendationContext>(BOT_TOKEN);
 bot.use(session());
 bot.use(stage.middleware());
 
-bot.start((ctx: RecommendationContext) => ctx.scene.enter("onboarding"));
-bot.command("restart", (ctx: RecommendationContext) =>
-  ctx.scene.enter("onboarding")
+// A small helper to wrap handlers and send a friendly message on error.
+function safe(handler: (...args: any[]) => Promise<any>) {
+  return async (...args: any[]) => {
+    try {
+      await handler(...args);
+    } catch (err) {
+      console.error("Handler error:", err);
+      const ctx = args[0] as RecommendationContext | undefined;
+      try {
+        if (ctx && typeof ctx.reply === "function") {
+          await ctx.reply("Произошла ошибка. Попробуйте ещё раз позже.");
+        }
+      } catch {
+        // ignore reply errors
+      }
+    }
+  };
+}
+
+bot.start(safe((ctx: RecommendationContext) => ctx.scene.enter("onboarding")));
+bot.command(
+  "restart",
+  safe((ctx: RecommendationContext) => ctx.scene.enter("onboarding"))
 );
 
-bot.command("sections", async (ctx: RecommendationContext) => {
-  const sections = listAllSections()
-    .map((section) => `• ${section.title} — ${section.summary}`)
-    .join("\n");
-  await ctx.reply(sections);
-});
+bot.command(
+  "sections",
+  safe(async (ctx: RecommendationContext) => {
+    const sections = listAllSections()
+      .map((section) => `• ${section.title} — ${section.summary}`)
+      .join("\n");
+    await ctx.reply(sections);
+  })
+);
 
-bot.action(/^rec:(.+)$/i, async (ctx: RecommendationContext) => {
-  const callback = ctx.callbackQuery;
-  const raw = callback && "data" in callback ? callback.data ?? "" : "";
-  if (!raw.toLowerCase().startsWith("rec:")) {
-    await ctx.answerCbQuery?.();
-    return;
-  }
-  const sectionId = raw.slice(4);
-  if (!sectionId) {
-    await ctx.answerCbQuery?.();
-    return;
-  }
-  const session = ctx.session as RecommendationSession;
-  const recommendations = session.temp?.recommendations;
-  if (!recommendations || !recommendations.length) {
-    await ctx.answerCbQuery?.("Данные недоступны. Пройдите подбор заново.", {
-      show_alert: true,
-    });
-    return;
-  }
-  const index = recommendations.findIndex(
-    (item) => item.section.id === sectionId
-  );
-  if (index === -1) {
-    await ctx.answerCbQuery?.(
-      "Рекомендация устарела. Запустите подбор заново.",
-      { show_alert: true }
+bot.action(
+  /^rec:(.+)$/i,
+  safe(async (ctx: RecommendationContext) => {
+    const callback = ctx.callbackQuery;
+    const raw = callback && "data" in callback ? callback.data ?? "" : "";
+    if (!raw.toLowerCase().startsWith("rec:")) {
+      await ctx.answerCbQuery?.();
+      return;
+    }
+    const sectionId = raw.slice(4);
+    if (!sectionId) {
+      await ctx.answerCbQuery?.();
+      return;
+    }
+    const session = ctx.session as RecommendationSession;
+    const recommendations = session.temp?.recommendations;
+    if (!recommendations || !recommendations.length) {
+      await ctx.answerCbQuery?.("Данные недоступны. Пройдите подбор заново.", {
+        show_alert: true,
+      });
+      return;
+    }
+    const index = recommendations.findIndex(
+      (item) => item.section.id === sectionId
     );
-    return;
-  }
-  await ctx.answerCbQuery?.();
-  const detail = renderRecommendationDetail(index + 1, recommendations[index]);
-  await ctx.replyWithMarkdownV2(detail);
-});
+    if (index === -1) {
+      await ctx.answerCbQuery?.(
+        "Рекомендация устарела. Запустите подбор заново.",
+        { show_alert: true }
+      );
+      return;
+    }
+    await ctx.answerCbQuery?.();
+    const detail = renderRecommendationDetail(
+      index + 1,
+      recommendations[index]
+    );
+    await ctx.replyWithMarkdownV2(detail);
+  })
+);
 
 bot.on(
   message("text"),
-  async (ctx: RecommendationContext, next: () => Promise<void>) => {
+  safe(async (ctx: RecommendationContext, next: () => Promise<void>) => {
     if (ctx.scene?.current) {
       return next();
     }
     await ctx.reply("Введите /start, чтобы запустить подбор секции.");
-  }
+  })
 );
 
 bot.catch((err: unknown, ctx: RecommendationContext) => {

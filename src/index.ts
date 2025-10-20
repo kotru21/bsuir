@@ -6,11 +6,18 @@ import fs from "fs";
 import path from "path";
 import { onboardingScene } from "./bot/scenes/onboarding.js";
 import { RecommendationContext, RecommendationSession } from "./bot/session.js";
-import { renderRecommendationDetail } from "./bot/formatters.js";
+import {
+  renderRecommendationDetail,
+  escapeMarkdown,
+} from "./bot/formatters.js";
 import {
   buildCompletionKeyboard,
   buildSectionsKeyboard,
 } from "./bot/keyboards.js";
+import {
+  replyMarkdownV2Safe,
+  replyWithPhotoMarkdownV2Safe,
+} from "./bot/telegram.js";
 
 dotenv.config();
 
@@ -18,6 +25,7 @@ type NodeProcessLike = {
   env?: Record<string, string | undefined>;
   exit?: (code?: number) => never;
   once?: (event: string, handler: () => void) => void;
+  on?: (event: string, handler: (...args: any[]) => void) => void;
 };
 
 const nodeProcess = (
@@ -37,23 +45,45 @@ const stage = new Scenes.Stage<RecommendationContext>([onboardingScene]);
 
 const bot = new Telegraf<RecommendationContext>(BOT_TOKEN);
 
+function setupProcessErrorHandling(): void {
+  if (!nodeProcess?.on) {
+    return;
+  }
+
+  nodeProcess.on("unhandledRejection", (reason) => {
+    console.error("Unhandled promise rejection:", reason);
+  });
+}
+
+setupProcessErrorHandling();
+
 bot.use(session());
 bot.use(stage.middleware());
 
 // A small helper to wrap handlers and send a friendly message on error.
 function safe(handler: (...args: any[]) => Promise<any>) {
   return async (...args: any[]) => {
+    const ctx = args[0] as RecommendationContext | undefined;
     try {
       await handler(...args);
     } catch (err) {
       console.error("Handler error:", err);
-      const ctx = args[0] as RecommendationContext | undefined;
+      if (ctx?.callbackQuery && typeof ctx.answerCbQuery === "function") {
+        try {
+          await ctx.answerCbQuery(
+            "Произошла ошибка. Попробуйте ещё раз позже.",
+            { show_alert: true }
+          );
+        } catch (cbErr) {
+          console.error("Failed to answer callback query after error:", cbErr);
+        }
+      }
       try {
         if (ctx && typeof ctx.reply === "function") {
           await ctx.reply("Произошла ошибка. Попробуйте ещё раз позже.");
         }
-      } catch {
-        // ignore reply errors
+      } catch (replyErr) {
+        console.error("Failed to send error notification:", replyErr);
       }
     }
   };
@@ -86,7 +116,10 @@ bot.command(
 
     const first = sections[0];
     const image = (first as any).imagePath ?? null;
-    const caption = `*${first.title}*\n${first.summary}`;
+    const caption = [
+      `*${escapeMarkdown(first.title)}*`,
+      escapeMarkdown(first.summary),
+    ].join("\n");
 
     if (image) {
       const abs = path.resolve(process.cwd(), image);
@@ -94,11 +127,12 @@ bot.command(
         await ctx.reply("Изображение не найдено на сервере.");
         return;
       }
-      await ctx.replyWithPhoto(
-        { source: fs.createReadStream(abs) },
+      await replyWithPhotoMarkdownV2Safe(
+        ctx,
+        () => ({ source: fs.createReadStream(abs) }),
         {
           caption,
-          parse_mode: "Markdown",
+          parse_mode: "MarkdownV2",
           reply_markup: buildSectionsKeyboard(0, sections.length, first.id)
             .reply_markup,
         }
@@ -106,8 +140,9 @@ bot.command(
     } else {
       const text = sections
         .map((s) => `• ${s.title} — ${s.summary}`)
+        .map((line) => escapeMarkdown(line))
         .join("\n\n");
-      await ctx.reply(text);
+      await replyMarkdownV2Safe(ctx, text);
     }
   })
 );
@@ -137,7 +172,10 @@ bot.action(
 
     const section = sections[index];
     const image = (section as any).imagePath ?? null;
-    const caption = `*${section.title}*\n${section.summary}`;
+    const caption = [
+      `*${escapeMarkdown(section.title)}*`,
+      escapeMarkdown(section.summary),
+    ].join("\n");
 
     await ctx.answerCbQuery?.();
 
@@ -163,11 +201,12 @@ bot.action(
             // ignore delete errors
           }
         }
-        await ctx.replyWithPhoto(
-          { source: fs.createReadStream(abs) },
+        await replyWithPhotoMarkdownV2Safe(
+          ctx,
+          () => ({ source: fs.createReadStream(abs) }),
           {
             caption,
-            parse_mode: "Markdown",
+            parse_mode: "MarkdownV2",
             reply_markup: buildSectionsKeyboard(
               index,
               sections.length,
@@ -176,25 +215,23 @@ bot.action(
           }
         );
       } else {
-        await ctx.reply(caption, {
-          parse_mode: "Markdown",
-          reply_markup: buildSectionsKeyboard(
-            index,
-            sections.length,
-            section.id
-          ).reply_markup,
-        });
+        await replyMarkdownV2Safe(
+          ctx,
+          caption,
+          buildSectionsKeyboard(index, sections.length, section.id)
+        );
       }
     } catch (err) {
       console.error("Failed to update section message:", err);
       if (image) {
         const abs = path.resolve(process.cwd(), image);
         if (fs.existsSync(abs)) {
-          await ctx.replyWithPhoto(
-            { source: fs.createReadStream(abs) },
+          await replyWithPhotoMarkdownV2Safe(
+            ctx,
+            () => ({ source: fs.createReadStream(abs) }),
             {
               caption,
-              parse_mode: "Markdown",
+              parse_mode: "MarkdownV2",
               reply_markup: buildSectionsKeyboard(
                 index,
                 sections.length,
@@ -203,10 +240,10 @@ bot.action(
             }
           );
         } else {
-          await ctx.reply(caption);
+          await replyMarkdownV2Safe(ctx, caption);
         }
       } else {
-        await ctx.reply(caption);
+        await replyMarkdownV2Safe(ctx, caption);
       }
     }
   })
@@ -249,7 +286,7 @@ bot.action(
       index + 1,
       recommendations[index]
     );
-    await ctx.replyWithMarkdownV2(detail);
+    await replyMarkdownV2Safe(ctx, detail);
   })
 );
 
@@ -267,8 +304,14 @@ bot.catch((err: unknown, ctx: RecommendationContext) => {
   console.error(`Bot error for update ${ctx.update.update_id}:`, err);
 });
 
-bot.launch().then(() => {
-  console.log("Telegram-бот запущен.");
-});
+bot
+  .launch()
+  .then(() => {
+    console.log("Telegram-бот запущен.");
+  })
+  .catch((err) => {
+    console.error("Failed to launch Telegram bot:", err);
+    nodeProcess?.exit?.(1);
+  });
 nodeProcess?.once?.("SIGINT", () => bot.stop("SIGINT"));
 nodeProcess?.once?.("SIGTERM", () => bot.stop("SIGTERM"));

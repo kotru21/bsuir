@@ -32,6 +32,7 @@ import {
   goalSelectionText,
   renderRecommendationSummary,
 } from "../formatters.js";
+import { replyMarkdownV2Safe } from "../telegram.js";
 import {
   DataCallbackQuery,
   RecommendationContext,
@@ -78,7 +79,7 @@ async function sendFitnessSlider(
   const profile = ensureProfile(ctx);
   if (temp.fitnessIndex === undefined) {
     const initialLevel = profile.fitnessLevel ?? "medium";
-    const initialIndex = Math.max(fitnessOrder.indexOf(initialLevel), 1);
+    const initialIndex = fitnessOrder.indexOf(initialLevel);
     temp.fitnessIndex = initialIndex === -1 ? 1 : initialIndex;
   }
   const text = buildFitnessSliderText(temp.fitnessIndex);
@@ -205,15 +206,28 @@ function safeStep(step: any) {
       return await step(ctx, ...rest);
     } catch (err) {
       console.error("Scene step error:", err);
+      if (ctx.callbackQuery && typeof ctx.answerCbQuery === "function") {
+        try {
+          await ctx.answerCbQuery(
+            "Произошла внутренняя ошибка. Попробуйте позже.",
+            { show_alert: true }
+          );
+        } catch (cbErr) {
+          console.error(
+            "Failed to answer callback query after scene error:",
+            cbErr
+          );
+        }
+      }
       try {
         await ctx.reply("Произошла внутренняя ошибка. Попробуйте позже.");
-      } catch {
-        // ignore
+      } catch (replyErr) {
+        console.error("Failed to send scene error notification:", replyErr);
       }
       try {
         return ctx.scene.leave();
-      } catch {
-        // ignore
+      } catch (leaveErr) {
+        console.error("Failed to leave scene after error:", leaveErr);
       }
     }
   };
@@ -599,7 +613,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       if (fallback) {
         temp.recommendations = [fallback];
         const summary = renderRecommendationSummary(1, fallback);
-        await ctx.replyWithMarkdownV2(
+        await replyMarkdownV2Safe(
+          ctx,
           summary,
           buildRecommendationKeyboard(fallback.section.id)
         );
@@ -611,7 +626,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     } else {
       for (const [index, item] of recommendations.entries()) {
         const summary = renderRecommendationSummary(index + 1, item);
-        await ctx.replyWithMarkdownV2(
+        await replyMarkdownV2Safe(
+          ctx,
           summary,
           buildRecommendationKeyboard(item.section.id)
         );

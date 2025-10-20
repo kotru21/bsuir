@@ -12,6 +12,7 @@ import {
   AGE_MIN,
   fitnessLevelLabelsRu,
   fitnessOrder,
+  goalOptions,
 } from "../constants.js";
 import {
   buildCompletionKeyboard,
@@ -375,6 +376,7 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     await ctx.answerCbQuery?.();
   }),
   safeStep(async (ctx: RecommendationContext) => {
+    // Step: select preferred training formats
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(ctx, "Выберите форматы занятий кнопками.");
@@ -388,16 +390,16 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       return;
     }
     const temp = ensureTemp(ctx);
-    if (!temp.formatSelection) {
-      temp.formatSelection = [];
-    }
-    const action = data.split(":")[1];
+    if (!temp.formatSelection) temp.formatSelection = [];
+
+    const action = data.split(":")[1] as string;
     if (action === "any") {
       temp.formatSelection = [];
       await ctx.answerCbQuery?.("Предпочтение сброшено.");
       await sendFormatPrompt(ctx, "edit");
       return;
     }
+
     if (action === "done") {
       ensureProfile(ctx).preferredFormats = temp.formatSelection;
       await ctx.answerCbQuery?.("Предпочтения сохранены.");
@@ -411,6 +413,7 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       await sendGoalPrompt(ctx, "new");
       return ctx.wizard.next();
     }
+
     const format = action as TrainingFormat;
     if (temp.formatSelection.includes(format)) {
       temp.formatSelection = temp.formatSelection.filter(
@@ -424,6 +427,7 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     await sendFormatPrompt(ctx, "edit");
   }),
   safeStep(async (ctx: RecommendationContext) => {
+    // Step: select goals
     if (ctx.updateType !== "callback_query") {
       if (ctx.message && "text" in ctx.message) {
         await sendTransientMessage(
@@ -440,9 +444,8 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       return;
     }
     const temp = ensureTemp(ctx);
-    if (!temp.goalSelection) {
-      temp.goalSelection = [];
-    }
+    if (!temp.goalSelection) temp.goalSelection = [];
+
     const action = data.split(":")[1] as string;
     if (action === "done") {
       if (!temp.goalSelection.length) {
@@ -467,13 +470,28 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
       );
       return ctx.wizard.next();
     }
+
     if (action === "clear") {
       temp.goalSelection = [];
       await ctx.answerCbQuery?.("Выбор очищен.");
       await sendGoalPrompt(ctx, "edit");
       return;
     }
-    const tag = action as GoalTag;
+
+    // Allow numeric keys (from goalOptions) or direct tags
+    let tag: GoalTag | undefined;
+    if (action in goalOptions) {
+      // @ts-ignore index by string
+      tag = goalOptions[action].tag as GoalTag;
+    } else {
+      tag = action as GoalTag;
+    }
+
+    if (!tag) {
+      await ctx.answerCbQuery?.();
+      return;
+    }
+
     if (temp.goalSelection.includes(tag)) {
       temp.goalSelection = temp.goalSelection.filter((item) => item !== tag);
       await ctx.answerCbQuery?.("Цель снята.");

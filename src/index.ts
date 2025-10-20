@@ -5,6 +5,7 @@ import { listAllSections } from "./recommendation.js";
 import { onboardingScene } from "./bot/scenes/onboarding.js";
 import { RecommendationContext, RecommendationSession } from "./bot/session.js";
 import { renderRecommendationDetail } from "./bot/formatters.js";
+import { buildCompletionKeyboard } from "./bot/keyboards.js";
 
 dotenv.config();
 
@@ -53,7 +54,17 @@ function safe(handler: (...args: any[]) => Promise<any>) {
   };
 }
 
-bot.start(safe((ctx: RecommendationContext) => ctx.scene.enter("onboarding")));
+bot.start(
+  safe(async (ctx: RecommendationContext) => {
+    // Показываем клавиатуру снизу сразу при нажатии /start
+    try {
+      await ctx.reply("Команды доступны ниже:", buildCompletionKeyboard());
+    } catch {
+      // ignore reply errors
+    }
+    return ctx.scene.enter("onboarding");
+  })
+);
 bot.command(
   "restart",
   safe((ctx: RecommendationContext) => ctx.scene.enter("onboarding"))

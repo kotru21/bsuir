@@ -288,27 +288,50 @@ bot.action(
       return;
     }
     const session = ctx.session as RecommendationSession;
-    const recommendations = session.temp?.recommendations;
-    if (!recommendations || !recommendations.length) {
-      await ctx.answerCbQuery?.("Данные недоступны. Пройдите подбор заново.", {
-        show_alert: true,
-      });
-      return;
-    }
-    const index = recommendations.findIndex(
+    const recommendations = session.temp?.recommendations ?? [];
+
+    // Try to find the recommendation in the session first
+    let recIndex = recommendations.findIndex(
       (item) => item.section.id === sectionId
     );
-    if (index === -1) {
+
+    let recommendationToShow: any = null;
+
+    if (recIndex !== -1) {
+      recommendationToShow = recommendations[recIndex];
+    } else {
+      // Fallback: try to find the section in the global list and show its details
+      try {
+        const all = listAllSections();
+        const sec = all.find((s) => s.id === sectionId) ?? null;
+        if (sec) {
+          recommendationToShow = {
+            section: sec,
+            score: 0,
+            matchedFocus: [],
+            formatMatch: false,
+            reason: ["Информация из каталога"],
+          };
+          // set recIndex to 0 for rendering position
+          recIndex = 0;
+        }
+      } catch (err) {
+        console.error("Failed to load sections for fallback rec:", err);
+      }
+    }
+
+    if (!recommendationToShow) {
       await ctx.answerCbQuery?.(
         "Рекомендация устарела. Запустите подбор заново.",
         { show_alert: true }
       );
       return;
     }
+
     await ctx.answerCbQuery?.();
     const detail = renderRecommendationDetail(
-      index + 1,
-      recommendations[index]
+      recIndex + 1,
+      recommendationToShow
     );
     await replyMarkdownV2Safe(ctx, detail);
   })

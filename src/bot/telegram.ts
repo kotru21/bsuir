@@ -3,9 +3,11 @@ import type { RecommendationContext } from "./session.js";
 
 const TELEGRAM_BAD_REQUEST = 400;
 
+/* eslint-disable no-useless-escape */
 export function stripMarkdownEscapes(text: string): string {
   return text.replace(/\\([_\-*\[\]()~`>#\+=|{}.!\\])/g, "$1");
 }
+/* eslint-enable no-useless-escape */
 
 type MarkdownExtra = Parameters<
   RecommendationContext["replyWithMarkdownV2"]

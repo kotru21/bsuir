@@ -41,7 +41,7 @@ import {
   ensureTemp,
 } from "../session.js";
 
-function clampAge(age: number): number {
+export function clampAge(age: number): number {
   return Math.min(AGE_MAX, Math.max(AGE_MIN, age));
 }
 
@@ -152,7 +152,7 @@ async function sendGoalPrompt(
   }
 }
 
-function parseAgeDelta(payload: string): number | null {
+export function parseAgeDelta(payload: string): number | null {
   const value = Number(payload);
   return Number.isNaN(value) ? null : value;
 }
@@ -200,8 +200,10 @@ async function sendTransientMessage(
 }
 
 // Добавим safeStep — обёртку для шагов сцены, чтобы логировать ошибку и корректно завершать сцену
-function safeStep(step: any) {
-  return async (ctx: RecommendationContext, ...rest: any[]) => {
+function safeStep(
+  step: (ctx: RecommendationContext, ...rest: unknown[]) => Promise<unknown>
+) {
+  return async (ctx: RecommendationContext, ...rest: unknown[]) => {
     try {
       return await step(ctx, ...rest);
     } catch (err) {
@@ -233,8 +235,66 @@ function safeStep(step: any) {
   };
 }
 
+export async function ageStepHandler(ctx: RecommendationContext) {
+  const session = ctx.session as RecommendationSession;
+  session.profile = {};
+  session.temp = {};
+  await ctx.reply(
+    "Здравствуйте! Я помогу подобрать подходящую спортивную секцию БГУИР."
+  );
+  await sendAgeSlider(ctx, "new");
+  return ctx.wizard.next();
+}
+
+export async function genderStepHandler(ctx: RecommendationContext) {
+  if (ctx.updateType !== "callback_query") {
+    if (ctx.message && "text" in ctx.message) {
+      await sendTransientMessage(
+        ctx,
+        "Пожалуйста, используйте кнопки ниже для выбора возраста."
+      );
+    }
+    return;
+  }
+  const callback = ctx.callbackQuery as DataCallbackQuery | undefined;
+  const data = callback?.data;
+  if (!data || !data.startsWith("age:")) {
+    await ctx.answerCbQuery?.();
+    return;
+  }
+  const action = data.split(":")[1];
+  const temp = ensureTemp(ctx);
+  if (temp.ageValue === undefined) {
+    temp.ageValue = AGE_DEFAULT;
+  }
+  if (action === "done") {
+    const age = clampAge(temp.ageValue);
+    ensureProfile(ctx).age = age;
+    await ctx.answerCbQuery?.(`Возраст сохранен: ${age} лет`);
+    if (callback?.message) {
+      await ctx
+        .deleteMessage(callback.message.message_id)
+        .catch(() => undefined);
+    }
+    temp.promptMessageId = undefined;
+    temp.promptChatId = undefined;
+    await sendPromptMessage(ctx, "Укажите пол:", genderKeyboard);
+    return ctx.wizard.next();
+  }
+  const delta = parseAgeDelta(action);
+  if (delta === null) {
+    await ctx.answerCbQuery?.();
+    return;
+  }
+  temp.ageValue = clampAge((temp.ageValue ?? AGE_DEFAULT) + delta);
+  await ctx.answerCbQuery?.(`Возраст: ${temp.ageValue} лет`);
+  await sendAgeSlider(ctx, "edit");
+}
+
 export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
   "onboarding",
+  safeStep(ageStepHandler),
+  safeStep(genderStepHandler),
   safeStep(async (ctx: RecommendationContext) => {
     const session = ctx.session as RecommendationSession;
     session.profile = {};
@@ -495,8 +555,13 @@ export const onboardingScene = new Scenes.WizardScene<RecommendationContext>(
     // Allow numeric keys (from goalOptions) or direct tags
     let tag: GoalTag | undefined;
     if (action in goalOptions) {
-      // @ts-ignore index by string
-      tag = goalOptions[action].tag as GoalTag;
+      const entry = (
+        Object.entries(goalOptions) as [
+          string,
+          { tag: GoalTag; label: string }
+        ][]
+      ).find(([key]) => key === action);
+      tag = entry ? entry[1].tag : (action as GoalTag);
     } else {
       tag = action as GoalTag;
     }

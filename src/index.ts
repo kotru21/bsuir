@@ -25,7 +25,7 @@ type NodeProcessLike = {
   env?: Record<string, string | undefined>;
   exit?: (code?: number) => never;
   once?: (event: string, handler: () => void) => void;
-  on?: (event: string, handler: (...args: any[]) => void) => void;
+  on?: (event: string, handler: (...args: unknown[]) => void) => void;
 };
 
 const nodeProcess = (
@@ -85,11 +85,13 @@ bot.use(session());
 bot.use(stage.middleware());
 
 // A small helper to wrap handlers and send a friendly message on error.
-function safe(handler: (...args: any[]) => Promise<any>) {
-  return async (...args: any[]) => {
-    const ctx = args[0] as RecommendationContext | undefined;
+// A small helper to wrap handlers and send a friendly message on error.
+function safe<TRest extends unknown[]>(
+  handler: (ctx: RecommendationContext, ...rest: TRest) => Promise<unknown>
+) {
+  return async (ctx: RecommendationContext, ...rest: TRest) => {
     try {
-      await handler(...args);
+      await handler(ctx, ...rest);
     } catch (err) {
       console.error("Handler error:", err);
       if (ctx?.callbackQuery && typeof ctx.answerCbQuery === "function") {
@@ -139,7 +141,8 @@ bot.command(
     }
 
     const first = sections[0];
-    const image = (first as any).imagePath ?? null;
+    const image =
+      (first as unknown as { imagePath?: string }).imagePath ?? null;
     const caption = [
       `*${escapeMarkdown(first.title)}*`,
       escapeMarkdown(first.summary),
@@ -195,7 +198,8 @@ bot.action(
     }
 
     const section = sections[index];
-    const image = (section as any).imagePath ?? null;
+    const image =
+      (section as unknown as { imagePath?: string }).imagePath ?? null;
     const caption = [
       `*${escapeMarkdown(section.title)}*`,
       escapeMarkdown(section.summary),
@@ -204,8 +208,10 @@ bot.action(
     await ctx.answerCbQuery?.();
 
     try {
-      const cb = ctx.callbackQuery as any;
-      const msg = cb && cb.message;
+      const cb = ctx.callbackQuery as
+        | RecommendationContext["callbackQuery"]
+        | undefined;
+      const msg = cb && "message" in cb ? cb.message : undefined;
       if (image) {
         const abs = resolveImagePath(image);
         if (!abs) {
@@ -295,7 +301,8 @@ bot.action(
       (item) => item.section.id === sectionId
     );
 
-    let recommendationToShow: any = null;
+    let recommendationToShow: import("./types.js").RecommendationResult | null =
+      null;
 
     if (recIndex !== -1) {
       recommendationToShow = recommendations[recIndex];

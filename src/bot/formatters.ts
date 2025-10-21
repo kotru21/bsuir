@@ -13,9 +13,13 @@ import {
   intensityLabelsRu,
 } from "./constants.js";
 
+// RegExp intentionally escapes MarkdownV2 special characters. eslint may flag some escapes
+// but they are required for the character class to be safe across engines.
+/* eslint-disable no-useless-escape */
 export function escapeMarkdown(text: string): string {
   return text.replace(/([_\-*\[\]()~`>#+=|{}.!\\])/g, "\\$1");
 }
+/* eslint-enable no-useless-escape */
 
 export function buildAgeSliderText(age: number): string {
   return [
@@ -44,7 +48,7 @@ export function formatSelectionText(selection: TrainingFormat[]): string {
     return "Предпочтительные форматы занятий: не важно. Выберите варианты кнопками ниже.";
   }
   const labels = selection.map((format) => formatLabelsRu[format]).join(", ");
-  return `Предпочтительные форматы занятий: ${labels}. Нажмите \"Готово\", когда закончите.`;
+  return `Предпочтительные форматы занятий: ${labels}. Нажмите "Готово", когда закончите.`;
 }
 
 export function goalSelectionText(selection: GoalTag[]): string {
@@ -52,7 +56,7 @@ export function goalSelectionText(selection: GoalTag[]): string {
     return "Выберите ваши цели в тренировках. Можно отметить несколько вариантов.";
   }
   const labels = selection.map((tag) => goalTagLabels[tag]).join(", ");
-  return `Вы выбрали: ${labels}. Добавьте или снимите отметку и нажмите \"Готово\".`;
+  return `Вы выбрали: ${labels}. Добавьте или снимите отметку и нажмите "Готово".`;
 }
 
 export function renderRecommendationSummary(

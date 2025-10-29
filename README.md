@@ -37,46 +37,50 @@
 
 ```mermaid
 flowchart LR
-      user(Пользователь Telegram):::actor
-      marketing(Маркетинговая команда):::actor
+   user(Telegram user):::actor
+   marketing(Marketing team):::actor
 
-      subgraph Bot [Система цифрового маркетинга]
-            start[/Начать диалог/]
-            profile[Сбор профиля]
-            recommend[Получить рекомендации]
-            sections[Просмотреть каталог секций]
-            feedback[Запросить обратную связь]
-            export[Экспорт интересов]
-      end
+   subgraph Bot [Digital marketing bot]
+      start[/Start dialog/]
+      profile[Collect profile]
+      recommend[Deliver recommendations]
+      sections[Browse sections]
+      feedback[Leave feedback]
+      export[Export insights]
+   end
 
-      user --> start
-      start --> profile
-      profile --> recommend
-      user --> sections
-      user --> feedback
-      marketing --> export
+   user --> start
+   start --> profile
+   profile --> recommend
+   user --> sections
+   user --> feedback
+   marketing --> export
 
-      classDef actor fill:#f0f0f0,stroke:#333,stroke-width:1;
+   classDef actor fill:#f0f0f0,stroke:#333,stroke-width:1;
 ```
+
+**Расшифровка:** Пользователь Telegram инициирует диалог, проходит сбор профиля и получает рекомендации; маркетинговая команда использует экспорт интересов.
 
 ### Бизнес-процесс взаимодействия
 
 ```mermaid
 flowchart TD
-      A[Пользователь запускает бота командой /start] --> B{Сессия существует?}
-      B -- Нет --> C[Создать сессию и показать приветствие]
-      B -- Да --> D[Предложить продолжить или начать заново]
-      C --> E[Пошаговый опрос: возраст → пол → уровень подготовки → формат → цели → контактность]
-      D --> E
-      E --> F[Формирование профиля пользователя]
-      F --> G[Расчёт рекомендаций recommendSections]
-      G --> H{Есть релевантные секции?}
-      H -- Да --> I[Отправить топ-N секций с обоснованиями и прогнозами]
-      H -- Нет --> J[Показать fallback-секцию и инструкцию по обратной связи]
-      I --> K[Инлайн-кнопки: записаться, посмотреть другие секции, перезапустить]
-      J --> K
-      K --> L[Логирование интереса и завершение сценария]
+   A[User starts bot with /start] --> B{Session exists?}
+   B -- No --> C[Create session and show greeting]
+   B -- Yes --> D[Offer resume or restart]
+   C --> E[Wizard: age -> gender -> fitness -> format -> goals -> contact]
+   D --> E
+   E --> F[Build user profile]
+   F --> G[Calculate recommendations recommendSections]
+   G --> H{Relevant sections found?}
+   H -- Yes --> I[Send top-N sections with reasoning]
+   H -- No --> J[Show fallback section and feedback hint]
+   I --> K[Inline buttons: enroll, browse, restart]
+   J --> K
+   K --> L[Log interest and finish scenario]
 ```
+
+**Расшифровка:** Пользователь запускает бота, заполняет анкету, после чего движок рекомендаций выбирает секции; далее пользователь взаимодействует с кнопками, а система фиксирует интерес.
 
 ### Логическая диаграмма сущность-связь
 
@@ -127,6 +131,8 @@ erDiagram
             string altText
       }
 ```
+
+**Расшифровка:** Профиль пользователя связан с ответами и рекомендациями; рекомендации привязаны к секциям, для которых описаны прогнозы результатов и медиаматериалы.
 
 ## Подробное описание функций
 

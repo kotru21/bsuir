@@ -5,8 +5,8 @@ import type {
   UserProfile,
   GoalTag,
   TrainingFormat,
+  RecommendationReason,
 } from "./types.js";
-import { goalTagLabels, formatLabelsRu } from "./bot/constants.js";
 
 const fitnessWeights: Record<string, number> = {
   low: 0,
@@ -34,59 +34,61 @@ function contactAllowed(section: SportSection, avoidContact: boolean): boolean {
   return section.contactLevel === "nonContact";
 }
 
-function buildReasons(
+function buildReasonCodes(
   section: SportSection,
   profile: UserProfile,
   matchedFocus: GoalTag[],
+  formatMatch: boolean,
+  fitnessDiff: number,
   score: number
-): string[] {
-  const reasons: string[] = [];
+): RecommendationReason[] {
+  const reasons: RecommendationReason[] = [];
 
   if (matchedFocus.length) {
-    const focusLabels = matchedFocus.map((tag) => goalTagLabels[tag] ?? tag);
-    reasons.push(`Соответствует целям: ${focusLabels.join(", ")}.`);
+    reasons.push({ kind: "goal-match", tags: matchedFocus });
   }
 
-  if (formatMatches(section, profile.preferredFormats)) {
-    if (profile.preferredFormats.length > 0) {
-      reasons.push(
-        `Формат занятий (${
-          formatLabelsRu[section.format] ?? section.format
-        }) совпадает с предпочтениями.`
-      );
+  if (profile.preferredFormats.length > 0) {
+    if (formatMatch) {
+      reasons.push({
+        kind: "format-aligned",
+        format: section.format,
+        preferred: profile.preferredFormats,
+      });
+    } else {
+      reasons.push({
+        kind: "format-mismatch",
+        format: section.format,
+        preferred: profile.preferredFormats,
+      });
     }
-  } else {
-    reasons.push(
-      "Формат отличается от предпочтительного, но остается приемлемым."
-    );
   }
 
-  const fitnessDiff = Math.abs(
-    fitnessWeights[profile.fitnessLevel] - fitnessWeights[section.intensity]
-  );
+  const fitnessReasonBase = {
+    profileLevel: profile.fitnessLevel,
+    intensity: section.intensity,
+  } as const;
+
   if (fitnessDiff === 0) {
-    reasons.push("Интенсивность соответствует текущему уровню подготовки.");
+    reasons.push({ kind: "fitness-balanced", ...fitnessReasonBase });
   } else if (fitnessDiff === 1) {
-    reasons.push(
-      "Интенсивность немного выше и поможет быстрее прогрессировать."
-    );
+    reasons.push({ kind: "fitness-progressive", ...fitnessReasonBase });
   } else {
-    reasons.push(
-      "Потребуется подготовительный период или консультация тренера."
-    );
+    reasons.push({ kind: "fitness-gap", ...fitnessReasonBase });
   }
 
   if (
     profile.interestedInCompetition &&
     section.focus.includes("competition")
   ) {
-    reasons.push("Программа включает путь к участию в соревнованиях.");
+    reasons.push({ kind: "competition-path" });
   }
 
   if (score > 0 && section.extraBenefits?.length) {
-    reasons.push(
-      `Дополнительные плюсы: ${section.extraBenefits.slice(0, 2).join(", ")}.`
-    );
+    reasons.push({
+      kind: "extra-benefits",
+      benefits: section.extraBenefits.slice(0, 2),
+    });
   }
 
   return reasons;
@@ -106,7 +108,9 @@ function computeScore(
   );
   score += matchedFocus.length * 3;
 
-  if (formatMatches(section, profile.preferredFormats)) {
+  const formatMatch = formatMatches(section, profile.preferredFormats);
+
+  if (formatMatch) {
     score += 2;
   } else {
     score -= 1;
@@ -138,14 +142,21 @@ function computeScore(
     score = 0;
   }
 
-  const reason = buildReasons(section, profile, matchedFocus, score);
+  const reasons = buildReasonCodes(
+    section,
+    profile,
+    matchedFocus,
+    formatMatch,
+    fitnessDiff,
+    score
+  );
 
   return {
     section,
     score,
     matchedFocus,
-    formatMatch: formatMatches(section, profile.preferredFormats),
-    reason,
+    formatMatch,
+    reasons,
   };
 }
 

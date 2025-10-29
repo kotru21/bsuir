@@ -2,6 +2,7 @@ import type {
   RecommendationResult,
   TrainingFormat,
   GoalTag,
+  RecommendationReason,
 } from "../types.js";
 import {
   AGE_MAX,
@@ -59,11 +60,74 @@ export function goalSelectionText(selection: GoalTag[]): string {
   return `Вы выбрали: ${labels}. Добавьте или снимите отметку и нажмите "Готово".`;
 }
 
+function describeReason(reason: RecommendationReason): string {
+  switch (reason.kind) {
+    case "goal-match": {
+      const focusLabels = reason.tags.map((tag) => goalTagLabels[tag] ?? tag);
+      return `Соответствует целям: ${focusLabels.join(", ")}.`;
+    }
+    case "format-aligned": {
+      const preferredLabels = reason.preferred
+        .map((format) => formatLabelsRu[format])
+        .join(", ");
+      return `Формат (${
+        formatLabelsRu[reason.format]
+      }) совпадает с предпочтениями (${preferredLabels}).`;
+    }
+    case "format-mismatch": {
+      const preferredLabels = reason.preferred
+        .map((format) => formatLabelsRu[format])
+        .join(", ");
+      return `Формат направления (${
+        formatLabelsRu[reason.format]
+      }) отличается от предпочтений (${preferredLabels}), но может подойти.`;
+    }
+    case "fitness-balanced": {
+      return `Интенсивность (${
+        intensityLabelsRu[reason.intensity]
+      }) соответствует вашему уровню (${
+        fitnessLevelLabelsRu[reason.profileLevel]
+      }).`;
+    }
+    case "fitness-progressive": {
+      return `Интенсивность (${
+        intensityLabelsRu[reason.intensity]
+      }) немного выше уровня (${
+        fitnessLevelLabelsRu[reason.profileLevel]
+      }) и поможет прогрессировать.`;
+    }
+    case "fitness-gap": {
+      return `Интенсивность (${
+        intensityLabelsRu[reason.intensity]
+      }) значительно выше текущего уровня (${
+        fitnessLevelLabelsRu[reason.profileLevel]
+      }), потребуется адаптация.`;
+    }
+    case "competition-path": {
+      return "Программа включает путь к участию в соревнованиях.";
+    }
+    case "extra-benefits": {
+      return `Дополнительные плюсы: ${reason.benefits.join(", ")}.`;
+    }
+    case "catalog-reference": {
+      return reason.note;
+    }
+    default:
+      return "";
+  }
+}
+
+function describeReasons(reasons: RecommendationReason[]): string[] {
+  return reasons
+    .map(describeReason)
+    .filter((text): text is string => Boolean(text));
+}
+
 export function renderRecommendationSummary(
   position: number,
   recommendation: RecommendationResult
 ): string {
-  const { section, matchedFocus, reason } = recommendation;
+  const { section, matchedFocus, reasons } = recommendation;
   const header = `*${escapeMarkdown(`${position}. ${section.title}`)}*`;
   const focusLabels = matchedFocus.map((tag) => goalTagLabels[tag] ?? tag);
   const focusLineRaw = focusLabels.length
@@ -72,7 +136,10 @@ export function renderRecommendationSummary(
   const formatLineRaw = `Формат: ${
     formatLabelsRu[section.format]
   }, интенсивность: ${intensityLabelsRu[section.intensity]}`;
-  const reasonLineRaw = reason.length ? `Почему: ${reason[0]}` : "";
+  const reasonStrings = describeReasons(reasons);
+  const reasonLineRaw = reasonStrings.length
+    ? `Почему: ${reasonStrings[0]}`
+    : "";
 
   return [
     header,
@@ -88,7 +155,7 @@ export function renderRecommendationDetail(
   position: number,
   recommendation: RecommendationResult
 ): string {
-  const { section, matchedFocus, reason } = recommendation;
+  const { section, matchedFocus, reasons } = recommendation;
   const focusLabels = matchedFocus.map((tag) => goalTagLabels[tag] ?? tag);
   const focusLineRaw = focusLabels.length
     ? `Совпадение по целям: ${focusLabels.join(", ")}`
@@ -100,7 +167,10 @@ export function renderRecommendationDetail(
     ? `Дополнительно: ${section.extraBenefits.join(", ")}`
     : "";
   const timelineRaw = `Ожидаемые результаты: ${section.expectedResults.shortTerm} / ${section.expectedResults.midTerm} / ${section.expectedResults.longTerm}`;
-  const reasonLineRaw = reason.length ? `Почему: ${reason.join(" ")}` : "";
+  const reasonStrings = describeReasons(reasons);
+  const reasonLineRaw = reasonStrings.length
+    ? `Почему: ${reasonStrings.join(" ")}`
+    : "";
 
   return [
     `*${escapeMarkdown(`${position}. ${section.title}`)}*`,

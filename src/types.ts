@@ -54,10 +54,41 @@ export interface UserProfile {
   interestedInCompetition: boolean;
 }
 
+export type RecommendationReason =
+  | { kind: "goal-match"; tags: GoalTag[] }
+  | {
+      kind: "format-aligned";
+      format: TrainingFormat;
+      preferred: TrainingFormat[];
+    }
+  | {
+      kind: "format-mismatch";
+      format: TrainingFormat;
+      preferred: TrainingFormat[];
+    }
+  | {
+      kind: "fitness-balanced";
+      profileLevel: FitnessLevel;
+      intensity: FitnessLevel;
+    }
+  | {
+      kind: "fitness-progressive";
+      profileLevel: FitnessLevel;
+      intensity: FitnessLevel;
+    }
+  | {
+      kind: "fitness-gap";
+      profileLevel: FitnessLevel;
+      intensity: FitnessLevel;
+    }
+  | { kind: "competition-path" }
+  | { kind: "extra-benefits"; benefits: string[] }
+  | { kind: "catalog-reference"; note: string };
+
 export interface RecommendationResult {
   section: SportSection;
   score: number;
   matchedFocus: GoalTag[];
   formatMatch: boolean;
-  reason: string[];
+  reasons: RecommendationReason[];
 }

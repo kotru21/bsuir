@@ -1,8 +1,7 @@
 import type { FitnessLevel, GoalTag, TrainingFormat } from "../types.js";
+import { AGE_MIN, AGE_MAX, AGE_DEFAULT } from "../domain/profileDefaults.js";
 
-export const AGE_MIN = 14;
-export const AGE_MAX = 80;
-export const AGE_DEFAULT = 20;
+export { AGE_MIN, AGE_MAX, AGE_DEFAULT };
 
 export const goalOptions: Record<string, { tag: GoalTag; label: string }> = {
   1: { tag: "strength", label: "Сила и мышцы" },

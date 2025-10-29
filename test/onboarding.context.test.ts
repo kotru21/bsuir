@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import {
-  ageStepHandler,
-  genderStepHandler,
-} from "../src/bot/scenes/onboarding.js";
+import { introStep } from "../src/bot/scenes/onboarding/steps/introStep.js";
+import { ageSelectionStep } from "../src/bot/scenes/onboarding/steps/ageSelectionStep.js";
+import { RecommendationContext } from "../src/bot/session.js";
 
 function makeMockCtx(): any {
   const partial: any = {
@@ -22,24 +21,25 @@ function makeMockCtx(): any {
 }
 
 describe("onboarding context handlers (mocked)", () => {
-  it("ageStepHandler initializes session and sends slider on /start", async () => {
+  it("introStep initializes session and sends slider", async () => {
     const ctx = makeMockCtx();
-    await ageStepHandler(ctx);
-    expect(ctx.session).toBeDefined();
-    expect(ctx.reply).toHaveBeenCalled();
+    await introStep(ctx as RecommendationContext);
+    expect(ctx.session.profile).toBeDefined();
+    expect(ctx.reply).toHaveBeenCalledWith(
+      "Здравствуйте! Я помогу подобрать подходящую спортивную секцию БГУИР."
+    );
   });
 
-  it("genderStepHandler handles age callback done and sets profile.age", async () => {
+  it("ageSelectionStep handles age:done and commits age", async () => {
     const ctx = makeMockCtx();
-    // simulate callback_query with data age:done
+    await introStep(ctx as RecommendationContext);
     ctx.updateType = "callback_query";
-    ctx.callbackQuery = { data: "age:done", message: { message_id: 2 } };
-    ctx.session.temp = {};
-    await ageStepHandler(ctx); // initialize
-    // set temp ageValue to 25 before calling gender handler
-    ctx.session.temp.ageValue = 25;
-    await genderStepHandler(ctx);
-    // after done, profile.age should be set
+    ctx.callbackQuery = {
+      data: "age:done",
+      message: { message_id: 2, chat: { id: 123 } },
+    };
+    ctx.session.temp = { ageValue: 25 };
+    await ageSelectionStep(ctx as RecommendationContext);
     expect(ctx.session.profile?.age).toBe(25);
     expect(ctx.answerCbQuery).toHaveBeenCalled();
   });

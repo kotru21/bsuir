@@ -115,7 +115,10 @@ describe("formatters", () => {
       score: 5,
       matchedFocus: first.focus.slice(0, 1),
       formatMatch: true,
-      reason: ["Причина теста"],
+      reasons: [
+        { kind: "goal-match", tags: first.focus.slice(0, 1) },
+        { kind: "catalog-reference", note: "Причина теста" },
+      ],
     };
     const summary = renderRecommendationSummary(1, fakeRec);
     const detail = renderRecommendationDetail(1, fakeRec);

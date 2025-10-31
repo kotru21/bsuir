@@ -1,3 +1,5 @@
 node_modules
 .env
 dist
+apps/admin-api/data/
+*.sqlite-journal

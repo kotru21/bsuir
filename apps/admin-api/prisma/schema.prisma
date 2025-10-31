@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("ADMIN_DATABASE_URL")
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  role         String    @default("ADMIN")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     AdminSession[]
+}
+
+model AdminSession {
+  id           String   @id @default(cuid())
+  adminUserId  String
+  tokenId      String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  revokedAt    DateTime?
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+}
+
+model SectionMetric {
+  id                       String   @id @default(cuid())
+  sectionId                String
+  totalSessions            Int      @default(0)
+  uniqueUsers              Int      @default(0)
+  completedRecommendations Int      @default(0)
+  updatedAt                DateTime @updatedAt @default(now())
+
+  @@index([sectionId])
+}
+
+model SegmentMetric {
+  id          String   @id @default(cuid())
+  segmentKey  String
+  totalUsers  Int      @default(0)
+  updatedAt   DateTime @updatedAt @default(now())
+
+  @@index([segmentKey])
+}

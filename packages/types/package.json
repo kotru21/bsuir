@@ -1,0 +1,21 @@
+{
+  "name": "@bsuir-admin/types",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Shared TypeScript types and Zod schemas for the BSUIR admin platform.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

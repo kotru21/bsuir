@@ -1,8 +1,13 @@
 {
   "name": "bsuir-sport-marketing-bot",
   "version": "0.1.0",
+  "private": true,
   "description": "Telegram bot prototype for recommending educational sports sections based on user preferences and physical data.",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "tsc",
     "heroku-postbuild": "npm run build",
@@ -12,7 +17,8 @@
     "test:watch": "vitest",
     "lint": "eslint --ext .ts src test",
     "coverage": "c8 --reporter=text --reporter=lcov npm test",
-    "coverage:ci": "c8 --reporter=lcov --reporter=text npm test"
+    "coverage:ci": "c8 --reporter=lcov --reporter=text npm test",
+    "build:packages": "npm run build --workspace @bsuir-admin/types && npm run build --workspace @bsuir-admin/config && npm run build --workspace @bsuir-admin/logger && npm run build --workspace @bsuir-admin/ui"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

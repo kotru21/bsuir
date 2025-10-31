@@ -20,6 +20,16 @@ const authPlugin: FastifyPluginCallback<AuthPluginOptions> = (
   const publicRoutes = new Set(options.publicRoutes ?? []);
 
   app.addHook("preHandler", async (request, reply) => {
+    const urlPath = request.raw.url ?? "";
+
+    if (
+      !urlPath.startsWith("/api") &&
+      !urlPath.startsWith("/auth") &&
+      !urlPath.startsWith("/health")
+    ) {
+      return;
+    }
+
     if (publicRoutes.has(request.routerPath ?? "")) {
       return;
     }

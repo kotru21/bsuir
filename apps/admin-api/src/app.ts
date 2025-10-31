@@ -10,6 +10,7 @@ import statsRoutes from "./modules/stats/stats.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { ensureBootstrapAdmin } from "./services/bootstrapAdmin.js";
 import { prisma } from "./services/prisma.js";
+import adminWebRoutes from "./routes/adminWeb.js";
 
 export function createApp() {
   const env = loadEnv();
@@ -33,6 +34,7 @@ export function createApp() {
   app.register(authRoutes);
   app.register(healthRoutes);
   app.register(statsRoutes, { prefix: "/api" });
+  app.register(adminWebRoutes);
 
   app.addHook("onReady", async () => {
     await ensureBootstrapAdmin();

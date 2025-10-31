@@ -17,7 +17,7 @@ const envSchema = z.object({
   ADMIN_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().optional(),
   ADMIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().optional(),
   ADMIN_BOOTSTRAP_USERNAME: z.string().min(3).optional(),
-  ADMIN_BOOTSTRAP_PASSWORD_HASH: z.string().min(16).optional(),
+  ADMIN_BOOTSTRAP_PASSWORD: z.string().min(8).optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

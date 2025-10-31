@@ -20,14 +20,14 @@ Fastify-based backend for the administrative analytics panel. Handles authentica
 
 ### Environment Variables
 
-| Variable                        | Purpose                                                                                                           |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `ADMIN_PASETO_LOCAL_KEY`        | Base64/hex/UTF-8 encoded symmetric key (>= 32 bytes) for PASETO v3.local access tokens.                           |
-| `ADMIN_DATABASE_URL`            | Connection string for the admin database. Defaults to a SQLite file at `file:./apps/admin-api/data/admin.sqlite`. |
-| `ADMIN_BOOTSTRAP_USERNAME`      | Initial administrator login (until persistent storage is wired).                                                  |
-| `ADMIN_BOOTSTRAP_PASSWORD_HASH` | Argon2id hash of the bootstrap administrator password. Generate with `npx argon2-cli "your-password"`.            |
-| `ADMIN_RATE_LIMIT_WINDOW_MS`    | Optional rate-limit window (default 60000 ms).                                                                    |
-| `ADMIN_RATE_LIMIT_MAX`          | Optional max requests per window (default 60).                                                                    |
+| Variable                     | Purpose                                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_PASETO_LOCAL_KEY`     | Base64/hex/UTF-8 encoded symmetric key (>= 32 bytes) for PASETO v3.local access tokens.                           |
+| `ADMIN_DATABASE_URL`         | Connection string for the admin database. Defaults to a SQLite file at `file:./apps/admin-api/data/admin.sqlite`. |
+| `ADMIN_BOOTSTRAP_USERNAME`   | Initial administrator login (until persistent storage is wired).                                                  |
+| `ADMIN_BOOTSTRAP_PASSWORD`   | Plain bootstrap administrator password (min 8 chars). Hashed automatically at startup and during seeding.         |
+| `ADMIN_RATE_LIMIT_WINDOW_MS` | Optional rate-limit window (default 60000 ms).                                                                    |
+| `ADMIN_RATE_LIMIT_MAX`       | Optional max requests per window (default 60).                                                                    |
 
 ## Commands
 

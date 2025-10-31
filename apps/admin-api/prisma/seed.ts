@@ -1,26 +1,28 @@
 import { PrismaClient } from "@prisma/client";
+import argon2 from "argon2";
 import { z } from "zod";
 
 const prisma = new PrismaClient();
 
 const seedEnvSchema = z.object({
   ADMIN_BOOTSTRAP_USERNAME: z.string().min(3).optional(),
-  ADMIN_BOOTSTRAP_PASSWORD_HASH: z.string().min(16).optional(),
+  ADMIN_BOOTSTRAP_PASSWORD: z.string().min(8).optional(),
 });
 
 async function main() {
   const env = seedEnvSchema.parse(process.env);
 
-  if (env.ADMIN_BOOTSTRAP_USERNAME && env.ADMIN_BOOTSTRAP_PASSWORD_HASH) {
+  if (env.ADMIN_BOOTSTRAP_USERNAME && env.ADMIN_BOOTSTRAP_PASSWORD) {
+    const passwordHash = await argon2.hash(env.ADMIN_BOOTSTRAP_PASSWORD);
     await prisma.adminUser.upsert({
       where: { username: env.ADMIN_BOOTSTRAP_USERNAME },
       update: {
-        passwordHash: env.ADMIN_BOOTSTRAP_PASSWORD_HASH,
+        passwordHash,
         role: "ADMIN",
       },
       create: {
         username: env.ADMIN_BOOTSTRAP_USERNAME,
-        passwordHash: env.ADMIN_BOOTSTRAP_PASSWORD_HASH,
+        passwordHash,
         role: "ADMIN",
       },
     });

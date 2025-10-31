@@ -12,7 +12,7 @@ Fastify-based backend for the administrative analytics panel. Handles authentica
    npm install
    ```
 
-3. Start the development server:
+3. Start the development server :
 
    ```powershell
    npm run dev

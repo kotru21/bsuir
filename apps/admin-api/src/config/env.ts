@@ -23,5 +23,9 @@ const envSchema = z.object({
 export type AppEnv = z.infer<typeof envSchema>;
 
 export function loadEnv(dotenvPath?: string): AppEnv {
+  if (!process.env.ADMIN_API_PORT && process.env.PORT) {
+    process.env.ADMIN_API_PORT = process.env.PORT;
+  }
+
   return loadConfig(envSchema, { dotenvPath });
 }

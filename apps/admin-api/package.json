@@ -18,7 +18,7 @@
     "@bsuir-admin/logger": "file:../../packages/logger",
     "@bsuir-admin/types": "file:../../packages/types",
     "@fastify/cookie": "^9.2.0",
-    "@fastify/helmet": "^13.0.2",
+    "@fastify/helmet": "^11.1.1",
     "@fastify/rate-limit": "^8.0.1",
     "argon2": "^0.41.1",
     "dotenv": "^16.4.5",

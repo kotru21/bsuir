@@ -20,14 +20,14 @@ Fastify-based backend for the administrative analytics panel. Handles authentica
 
 ### Environment Variables
 
-| Variable                     | Purpose                                                                                                           |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `ADMIN_PASETO_LOCAL_KEY`     | Base64/hex/UTF-8 encoded symmetric key (>= 32 bytes) for PASETO v3.local access tokens.                           |
-| `ADMIN_DATABASE_URL`         | Connection string for the admin database. Defaults to a SQLite file at `file:./apps/admin-api/data/admin.sqlite`. |
-| `ADMIN_BOOTSTRAP_USERNAME`   | Initial administrator login (until persistent storage is wired).                                                  |
-| `ADMIN_BOOTSTRAP_PASSWORD`   | Plain bootstrap administrator password (min 8 chars). Hashed automatically at startup and during seeding.         |
-| `ADMIN_RATE_LIMIT_WINDOW_MS` | Optional rate-limit window (default 60000 ms).                                                                    |
-| `ADMIN_RATE_LIMIT_MAX`       | Optional max requests per window (default 60).                                                                    |
+| Variable                     | Purpose                                                                                                         |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_PASETO_LOCAL_KEY`     | Base64/hex/UTF-8 encoded symmetric key (>= 32 bytes) for PASETO v3.local access tokens.                         |
+| `ADMIN_DATABASE_URL`         | PostgreSQL connection string for the admin database (e.g. `postgresql://user:pass@host:5432/db?schema=public`). |
+| `ADMIN_BOOTSTRAP_USERNAME`   | Initial administrator login (until persistent storage is wired).                                                |
+| `ADMIN_BOOTSTRAP_PASSWORD`   | Plain bootstrap administrator password (min 8 chars). Hashed automatically at startup and during seeding.       |
+| `ADMIN_RATE_LIMIT_WINDOW_MS` | Optional rate-limit window (default 60000 ms).                                                                  |
+| `ADMIN_RATE_LIMIT_MAX`       | Optional max requests per window (default 60).                                                                  |
 
 ## Commands
 
@@ -40,7 +40,7 @@ Fastify-based backend for the administrative analytics panel. Handles authentica
 
 ### Database Setup
 
-1. Ensure `ADMIN_DATABASE_URL` points to your SQLite (or alternative) location.
+1. Ensure `ADMIN_DATABASE_URL` points to your PostgreSQL instance (Heroku Postgres, local Postgres, etc.).
 2. Apply migrations:
 
    ```powershell

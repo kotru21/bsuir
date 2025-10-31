@@ -23,7 +23,7 @@ The admin panel provides privileged operators with secure access to dashboards b
 ### Backend Stack
 
 - **Runtime**: Node.js 20 LTS, TypeScript, Fastify.
-- **Database**: SQLite via Prisma for the MVP (upgrade path to PostgreSQL in production).
+- **Database**: PostgreSQL via Prisma (Heroku Postgres in production, local Postgres during dev).
 - **Cache & queues**: Redis (BullMQ) for caching aggregates and background aggregation jobs.
 - **Auth**: PASETO v3.local for access tokens (scaffolded), with roadmap to add asymmetric refresh tokens stored server-side.
 - **Testing**: Vitest + Supertest for endpoints, Prisma test harness for repositories.
@@ -188,7 +188,7 @@ src/
 1. **Scaffold mono-repo** with `apps/` and `packages/` directories, base configs (tsconfig, eslint, prettier, turbo optional).
 2. **Backend MVP**: Fastify server, user model, login route, PASETO issuance, protected `/stats/overview` returning mocked data.
 3. **Frontend MVP**: Login page, token handling, basic dashboard fetching mocked data.
-4. **Persistence integration**: SQLite setup (Prisma schema for admin users, metrics tables) with forward-compatible path to Postgres; aggregate ingestion pipeline.
+4. **Persistence integration**: PostgreSQL setup (Prisma schema for admin users, metrics tables); aggregate ingestion pipeline.
 5. **Visualization enhancements**: implement chart widgets, filters, responsive layout.
 6. **Security hardening**: rate limiting, audit log, alerting, optional MFA.
 7. **Observability & deployment**: health checks, metrics, GitHub Actions, docker-compose for local and staging.

@@ -24,5 +24,9 @@ export function loadEnv(dotenvPath?: string): AppEnv {
     process.env.ADMIN_API_PORT = process.env.PORT;
   }
 
+  if (!process.env.ADMIN_DATABASE_URL && process.env.DATABASE_URL) {
+    process.env.ADMIN_DATABASE_URL = process.env.DATABASE_URL;
+  }
+
   return loadConfig(envSchema, { dotenvPath });
 }

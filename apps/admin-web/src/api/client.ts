@@ -11,9 +11,17 @@ const DEFAULT_API_BASE_URL = "http://localhost:4000";
 
 function getApiBaseUrl(): string {
   const envValue = import.meta.env.VITE_ADMIN_API_URL;
-  return typeof envValue === "string" && envValue.length > 0
-    ? envValue
-    : DEFAULT_API_BASE_URL;
+  const raw =
+    typeof envValue === "string" && envValue.length > 0
+      ? envValue
+      : DEFAULT_API_BASE_URL;
+  return normalizeBaseUrl(raw);
+}
+
+// Ensure base URL has no trailing slash to avoid double slashes when building paths
+function normalizeBaseUrl(raw: string): string {
+  // remove trailing slashes only — keep leading protocol and host intact
+  return raw.replace(/\/+$/g, "");
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {

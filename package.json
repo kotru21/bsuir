@@ -10,8 +10,9 @@
   ],
   "scripts": {
     "build": "tsc",
+    "build:packages": "npm run build --workspace @bsuir-admin/types && npm run build --workspace @bsuir-admin/config && npm run build --workspace @bsuir-admin/logger && npm run build --workspace @bsuir-admin/ui",
     "build:admin-api": "npm run build --workspace @bsuir/admin-api",
-    "heroku-postbuild": "npm run build && npm run build:admin-api",
+    "heroku-postbuild": "npm run build && npm run build:packages && npm run build:admin-api",
     "start": "node dist/index.js",
     "start:bot": "node dist/index.js",
     "start:admin-api": "npm run start --workspace @bsuir/admin-api",
@@ -20,8 +21,7 @@
     "test:watch": "vitest",
     "lint": "eslint --ext .ts src test",
     "coverage": "c8 --reporter=text --reporter=lcov npm test",
-    "coverage:ci": "c8 --reporter=lcov --reporter=text npm test",
-    "build:packages": "npm run build --workspace @bsuir-admin/types && npm run build --workspace @bsuir-admin/config && npm run build --workspace @bsuir-admin/logger && npm run build --workspace @bsuir-admin/ui"
+    "coverage:ci": "c8 --reporter=lcov --reporter=text npm test"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

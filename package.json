@@ -10,8 +10,11 @@
   ],
   "scripts": {
     "build": "tsc",
-    "heroku-postbuild": "npm run build",
+    "build:admin-api": "npm run build --workspace @bsuir/admin-api",
+    "heroku-postbuild": "npm run build && npm run build:admin-api",
     "start": "node dist/index.js",
+    "start:bot": "node dist/index.js",
+    "start:admin-api": "npm run start --workspace @bsuir/admin-api",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",

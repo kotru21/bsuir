@@ -9,8 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
+    "prisma:deploy": "npm run prisma:push",
     "db:seed": "prisma db seed"
   },
   "dependencies": {

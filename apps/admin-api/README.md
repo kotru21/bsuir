@@ -34,17 +34,17 @@ Fastify-based backend for the administrative analytics panel. Handles authentica
 - `npm run dev` — start Fastify with live reload via `tsx`.
 - `npm run build` — compile TypeScript output to `dist`.
 - `npm run start` — run the compiled build.
-- `npm run prisma:migrate` — apply schema changes to the local database (runs `prisma migrate dev`).
+- `npm run prisma:push` — push the current Prisma schema to the connected database.
 - `npm run prisma:generate` — regenerate the Prisma client after updating the schema.
 - `npm run db:seed` — seed the database with a bootstrap admin user (if configured) and sample metrics.
 
 ### Database Setup
 
 1. Ensure `ADMIN_DATABASE_URL` points to your PostgreSQL instance (Heroku Postgres, local Postgres, etc.).
-2. Apply migrations:
+2. Push the schema to your database:
 
    ```powershell
-   npm run prisma:migrate --workspace @bsuir/admin-api
+   npm run prisma:push --workspace @bsuir/admin-api
    ```
 
 3. Seed initial data (optional but recommended):

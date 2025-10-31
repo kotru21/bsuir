@@ -36,7 +36,17 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   });
 
   if (!response.ok) {
-    throw new Error("Invalid credentials");
+    // Try to read error message returned by the API to provide better UX
+    let message = response.statusText || `HTTP ${response.status}`;
+    try {
+      const err = await response.json();
+      if (err && typeof err.message === "string") {
+        message = err.message;
+      }
+    } catch (e) {
+      // ignore JSON parse errors and keep statusText
+    }
+    throw new Error(message);
   }
 
   const data = await response.json();

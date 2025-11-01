@@ -73,6 +73,8 @@ button {
   display: none;
   font-size: 18px;
   line-height: 1;
+  width: 24px;
+  text-align: center;
 }
 .sidebar__logo {
   display: block;
@@ -125,6 +127,16 @@ button {
 
 .sidebar--collapsed .nav-link__icon {
   display: inline-block;
+}
+
+/* Center icons inside nav-links when sidebar is collapsed */
+.sidebar--collapsed .nav-link {
+  justify-content: center;
+}
+
+/* Keep links left-aligned in expanded state */
+.sidebar .nav-link {
+  justify-content: flex-start;
 }
 
 /* Logout button icon/text behavior when sidebar collapsed */

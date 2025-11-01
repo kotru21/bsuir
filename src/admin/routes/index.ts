@@ -21,5 +21,10 @@ export async function registerAdminRoutes(
   await registerSubmissionRoutes(app, { config });
   await registerUiRoutes(app, { config, staticRoot });
 
-  app.get("/", async () => ({ status: "ok" }));
+  app.get("/", async (_request, reply) => {
+    const target = config.basePath.endsWith("/")
+      ? config.basePath
+      : `${config.basePath}/`;
+    reply.redirect(target);
+  });
 }

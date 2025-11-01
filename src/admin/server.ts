@@ -103,8 +103,10 @@ export async function buildAdminServer(
   await instance.register(authenticationPlugin, { config: resolvedConfig });
 
   const staticRoot = path.resolve(process.cwd(), "dist", "admin");
+  const assetsRoot = path.join(staticRoot, "assets");
+
   await instance.register(fastifyStatic, {
-    root: staticRoot,
+    root: assetsRoot,
     prefix: `${resolvedConfig.basePath}/assets/`,
     decorateReply: false,
     index: false,

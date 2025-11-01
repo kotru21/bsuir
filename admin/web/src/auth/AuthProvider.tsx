@@ -20,6 +20,7 @@ interface AuthState {
   username: string | null;
   csrfToken: string | null;
   error: string | null;
+  logoutInProgress: boolean;
 }
 
 interface AuthContextValue extends AuthState {
@@ -36,6 +37,7 @@ const INITIAL_STATE: AuthState = {
   username: null,
   csrfToken: null,
   error: null,
+  logoutInProgress: false,
 };
 
 export function AuthProvider({
@@ -109,14 +111,35 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
-    const token = state.csrfToken ?? (await refreshCsrf());
-    await logoutRequest(token);
     setState((prev: AuthState) => ({
       ...prev,
-      authenticated: false,
-      username: null,
+      logoutInProgress: true,
+      error: null,
     }));
-    await refreshCsrf();
+    try {
+      const token = state.csrfToken ?? (await refreshCsrf());
+      await logoutRequest(token);
+      setState((prev: AuthState) => ({
+        ...prev,
+        authenticated: false,
+        username: null,
+      }));
+      await refreshCsrf();
+    } catch (err) {
+      console.error("Logout failed", err);
+      if (err) {
+        console.error("Logout failed", err);
+      }
+      setState((prev: AuthState) => ({
+        ...prev,
+        error: "Не удалось завершить сессию. Попробуйте еще раз.",
+      }));
+    } finally {
+      setState((prev: AuthState) => ({
+        ...prev,
+        logoutInProgress: false,
+      }));
+    }
   }, [refreshCsrf, state.csrfToken]);
 
   const refresh = useCallback(async () => {

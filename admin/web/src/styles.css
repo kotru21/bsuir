@@ -324,3 +324,23 @@ button {
   font-size: 13px;
   text-align: center;
 }
+
+.status-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.status-message__text {
+  flex: 1;
+}
+
+.status-message--error {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+}

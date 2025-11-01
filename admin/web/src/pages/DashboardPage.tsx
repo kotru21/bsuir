@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDemographics, fetchOverview, fetchTimeline } from "../api/stats";
 import { MetricCard } from "../components/MetricCard";
@@ -14,7 +15,14 @@ function formatAverageAge(value: number | null): string {
   return value.toFixed(1);
 }
 
-export function DashboardPage(): JSX.Element {
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return "Не удалось загрузить статистику. Попробуйте еще раз.";
+}
+
+export function DashboardPage(): ReactElement {
   const [rangeDays, setRangeDays] = useState(30);
 
   const overviewQuery = useQuery({
@@ -45,6 +53,35 @@ export function DashboardPage(): JSX.Element {
 
   if (loading) {
     return <FullscreenSpinner message="Загружаем статистику..." />;
+  }
+
+  const hasError =
+    overviewQuery.isError || demographicsQuery.isError || timelineQuery.isError;
+
+  if (hasError) {
+    const firstError =
+      overviewQuery.error || demographicsQuery.error || timelineQuery.error;
+    const message = getErrorMessage(firstError);
+
+    return (
+      <div className="card">
+        <h2>Не удалось загрузить статистику</h2>
+        <div className="status-message status-message--error">
+          <span className="status-message__text">{message}</span>
+          <button
+            className="button button--secondary"
+            onClick={() => {
+              void Promise.all([
+                overviewQuery.refetch(),
+                demographicsQuery.refetch(),
+                timelineQuery.refetch(),
+              ]).catch(() => undefined);
+            }}>
+            Повторить попытку
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!overview || !demographics || !timeline) {

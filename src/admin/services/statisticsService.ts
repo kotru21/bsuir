@@ -1,4 +1,4 @@
-import { getPrismaClient } from "../../infrastructure/prismaClient.js";
+﻿import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
 interface RecommendationEntity {
   id: string;
@@ -25,6 +25,50 @@ interface SubmissionEntity {
   recommendations?: RecommendationEntity[];
 }
 
+type CountAggregate = { _all: number | bigint };
+
+interface GenderGroupRow {
+  gender: string;
+  _count: CountAggregate;
+}
+
+interface FitnessGroupRow {
+  fitnessLevel: string;
+  _count: CountAggregate;
+}
+
+interface FormatRow {
+  format: string | null;
+  count: bigint;
+}
+
+interface GoalRow {
+  goal: string | null;
+  count: bigint;
+}
+
+interface AgeBucketRow {
+  bucket: string;
+  count: bigint;
+}
+
+interface GenderFitnessRow {
+  gender: string;
+  fitnessLevel: string;
+  count: bigint;
+}
+
+interface GoalFormatRow {
+  goal: string;
+  format: string;
+  count: bigint;
+}
+
+interface TimelineRow {
+  date: string;
+  submissions: bigint;
+}
+
 function isRecoverablePrismaError(err: unknown): boolean {
   if (!err || typeof err !== "object") {
     return false;
@@ -48,8 +92,6 @@ function logAndReturn<T>(err: unknown, fallback: T): T {
   console.warn("Prisma statistics query failed, returning fallback", err);
   return fallback;
 }
-
-type SubmissionBooleanField = "avoidContact" | "interestedInCompetition";
 
 export interface OverviewStats {
   totalSubmissions: number;
@@ -110,6 +152,16 @@ const AGE_BUCKETS: { label: string; from: number; to: number | null }[] = [
   { label: "46+", from: 46, to: null },
 ];
 
+function toNumber(value: bigint | number | null | undefined): number {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+  return value;
+}
+
 function normalizeFormats(formats: string[] | null | undefined): string[] {
   return Array.isArray(formats)
     ? formats.map((item) => item.toLowerCase())
@@ -118,106 +170,6 @@ function normalizeFormats(formats: string[] | null | undefined): string[] {
 
 function normalizeGoals(goals: string[] | null | undefined): string[] {
   return Array.isArray(goals) ? goals.map((item) => item.toLowerCase()) : [];
-}
-
-function buildAgeBuckets(submissions: SubmissionEntity[]): {
-  label: string;
-  count: number;
-}[] {
-  const totals = new Map<string, number>();
-
-  for (const bucket of AGE_BUCKETS) {
-    totals.set(bucket.label, 0);
-  }
-
-  for (const submission of submissions) {
-    const bucket = AGE_BUCKETS.find(({ from, to }) => {
-      if (submission.age < from) return false;
-      if (to === null) return submission.age >= from;
-      return submission.age >= from && submission.age <= to;
-    });
-
-    if (!bucket) {
-      continue;
-    }
-
-    totals.set(bucket.label, (totals.get(bucket.label) ?? 0) + 1);
-  }
-
-  return AGE_BUCKETS.map(({ label }) => ({
-    label,
-    count: totals.get(label) ?? 0,
-  }));
-}
-
-function buildGenderFitnessMatrix(
-  submissions: SubmissionEntity[]
-): { gender: string; fitnessLevel: string; count: number }[] {
-  const map = new Map<string, number>();
-
-  for (const submission of submissions) {
-    const key = `${submission.gender}|${submission.fitnessLevel}`;
-    map.set(key, (map.get(key) ?? 0) + 1);
-  }
-
-  return Array.from(map.entries()).map(([key, count]) => {
-    const [gender, fitnessLevel] = key.split("|");
-    return { gender, fitnessLevel, count };
-  });
-}
-
-function buildGoalOverlap(
-  submissions: SubmissionEntity[]
-): { goal: string; format: string; count: number }[] {
-  const map = new Map<string, number>();
-
-  for (const submission of submissions) {
-    const formats = normalizeFormats(submission.preferredFormats);
-    const goals = normalizeGoals(submission.desiredGoals);
-
-    for (const goal of goals) {
-      for (const format of formats) {
-        const key = `${goal}|${format}`;
-        map.set(key, (map.get(key) ?? 0) + 1);
-      }
-    }
-  }
-
-  return Array.from(map.entries()).map(([key, count]) => {
-    const [goal, format] = key.split("|");
-    return { goal, format, count };
-  });
-}
-
-function countBoolean(
-  submissions: SubmissionEntity[],
-  key: SubmissionBooleanField
-) {
-  let trueCount = 0;
-  for (const submission of submissions) {
-    if (submission[key]) {
-      trueCount += 1;
-    }
-  }
-  return {
-    trueCount,
-    falseCount: submissions.length - trueCount,
-  };
-}
-
-function aggregateCounts(
-  values: string[],
-  limit = 5
-): { key: string; count: number }[] {
-  const map = new Map<string, number>();
-  for (const value of values) {
-    map.set(value, (map.get(value) ?? 0) + 1);
-  }
-
-  return Array.from(map.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([key, count]) => ({ key, count }));
 }
 
 export async function getOverviewStats(): Promise<OverviewStats> {
@@ -235,111 +187,206 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     lastSubmissionAt: null,
   };
 
-  let submissions: SubmissionEntity[];
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
   try {
-    submissions =
-      (await prisma.surveySubmission.findMany()) as SubmissionEntity[];
+    const [
+      totalSubmissions,
+      submissionsLast7Days,
+      averageAgeResult,
+      rawGenderGroups,
+      rawFitnessGroups,
+      avoidContactCount,
+      competitionInterestCount,
+      lastSubmission,
+      rawFormatRows,
+      rawGoalRows,
+    ] = await Promise.all([
+      prisma.surveySubmission.count(),
+      prisma.surveySubmission.count({
+        where: {
+          createdAt: {
+            gte: sevenDaysAgo,
+          },
+        },
+      }),
+      prisma.surveySubmission.aggregate({
+        _avg: { age: true },
+      }),
+      prisma.surveySubmission.groupBy({
+        by: ["gender"],
+        _count: { _all: true },
+      }),
+      prisma.surveySubmission.groupBy({
+        by: ["fitnessLevel"],
+        _count: { _all: true },
+      }),
+      prisma.surveySubmission.count({
+        where: { avoidContact: true },
+      }),
+      prisma.surveySubmission.count({
+        where: { interestedInCompetition: true },
+      }),
+      prisma.surveySubmission.findFirst({
+        select: { createdAt: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.$queryRaw<{ format: string | null; count: bigint }[]>`
+        SELECT lower(format) AS format, COUNT(*)::bigint AS count
+        FROM "SurveySubmission", LATERAL unnest("preferredFormats") AS format
+        GROUP BY lower(format)
+        ORDER BY COUNT(*) DESC
+        LIMIT 5
+      `,
+      prisma.$queryRaw<{ goal: string | null; count: bigint }[]>`
+        SELECT lower(goal) AS goal, COUNT(*)::bigint AS count
+        FROM "SurveySubmission", LATERAL unnest("desiredGoals") AS goal
+        GROUP BY lower(goal)
+        ORDER BY COUNT(*) DESC
+        LIMIT 5
+      `,
+    ]);
+
+    const genderGroups = rawGenderGroups as GenderGroupRow[];
+    const fitnessGroups = rawFitnessGroups as FitnessGroupRow[];
+    const formatRows = rawFormatRows as FormatRow[];
+    const goalRows = rawGoalRows as GoalRow[];
+
+    if (!totalSubmissions) {
+      return empty;
+    }
+
+    const averageAge = averageAgeResult._avg.age;
+
+    const genderDistribution: Record<string, number> = {};
+    for (const group of genderGroups) {
+      genderDistribution[group.gender] = toNumber(group._count._all);
+    }
+
+    const fitnessDistribution: Record<string, number> = {};
+    for (const group of fitnessGroups) {
+      fitnessDistribution[group.fitnessLevel] = toNumber(group._count._all);
+    }
+
+    const formatLeaders: { format: string; count: number }[] = [];
+    for (const row of formatRows) {
+      if (!row.format) {
+        continue;
+      }
+      formatLeaders.push({
+        format: row.format,
+        count: toNumber(row.count),
+      });
+    }
+
+    const goalLeaders: { goal: string; count: number }[] = [];
+    for (const row of goalRows) {
+      if (!row.goal) {
+        continue;
+      }
+      goalLeaders.push({
+        goal: row.goal,
+        count: toNumber(row.count),
+      });
+    }
+
+    return {
+      totalSubmissions,
+      submissionsLast7Days,
+      averageAge: averageAge === null ? null : Number(averageAge.toFixed(2)),
+      genderDistribution,
+      fitnessDistribution,
+      contactPreference: {
+        avoidContact: avoidContactCount,
+        allowContact: totalSubmissions - avoidContactCount,
+      },
+      competitionInterest: {
+        interested: competitionInterestCount,
+        notInterested: totalSubmissions - competitionInterestCount,
+      },
+      formatLeaders,
+      goalLeaders,
+      lastSubmissionAt: lastSubmission?.createdAt
+        ? lastSubmission.createdAt.toISOString()
+        : null,
+    };
   } catch (err) {
     if (isRecoverablePrismaError(err)) {
       return logAndReturn(err, empty);
     }
     throw err;
   }
-
-  if (!submissions.length) {
-    return empty;
-  }
-
-  const now = new Date();
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  const submissionsLast7Days = submissions.filter(
-    (item) => item.createdAt >= sevenDaysAgo
-  ).length;
-
-  const averageAge =
-    submissions.reduce((total, item) => total + item.age, 0) /
-    submissions.length;
-
-  const genderDistribution = submissions.reduce<Record<string, number>>(
-    (acc: Record<string, number>, item) => {
-      acc[item.gender] = (acc[item.gender] ?? 0) + 1;
-      return acc;
-    },
-    {}
-  );
-
-  const fitnessDistribution = submissions.reduce<Record<string, number>>(
-    (acc: Record<string, number>, item) => {
-      acc[item.fitnessLevel] = (acc[item.fitnessLevel] ?? 0) + 1;
-      return acc;
-    },
-    {}
-  );
-
-  const contactCounts = countBoolean(submissions, "avoidContact");
-  const competitionCounts = countBoolean(
-    submissions,
-    "interestedInCompetition"
-  );
-
-  const allFormats = submissions.flatMap((item) =>
-    normalizeFormats(item.preferredFormats)
-  );
-  const allGoals = submissions.flatMap((item) =>
-    normalizeGoals(item.desiredGoals)
-  );
-
-  const formatLeaders = aggregateCounts(allFormats).map(({ key, count }) => ({
-    format: key,
-    count,
-  }));
-  const goalLeaders = aggregateCounts(allGoals).map(({ key, count }) => ({
-    goal: key,
-    count,
-  }));
-
-  const lastSubmissionAt = submissions
-    .map((item) => item.createdAt.getTime())
-    .sort((a: number, b: number) => b - a)[0];
-
-  return {
-    totalSubmissions: submissions.length,
-    submissionsLast7Days,
-    averageAge: Number(averageAge.toFixed(2)),
-    genderDistribution,
-    fitnessDistribution,
-    contactPreference: {
-      avoidContact: contactCounts.trueCount,
-      allowContact: contactCounts.falseCount,
-    },
-    competitionInterest: {
-      interested: competitionCounts.trueCount,
-      notInterested: competitionCounts.falseCount,
-    },
-    formatLeaders,
-    goalLeaders,
-    lastSubmissionAt: lastSubmissionAt
-      ? new Date(lastSubmissionAt).toISOString()
-      : null,
-  };
 }
 
 export async function getDemographicStats(): Promise<DemographicStats> {
   const prisma = getPrismaClient();
   const empty: DemographicStats = {
-    ageBuckets: buildAgeBuckets([]),
+    ageBuckets: AGE_BUCKETS.map(({ label }) => ({ label, count: 0 })),
     genderByFitness: [],
     goalOverlap: [],
   };
 
   try {
-    const submissions =
-      (await prisma.surveySubmission.findMany()) as SubmissionEntity[];
+    const [ageRows, genderFitnessRows, goalRows] = (await Promise.all([
+      prisma.$queryRaw<AgeBucketRow[]>`
+        SELECT bucket, COUNT(*)::bigint AS count
+        FROM (
+          SELECT CASE
+            WHEN age <= 17 THEN 'До 17'
+            WHEN age BETWEEN 18 AND 25 THEN '18-25'
+            WHEN age BETWEEN 26 AND 35 THEN '26-35'
+            WHEN age BETWEEN 36 AND 45 THEN '36-45'
+            ELSE '46+'
+          END AS bucket
+          FROM "SurveySubmission"
+        ) AS buckets
+        GROUP BY bucket
+      `,
+      prisma.$queryRaw<GenderFitnessRow[]>`
+        SELECT gender, "fitnessLevel" AS "fitnessLevel", COUNT(*)::bigint AS count
+        FROM "SurveySubmission"
+        GROUP BY gender, "fitnessLevel"
+      `,
+      prisma.$queryRaw<GoalFormatRow[]>`
+        SELECT
+          lower(goal) AS goal,
+          lower(format) AS format,
+          COUNT(*)::bigint AS count
+        FROM "SurveySubmission"
+        CROSS JOIN LATERAL unnest("desiredGoals") AS goal
+        CROSS JOIN LATERAL unnest("preferredFormats") AS format
+        GROUP BY lower(goal), lower(format)
+      `,
+    ])) as [AgeBucketRow[], GenderFitnessRow[], GoalFormatRow[]];
+
+    const ageMap = new Map<string, number>();
+    for (const row of ageRows) {
+      ageMap.set(row.bucket, toNumber(row.count));
+    }
+
     return {
-      ageBuckets: buildAgeBuckets(submissions),
-      genderByFitness: buildGenderFitnessMatrix(submissions),
-      goalOverlap: buildGoalOverlap(submissions),
+      ageBuckets: AGE_BUCKETS.map(({ label }) => ({
+        label,
+        count: ageMap.get(label) ?? 0,
+      })),
+      genderByFitness: genderFitnessRows.map((row: GenderFitnessRow) => ({
+        gender: row.gender,
+        fitnessLevel: row.fitnessLevel,
+        count: toNumber(row.count),
+      })),
+      goalOverlap: (() => {
+        const overlap: { goal: string; format: string; count: number }[] = [];
+        for (const row of goalRows) {
+          if (row.goal && row.format) {
+            overlap.push({
+              goal: row.goal,
+              format: row.format,
+              count: toNumber(row.count),
+            });
+          }
+        }
+        return overlap;
+      })(),
     };
   } catch (err) {
     if (isRecoverablePrismaError(err)) {
@@ -355,34 +402,26 @@ export async function getTimelineStats(
   const prisma = getPrismaClient();
   const rangeStart = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000);
 
-  let submissionEntries: SubmissionEntity[];
   try {
-    const submissions = await prisma.surveySubmission.findMany({
-      where: {
-        createdAt: {
-          gte: rangeStart,
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    });
+    const rows = (await prisma.$queryRaw<TimelineRow[]>`
+      SELECT TO_CHAR("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
+             COUNT(*)::bigint AS submissions
+      FROM "SurveySubmission"
+      WHERE "createdAt" >= ${rangeStart}
+      GROUP BY date
+      ORDER BY date ASC
+    `) as TimelineRow[];
 
-    submissionEntries = submissions as SubmissionEntity[];
+    return rows.map((row: TimelineRow) => ({
+      date: row.date,
+      submissions: toNumber(row.submissions),
+    }));
   } catch (err) {
     if (isRecoverablePrismaError(err)) {
       return logAndReturn(err, []);
     }
     throw err;
   }
-
-  const map = new Map<string, number>();
-  for (const submission of submissionEntries) {
-    const key = submission.createdAt.toISOString().slice(0, 10);
-    map.set(key, (map.get(key) ?? 0) + 1);
-  }
-
-  return Array.from(map.entries())
-    .sort(([a], [b]) => (a < b ? -1 : 1))
-    .map(([date, count]) => ({ date, submissions: count }));
 }
 
 export async function getSubmissionPage(
@@ -417,9 +456,7 @@ export async function getSubmissionPage(
     throw err;
   }
 
-  const submissionEntries = entries;
-
-  const items: SubmissionListItem[] = submissionEntries.map((submission) => {
+  const items: SubmissionListItem[] = entries.map((submission) => {
     const recommendations = submission.recommendations ?? [];
 
     return {

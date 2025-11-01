@@ -1,18 +1,22 @@
 import { NavLink } from "react-router-dom";
-import type { ReactNode } from "react";
+import { useCallback } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useAuth } from "../auth/AuthProvider";
+import logoUrl from "../assets/logo.png";
 
-export function Layout({ children }: { children: ReactNode }): JSX.Element {
+export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
+  const handleLogout = useCallback(() => {
+    void auth.logout();
+  }, [auth]);
 
   return (
     <div className="layout-container">
       <aside className="sidebar">
         <div className="sidebar__brand">
-          <span className="sidebar__logo">🏋️</span>
+          <img src={logoUrl} alt="Логотип" className="sidebar__logo" />
           <div>
-            <strong>BSUIR Sport</strong>
-            <small>Админ-панель</small>
+            <strong>Админ-панель</strong>
           </div>
         </div>
         <nav className="sidebar__nav">
@@ -43,10 +47,24 @@ export function Layout({ children }: { children: ReactNode }): JSX.Element {
           </div>
           <button
             className="button button--secondary"
-            onClick={() => auth.logout()}>
-            Выйти
+            onClick={handleLogout}
+            disabled={auth.logoutInProgress}
+            aria-disabled={auth.logoutInProgress}>
+            {auth.logoutInProgress ? "Выходим..." : "Выйти"}
           </button>
         </header>
+        {auth.error ? (
+          <div className="status-message status-message--error">
+            <span className="status-message__text">{auth.error}</span>
+            <button
+              className="button button--secondary"
+              onClick={() => {
+                void auth.refresh().catch(() => undefined);
+              }}>
+              Повторить попытку
+            </button>
+          </div>
+        ) : null}
         <section className="main__content">{children}</section>
       </main>
     </div>

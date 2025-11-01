@@ -69,15 +69,36 @@ export async function buildAdminServer(
       "Admin panel is disabled. Ensure DATABASE_URL, ADMIN_PASSWORD (or ADMIN_PASSWORD_HASH) and ADMIN_SESSION_SECRET are configured."
     );
 
-    instance.get("/", async () => ({
+    const disabledResponse = {
       status: "admin-disabled",
       reason: "Admin panel is not configured.",
+    } as const;
+
+    const basePath = resolvedConfig.basePath.endsWith("/")
+      ? resolvedConfig.basePath.slice(0, -1)
+      : resolvedConfig.basePath;
+
+    instance.get("/", async () => ({
+      ...disabledResponse,
     }));
 
-    instance.get(`${resolvedConfig.basePath}/*`, async () => ({
-      status: "admin-disabled",
-      reason: "Admin panel is not configured.",
-    }));
+    if (basePath && basePath !== "/") {
+      instance.get(basePath, async () => ({
+        ...disabledResponse,
+      }));
+
+      instance.get(`${basePath}/`, async () => ({
+        ...disabledResponse,
+      }));
+
+      instance.get(`${basePath}/*`, async () => ({
+        ...disabledResponse,
+      }));
+    } else {
+      instance.get("/*", async () => ({
+        ...disabledResponse,
+      }));
+    }
 
     return instance;
   }

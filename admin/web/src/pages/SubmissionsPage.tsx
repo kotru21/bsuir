@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSubmissions } from "../api/stats";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
@@ -6,10 +7,17 @@ import type { SubmissionListItem } from "../types/stats";
 
 const PAGE_SIZE = 20;
 
-export function SubmissionsPage(): JSX.Element {
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return "Не удалось загрузить ответы. Попробуйте еще раз.";
+}
+
+export function SubmissionsPage(): ReactElement {
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["submissions", page],
     queryFn: () => fetchSubmissions(page, PAGE_SIZE),
     staleTime: 30_000,
@@ -19,15 +27,49 @@ export function SubmissionsPage(): JSX.Element {
     return <FullscreenSpinner message="Загружаем ответы..." />;
   }
 
+  if (isError && !data) {
+    const message = getErrorMessage(error);
+    return (
+      <div className="card">
+        <h2>Не удалось загрузить ответы</h2>
+        <div className="status-message status-message--error">
+          <span className="status-message__text">{message}</span>
+          <button
+            className="button button--secondary"
+            onClick={() => {
+              void refetch().catch(() => undefined);
+            }}>
+            Повторить попытку
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!data || !data.items.length) {
     return <p>Ответы опросов пока отсутствуют.</p>;
   }
 
   const { items, pagination } = data;
+  const transientError = isError ? getErrorMessage(error) : null;
 
   return (
     <div className="card">
       <h2>Ответы пользователей</h2>
+      {transientError ? (
+        <div className="status-message status-message--error">
+          <span className="status-message__text">
+            {transientError} Обновите страницу позже.
+          </span>
+          <button
+            className="button button--secondary"
+            onClick={() => {
+              void refetch().catch(() => undefined);
+            }}>
+            Повторить попытку
+          </button>
+        </div>
+      ) : null}
       {isFetching ? <p>Обновляем данные...</p> : null}
       <table className="table">
         <thead>

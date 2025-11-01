@@ -3,6 +3,9 @@ import { useCallback, useState, useEffect } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import logoUrl from "../assets/logo.png";
+import statsUrl from "../assets/stats.svg";
+import viewRespUrl from "../assets/viewResp.svg";
+import logoutUrl from "../assets/logout.svg";
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
@@ -45,7 +48,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
             <span className="nav-link__icon" aria-hidden>
-              📊
+              <img src={statsUrl} alt="" className="nav-link__icon-img" />
             </span>
             <span className="nav-link__text">Обзор</span>
           </NavLink>
@@ -55,7 +58,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
             <span className="nav-link__icon" aria-hidden>
-              📝
+              <img src={viewRespUrl} alt="" className="nav-link__icon-img" />
             </span>
             <span className="nav-link__text">Опросы</span>
           </NavLink>
@@ -69,7 +72,11 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             title={auth.logoutInProgress ? "Выходим..." : "Выйти"}
             style={{ marginTop: "1rem" }}>
             <span className="sidebar-footer__icon" aria-hidden>
-              🔓
+              <img
+                src={logoutUrl}
+                alt=""
+                className="sidebar-footer__icon-img"
+              />
             </span>
             <span className="sidebar-footer__text">
               {auth.logoutInProgress ? "Выходим..." : "Выйти"}

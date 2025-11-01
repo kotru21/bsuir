@@ -25,6 +25,12 @@ export async function registerUiRoutes(
   const { config, staticRoot } = options;
   let cachedIndex: string | null = null;
 
+  const normalizedBase = config.basePath.endsWith("/")
+    ? config.basePath.slice(0, -1)
+    : config.basePath;
+  const apiPrefix = `${normalizedBase}/api`;
+  const assetsPrefix = `${normalizedBase}/assets`;
+
   async function serveIndex(reply: FastifyReply): Promise<void> {
     if (!cachedIndex) {
       cachedIndex = await loadIndex(staticRoot);
@@ -49,7 +55,10 @@ export async function registerUiRoutes(
   app.get(
     `${config.basePath}/*`,
     async (request: FastifyRequest, reply: FastifyReply) => {
-      if (request.url.startsWith(`${config.basePath}/api`)) {
+      if (
+        request.url.startsWith(apiPrefix) ||
+        request.url.startsWith(assetsPrefix)
+      ) {
         reply.callNotFound();
         return;
       }

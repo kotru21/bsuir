@@ -8,6 +8,7 @@
     "build:admin": "vite build --config admin/web/vite.config.ts",
     "build:bot": "tsc",
     "heroku-postbuild": "npm run build",
+    "migrate:deploy": "prisma migrate deploy",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:admin": "vite dev --config admin/web/vite.config.ts",

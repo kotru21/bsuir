@@ -36,10 +36,7 @@ export function DashboardPage(): JSX.Element {
   const demographics = demographicsQuery.data;
   const timeline = timelineQuery.data;
 
-  const timelinePoints = useMemo(
-    () => timeline?.points ?? [],
-    [timeline]
-  );
+  const timelinePoints = useMemo(() => timeline?.points ?? [], [timeline]);
 
   const loading =
     overviewQuery.isLoading ||

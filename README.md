@@ -53,26 +53,26 @@ SPA общается с Fastify API через защищённые cookie-се�
 
 ```mermaid
 flowchart LR
-   subgraph Browser [Admin SPA (Vite/React)]
-      UI[Страницы и компоненты]
-      Query[TanStack Query]
-      Charts[Chart.js виджеты]
+   subgraph Browser["Admin SPA (Vite/React)"]
+      UI["Страницы и компоненты"]
+      Query["TanStack Query"]
+      Charts["Chart.js виджеты"]
    end
 
-   subgraph Fastify [Fastify сервер]
-      Auth[Маршруты авторизации]
-      Stats[REST /admin/api/stats]
-      Subs[REST /admin/api/submissions]
-      StaticServ[Раздача бандла]
+   subgraph Fastify["Fastify сервер"]
+      Auth["Маршруты авторизации"]
+      Stats["REST /admin/api/stats"]
+      Subs["REST /admin/api/submissions"]
+      StaticServ["Раздача бандла"]
    end
 
-   subgraph Services [Сервисы]
-      StatSvc[statisticsService]
-      SubRec[submissionRecorder]
+   subgraph Services["Сервисы"]
+      StatSvc["statisticsService"]
+      SubRec["submissionRecorder"]
    end
 
-   subgraph DataLayer [Данные]
-      Prisma[Prisma Client]
+   subgraph DataLayer["Данные"]
+      Prisma["Prisma Client"]
       PG[(PostgreSQL)]
    end
 
@@ -92,17 +92,17 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-   App[App.tsx] --> Router[Маршрутизация]
-   Router --> AuthGuard[AuthProvider]
-   AuthGuard -->|нет токена| Login[LoginPage]
-   AuthGuard -->|валидная сессия| Layout[Layout]
-   Layout --> Dashboard[DashboardPage]
-   Layout --> Submissions[SubmissionsPage]
-   Dashboard --> ChartsSetup[chats/setup.ts]
-   Dashboard --> Metrics[components/MetricCard.tsx]
-   Dashboard --> DistCharts[components/FitnessDistributionChart.tsx]
-   Submissions --> TableQuery[api/stats.ts]
-   Layout --> Locale[localization.ts]
+   App["App.tsx"] --> Router["Маршрутизация"]
+   Router --> AuthGuard["AuthProvider"]
+   AuthGuard -->|нет токена| Login["LoginPage"]
+   AuthGuard -->|валидная сессия| Layout["Layout"]
+   Layout --> Dashboard["DashboardPage"]
+   Layout --> Submissions["SubmissionsPage"]
+   Dashboard --> ChartsSetup["charts/setup.ts"]
+   Dashboard --> Metrics["components/MetricCard.tsx"]
+   Dashboard --> DistCharts["components/FitnessDistributionChart.tsx"]
+   Submissions --> TableQuery["api/stats.ts"]
+   Layout --> Locale["localization.ts"]
 ```
 
 ### Ключевые файлы SPA

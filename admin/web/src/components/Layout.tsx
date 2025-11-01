@@ -9,7 +9,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem("sidebarCollapsed") === "1";
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   });
@@ -17,7 +17,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
   useEffect(() => {
     try {
       localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
-    } catch (e) {
+    } catch (_e) {
       /* ignore */
     }
   }, [collapsed]);

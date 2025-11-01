@@ -25,12 +25,6 @@ export async function registerUiRoutes(
   const { config, staticRoot } = options;
   let cachedIndex: string | null = null;
 
-  const normalizedBase = config.basePath.endsWith("/")
-    ? config.basePath.slice(0, -1)
-    : config.basePath;
-  const apiPrefix = `${normalizedBase}/api`;
-  const assetsPrefix = `${normalizedBase}/assets`;
-
   async function serveIndex(reply: FastifyReply): Promise<void> {
     if (!cachedIndex) {
       cachedIndex = await loadIndex(staticRoot);
@@ -52,17 +46,21 @@ export async function registerUiRoutes(
     }
   );
 
-  app.get(
-    `${config.basePath}/*`,
+  app.setNotFoundHandler(
     async (request: FastifyRequest, reply: FastifyReply) => {
-      if (
-        request.url.startsWith(apiPrefix) ||
-        request.url.startsWith(assetsPrefix)
-      ) {
-        reply.callNotFound();
+      const acceptHeader = request.headers["accept"] ?? "";
+      const url = request.url ?? "";
+      const isHtmlRequest =
+        typeof acceptHeader === "string" && acceptHeader.includes("text/html");
+      if (isHtmlRequest && url.startsWith(config.basePath)) {
+        await serveIndex(reply);
         return;
       }
-      await serveIndex(reply);
+
+      reply.code(404).type("application/json").send({
+        status: "not-found",
+        path: url,
+      });
     }
   );
 }

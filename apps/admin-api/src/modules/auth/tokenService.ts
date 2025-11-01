@@ -2,7 +2,9 @@ import { V3 } from "paseto";
 import { z } from "zod";
 import { loadEnv } from "../../config/env.js";
 
-const ACCESS_TOKEN_TTL_SECONDS = 60 * 5; // 5 minutes
+const env = loadEnv();
+
+const ACCESS_TOKEN_TTL_SECONDS = env.ADMIN_ACCESS_TOKEN_TTL_SECONDS;
 
 const ROLES = ["admin", "analyst", "support"] as const;
 export type Role = (typeof ROLES)[number];
@@ -10,6 +12,7 @@ export type Role = (typeof ROLES)[number];
 const tokenClaimsSchema = z.object({
   sub: z.string(),
   role: z.enum(ROLES),
+  sid: z.string().min(1),
   exp: z.coerce.date(),
   iat: z.coerce.date(),
   jti: z.string().uuid(),
@@ -63,6 +66,7 @@ function ensureLength(source: Buffer): Buffer {
 export interface IssueTokenInput {
   subject: string;
   role: Role;
+  sessionId: string;
 }
 
 export interface IssuedToken {
@@ -73,10 +77,12 @@ export interface IssuedToken {
 export async function issueAccessToken({
   subject,
   role,
+  sessionId,
 }: IssueTokenInput): Promise<IssuedToken> {
   const payload = {
     sub: subject,
     role,
+    sid: sessionId,
     jti: crypto.randomUUID(),
   };
 

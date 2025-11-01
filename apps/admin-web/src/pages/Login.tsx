@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FormEvent, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import type { LoginRequest, LoginResponse } from "@bsuir-admin/types";
 import { login } from "../api/client.js";
 import { useAuth } from "../auth/AuthProvider.js";
@@ -8,8 +8,26 @@ import { useAuth } from "../auth/AuthProvider.js";
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
-  const { signIn } = useAuth();
+  const { signIn, status } = useAuth();
   const location = useLocation();
+  const locationState = location.state as
+    | { from?: { pathname?: string } }
+    | null
+    | undefined;
+
+  const redirectTarget = locationState?.from?.pathname ?? "/";
+
+  if (status === "authenticated") {
+    return <Navigate to={redirectTarget} replace />;
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+        Checking session...
+      </div>
+    );
+  }
 
   const mutation = useMutation<LoginResponse, Error, LoginRequest>({
     mutationFn: login,
@@ -29,9 +47,9 @@ const LoginPage: React.FC = () => {
         onSubmit={onSubmit}
         className="w-full max-w-sm rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
         <h1 className="mb-2 text-xl font-semibold">Admin Sign in</h1>
-        {location.state?.from && (
+        {locationState?.from && (
           <p className="mb-4 text-xs text-slate-400">
-            Please authenticate to access {location.state.from.pathname}
+            Please authenticate to access {locationState.from.pathname}
           </p>
         )}
         <label
@@ -67,7 +85,9 @@ const LoginPage: React.FC = () => {
         />
         {mutation.isError && (
           <p className="mb-4 text-sm text-rose-400">
-            Authentication failed. Check your credentials.
+            {mutation.error instanceof Error
+              ? mutation.error.message
+              : "Authentication failed. Check your credentials."}
           </p>
         )}
         <button

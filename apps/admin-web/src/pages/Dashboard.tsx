@@ -1,10 +1,10 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchStatsOverview } from "../api/client.js";
+import { fetchStatsOverview, UnauthorizedError } from "../api/client.js";
 import { useAuth } from "../auth/AuthProvider.js";
 
 const DashboardPage: React.FC = () => {
-  const { accessToken } = useAuth();
+  const { accessToken, signOut } = useAuth();
 
   const { data, isPending, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["stats", "overview"],
@@ -12,7 +12,12 @@ const DashboardPage: React.FC = () => {
       if (!accessToken) {
         throw new Error("Missing access token");
       }
-      return fetchStatsOverview(accessToken);
+      return fetchStatsOverview(accessToken).catch(async (error) => {
+        if (error instanceof UnauthorizedError) {
+          await signOut();
+        }
+        throw error;
+      });
     },
     enabled: Boolean(accessToken),
     refetchInterval: 60_000,

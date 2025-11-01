@@ -24,6 +24,20 @@ function normalizeBaseUrl(raw: string): string {
   return raw.replace(/\/+$/g, "");
 }
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+export class UnauthorizedError extends ApiError {
+  constructor(message = "Unauthorized") {
+    super(message, 401);
+    this.name = "UnauthorizedError";
+  }
+}
+
 export async function login(request: LoginRequest): Promise<LoginResponse> {
   const payload = loginRequestSchema.parse(request);
 
@@ -33,6 +47,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -53,6 +68,34 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   return loginResponseSchema.parse(data);
 }
 
+export async function refreshSession(): Promise<LoginResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new UnauthorizedError();
+    }
+    throw new ApiError("Failed to refresh session", response.status);
+  }
+
+  const data = await response.json();
+  return loginResponseSchema.parse(data);
+}
+
+export async function logout(): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!response.ok && response.status !== 204) {
+    throw new ApiError("Failed to terminate session", response.status);
+  }
+}
+
 export async function fetchStatsOverview(
   accessToken: string
 ): Promise<StatsOverview> {
@@ -60,9 +103,13 @@ export async function fetchStatsOverview(
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
+    credentials: "include",
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new UnauthorizedError();
+    }
     throw new Error("Unable to load overview stats");
   }
 

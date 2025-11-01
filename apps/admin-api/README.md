@@ -20,14 +20,19 @@ Fastify-based backend for the administrative analytics panel. Handles authentica
 
 ### Environment Variables
 
-| Variable                     | Purpose                                                                                                         |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `ADMIN_PASETO_LOCAL_KEY`     | Base64/hex/UTF-8 encoded symmetric key (>= 32 bytes) for PASETO v3.local access tokens.                         |
-| `ADMIN_DATABASE_URL`         | PostgreSQL connection string for the admin database (e.g. `postgresql://user:pass@host:5432/db?schema=public`). |
-| `ADMIN_BOOTSTRAP_USERNAME`   | Initial administrator login (until persistent storage is wired).                                                |
-| `ADMIN_BOOTSTRAP_PASSWORD`   | Plain bootstrap administrator password (min 8 chars). Hashed automatically at startup and during seeding.       |
-| `ADMIN_RATE_LIMIT_WINDOW_MS` | Optional rate-limit window (default 60000 ms).                                                                  |
-| `ADMIN_RATE_LIMIT_MAX`       | Optional max requests per window (default 60).                                                                  |
+| Variable                         | Purpose                                                                                                         |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_PASETO_LOCAL_KEY`         | Base64/hex/UTF-8 encoded symmetric key (>= 32 bytes) for PASETO v3.local access tokens.                         |
+| `ADMIN_DATABASE_URL`             | PostgreSQL connection string for the admin database (e.g. `postgresql://user:pass@host:5432/db?schema=public`). |
+| `ADMIN_BOOTSTRAP_USERNAME`       | Initial administrator login (until persistent storage is wired).                                                |
+| `ADMIN_BOOTSTRAP_PASSWORD`       | Plain bootstrap administrator password (min 8 chars). Hashed automatically at startup and during seeding.       |
+| `ADMIN_RATE_LIMIT_WINDOW_MS`     | Optional rate-limit window (default 60000 ms).                                                                  |
+| `ADMIN_RATE_LIMIT_MAX`           | Optional max requests per window (default 60).                                                                  |
+| `ADMIN_ACCESS_TOKEN_TTL_SECONDS` | Optional override for short-lived access token lifetime (default 300 seconds).                                  |
+| `ADMIN_SESSION_TTL_DAYS`         | Lifetime of refresh sessions stored in the database (default 7 days).                                           |
+| `ADMIN_SESSION_COOKIE_NAME`      | Name of the httpOnly cookie that stores refresh tokens (default `admin_session`).                               |
+| `ADMIN_COOKIE_DOMAIN`            | Optional domain attribute for the refresh cookie (omit for same-origin scenarios).                              |
+| `ADMIN_COOKIE_SECURE`            | Set to `true` to force the refresh cookie to `Secure`; falls back to `NODE_ENV === "production"` when unset.    |
 
 ## Commands
 
@@ -55,6 +60,6 @@ Fastify-based backend for the administrative analytics panel. Handles authentica
 
 ## Next Steps
 
-- Introduce refresh token rotation and persist sessions in `AdminSession`.
 - Expand metrics ingestion to reflect live bot data (replace seed placeholders).
 - Connect to bot data sources for real analytics instead of static placeholders.
+- Add audit logging for administrator sessions and credential changes.

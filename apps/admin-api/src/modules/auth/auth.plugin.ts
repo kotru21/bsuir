@@ -1,6 +1,7 @@
 import fp from "fastify-plugin";
 import type { FastifyPluginCallback } from "fastify";
-import { verifyAccessToken } from "./tokenService.js";
+import { verifyAccessToken, type TokenClaims } from "./tokenService.js";
+import { findActiveSessionById } from "./session.service.js";
 
 interface AuthPluginOptions {
   publicRoutes?: string[];
@@ -8,8 +9,15 @@ interface AuthPluginOptions {
 
 declare module "fastify" {
   interface FastifyRequest {
-    adminUser?: Awaited<ReturnType<typeof verifyAccessToken>>;
+    adminUser?: AdminRequestUser;
   }
+}
+
+export interface AdminRequestUser {
+  id: string;
+  role: TokenClaims["role"];
+  sessionId: string;
+  claims: TokenClaims;
 }
 
 const authPlugin: FastifyPluginCallback<AuthPluginOptions> = (
@@ -47,10 +55,24 @@ const authPlugin: FastifyPluginCallback<AuthPluginOptions> = (
 
     try {
       const token = authorization.slice("Bearer ".length).trim();
-      request.adminUser = await verifyAccessToken(token);
+      const claims = await verifyAccessToken(token);
+      const session = await findActiveSessionById(claims.sid);
+
+      if (!session || session.adminUserId !== claims.sub) {
+        reply.code(401).send({ message: "Unauthorized" });
+        return;
+      }
+
+      request.adminUser = {
+        id: claims.sub,
+        role: claims.role,
+        sessionId: claims.sid,
+        claims,
+      };
     } catch (error) {
       request.log.warn({ err: error }, "Failed to verify admin token");
       reply.code(401).send({ message: "Unauthorized" });
+      return;
     }
   });
 

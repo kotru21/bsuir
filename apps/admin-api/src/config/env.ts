@@ -15,6 +15,18 @@ const envSchema = z.object({
   ADMIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().optional(),
   ADMIN_BOOTSTRAP_USERNAME: z.string().min(3).optional(),
   ADMIN_BOOTSTRAP_PASSWORD: z.string().min(8).optional(),
+  ADMIN_ACCESS_TOKEN_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(300),
+  ADMIN_SESSION_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  ADMIN_SESSION_COOKIE_NAME: z.string().min(3).default("admin_session"),
+  ADMIN_COOKIE_DOMAIN: z.string().optional(),
+  ADMIN_COOKIE_SECURE: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

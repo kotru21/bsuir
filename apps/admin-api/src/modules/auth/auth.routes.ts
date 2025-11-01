@@ -1,8 +1,18 @@
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import argon2 from "argon2";
-import { loginRequestSchema } from "@bsuir-admin/types";
+import { loginRequestSchema, loginResponseSchema } from "@bsuir-admin/types";
 import { findAdminUserByUsername } from "./auth.service.js";
 import { issueAccessToken, type Role } from "./tokenService.js";
+import {
+  createAdminSession,
+  rotateAdminSession,
+  revokeAdminSession,
+} from "./session.service.js";
+import {
+  clearRefreshTokenCookie,
+  readRefreshTokenFromCookies,
+  setRefreshTokenCookie,
+} from "./cookie.js";
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
   app.post(
@@ -18,19 +28,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
           },
         },
         response: {
-          200: {
-            type: "object",
-            properties: {
-              accessToken: { type: "string" },
-              expiresAt: { type: "string", format: "date-time" },
-            },
-          },
-          401: {
-            type: "object",
-            properties: {
-              message: { type: "string" },
-            },
-          },
+          200: sessionResponseJsonSchema,
+          401: loginErrorResponseSchema,
         },
       },
     },
@@ -57,18 +56,99 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         return;
       }
 
-      const normalizedRole = user.role.toLowerCase();
-      const role: Role = ["admin", "analyst", "support"].includes(
-        normalizedRole
-      )
-        ? (normalizedRole as Role)
-        : "admin";
-      const issued = await issueAccessToken({ subject: user.id, role });
-
-      reply.send({
-        accessToken: issued.token,
-        expiresAt: issued.expiresAt.toISOString(),
+      const role = normalizeRole(user.role);
+      const { session, refreshToken } = await createAdminSession(user.id);
+      const issued = await issueAccessToken({
+        subject: user.id,
+        role,
+        sessionId: session.id,
       });
+
+      setRefreshTokenCookie(reply, refreshToken, session.expiresAt);
+
+      reply.send(
+        loginResponseSchema.parse({
+          accessToken: issued.token,
+          expiresAt: issued.expiresAt.toISOString(),
+          user: {
+            id: user.id,
+            username: user.username,
+            role,
+          },
+        })
+      );
+    }
+  );
+
+  app.post(
+    "/auth/refresh",
+    {
+      schema: {
+        response: {
+          200: sessionResponseJsonSchema,
+          401: loginErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const refreshToken = readRefreshTokenFromCookies(request);
+
+      if (!refreshToken) {
+        clearRefreshTokenCookie(reply);
+        reply.code(401).send({ message: "Unauthorized" });
+        return;
+      }
+
+      const rotated = await rotateAdminSession(refreshToken);
+
+      if (!rotated) {
+        clearRefreshTokenCookie(reply);
+        reply.code(401).send({ message: "Unauthorized" });
+        return;
+      }
+
+      const { session, refreshToken: nextToken } = rotated;
+      const role = normalizeRole(session.adminUser.role);
+
+      const issued = await issueAccessToken({
+        subject: session.adminUserId,
+        role,
+        sessionId: session.id,
+      });
+
+      setRefreshTokenCookie(reply, nextToken, session.expiresAt);
+
+      reply.send(
+        loginResponseSchema.parse({
+          accessToken: issued.token,
+          expiresAt: issued.expiresAt.toISOString(),
+          user: {
+            id: session.adminUser.id,
+            username: session.adminUser.username,
+            role,
+          },
+        })
+      );
+    }
+  );
+
+  app.post(
+    "/auth/logout",
+    {
+      schema: {
+        response: {
+          204: { type: "null" },
+        },
+      },
+    },
+    async (request, reply) => {
+      const refreshToken = readRefreshTokenFromCookies(request);
+      if (refreshToken) {
+        await revokeAdminSession(refreshToken);
+      }
+
+      clearRefreshTokenCookie(reply);
+      reply.code(204).send();
     }
   );
 };
@@ -76,3 +156,38 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 async function replyUnauthorized(reply: FastifyReply) {
   await reply.code(401).send({ message: "Invalid credentials" });
 }
+
+const loginErrorResponseSchema = {
+  type: "object",
+  properties: {
+    message: { type: "string" },
+  },
+  required: ["message"],
+};
+
+function normalizeRole(role: string): Role {
+  const normalizedRole = role.toLowerCase();
+  return (["admin", "analyst", "support"] as const).includes(
+    normalizedRole as Role
+  )
+    ? (normalizedRole as Role)
+    : "admin";
+}
+
+const sessionResponseJsonSchema = {
+  type: "object",
+  properties: {
+    accessToken: { type: "string" },
+    expiresAt: { type: "string", format: "date-time" },
+    user: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        username: { type: "string" },
+        role: { type: "string" },
+      },
+      required: ["id", "username", "role"],
+    },
+  },
+  required: ["accessToken", "expiresAt", "user"],
+};

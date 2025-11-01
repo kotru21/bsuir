@@ -54,6 +54,16 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             <span className="nav-link__text">Опросы</span>
           </NavLink>
         </nav>
+        <div className="sidebar__footer">
+          <button
+            className="button button--secondary"
+            onClick={handleLogout}
+            disabled={auth.logoutInProgress}
+            aria-disabled={auth.logoutInProgress}
+            style={{ marginTop: "1rem" }}>
+            {auth.logoutInProgress ? "Выходим..." : "Выйти"}
+          </button>
+        </div>
       </aside>
       <main className="main">
         <header className="main__header">
@@ -71,13 +81,6 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               <span className="main__user">{auth.username}</span>
             ) : null}
           </div>
-          <button
-            className="button button--secondary"
-            onClick={handleLogout}
-            disabled={auth.logoutInProgress}
-            aria-disabled={auth.logoutInProgress}>
-            {auth.logoutInProgress ? "Выходим..." : "Выйти"}
-          </button>
         </header>
         {auth.error ? (
           <div className="status-message status-message--error">

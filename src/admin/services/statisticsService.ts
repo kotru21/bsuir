@@ -1,8 +1,3 @@
-import {
-  PrismaClientInitializationError,
-  PrismaClientKnownRequestError,
-  PrismaClientUnknownRequestError,
-} from "@prisma/client/runtime/library";
 import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
 interface RecommendationEntity {
@@ -31,16 +26,22 @@ interface SubmissionEntity {
 }
 
 function isRecoverablePrismaError(err: unknown): boolean {
-  if (err instanceof PrismaClientKnownRequestError) {
-    return ["P2021", "P2022", "P1010", "P1001"].includes(err.code);
+  if (!err || typeof err !== "object") {
+    return false;
   }
-  if (err instanceof PrismaClientInitializationError) {
+
+  const errorLike = err as { code?: unknown; name?: unknown };
+  const code = typeof errorLike.code === "string" ? errorLike.code : undefined;
+  const name = typeof errorLike.name === "string" ? errorLike.name : undefined;
+
+  if (code && ["P2021", "P2022", "P1010", "P1001"].includes(code)) {
     return true;
   }
-  if (err instanceof PrismaClientUnknownRequestError) {
-    return true;
-  }
-  return false;
+
+  return (
+    name === "PrismaClientInitializationError" ||
+    name === "PrismaClientUnknownRequestError"
+  );
 }
 
 function logAndReturn<T>(err: unknown, fallback: T): T {

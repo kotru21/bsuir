@@ -65,6 +65,14 @@ button {
   padding: 10px 12px;
   border-radius: 8px;
   transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-link__icon {
+  display: none;
+  font-size: 18px;
+  line-height: 1;
 }
 .sidebar__logo {
   display: block;
@@ -113,6 +121,79 @@ button {
 }
 .sidebar--collapsed .nav-link__text {
   display: none;
+}
+
+.sidebar--collapsed .nav-link__icon {
+  display: inline-block;
+}
+
+/* Logout button icon/text behavior when sidebar collapsed */
+.sidebar__footer .sidebar__logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+.sidebar-footer__icon {
+  display: none;
+  font-size: 18px;
+  line-height: 1;
+}
+.sidebar__footer .sidebar__logout .sidebar-footer__text {
+  display: inline-block;
+}
+.sidebar--collapsed .sidebar__footer .sidebar__logout {
+  justify-content: center;
+}
+.sidebar--collapsed .sidebar__footer .sidebar__logout .sidebar-footer__text {
+  display: none;
+}
+.sidebar--collapsed .sidebar__footer .sidebar__logout .sidebar-footer__icon {
+  display: inline-block;
+}
+
+/* Mobile improvements */
+@media (max-width: 600px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-form {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+  }
+
+  .login-logo {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+/* Login logo wrap */
+.login-logo-wrap {
+  display: flex;
+  justify-content: center;
+}
+.login-logo {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  margin-bottom: 6px;
 }
 
 .nav-link:hover {

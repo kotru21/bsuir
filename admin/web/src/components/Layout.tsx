@@ -44,6 +44,9 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             className={({ isActive }: { isActive: boolean }) =>
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
+            <span className="nav-link__icon" aria-hidden>
+              📊
+            </span>
             <span className="nav-link__text">Обзор</span>
           </NavLink>
           <NavLink
@@ -51,17 +54,31 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             className={({ isActive }: { isActive: boolean }) =>
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
+            <span className="nav-link__icon" aria-hidden>
+              📝
+            </span>
             <span className="nav-link__text">Опросы</span>
           </NavLink>
         </nav>
         <div className="sidebar__footer">
           <button
-            className="button button--secondary"
+            className="button button--secondary sidebar__logout"
             onClick={handleLogout}
             disabled={auth.logoutInProgress}
             aria-disabled={auth.logoutInProgress}
-            style={{ marginTop: "1rem" }}>
-            {auth.logoutInProgress ? "Выходим..." : "Выйти"}
+            title={auth.logoutInProgress ? "Выходим..." : "Выйти"}
+            style={{
+              marginTop: "1rem",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}>
+            <span className="sidebar-footer__icon" aria-hidden>
+              🔓
+            </span>
+            <span className="sidebar-footer__text">
+              {auth.logoutInProgress ? "Выходим..." : "Выйти"}
+            </span>
           </button>
         </div>
       </aside>

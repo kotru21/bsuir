@@ -2,6 +2,7 @@ import { FormEvent, ChangeEvent, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
+import logoUrl from "../assets/logo.png";
 
 export function LoginPage(): JSX.Element {
   const auth = useAuth();
@@ -35,6 +36,9 @@ export function LoginPage(): JSX.Element {
   return (
     <div className="login-screen">
       <form className="login-form" onSubmit={handleSubmit}>
+        <div className="login-logo-wrap">
+          <img src={logoUrl} alt="Логотип" className="login-logo" />
+        </div>
         <h1>Вход администратора</h1>
         <label>
           Логин

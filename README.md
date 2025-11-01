@@ -53,13 +53,13 @@ SPA общается с Fastify API через защищённые cookie-се�
 
 ```mermaid
 flowchart LR
-   subgraph Browser["Admin SPA (Vite/React)"]
+   subgraph Browser["Админ SPA (Vite/React)"]
       UI["Страницы и компоненты"]
       Query["TanStack Query"]
       Charts["Chart.js виджеты"]
    end
 
-   subgraph Fastify["Fastify сервер"]
+   subgraph Fastify["Сервер Fastify"]
       Auth["Маршруты авторизации"]
       Stats["REST /admin/api/stats"]
       Subs["REST /admin/api/submissions"]
@@ -67,8 +67,8 @@ flowchart LR
    end
 
    subgraph Services["Сервисы"]
-      StatSvc["statisticsService"]
-      SubRec["submissionRecorder"]
+      StatSvc["Сервис статистики (statisticsService)"]
+      SubRec["Регистратор откликов (submissionRecorder)"]
    end
 
    subgraph DataLayer["Данные"]
@@ -76,10 +76,10 @@ flowchart LR
       PG[(PostgreSQL)]
    end
 
-   UI -->|hooks + context| Query
-   Query -->|fetch| Auth
-   Query -->|fetch| Stats
-   Query -->|fetch| Subs
+   UI -->|хуки + контекст| Query
+   Query -->|запрос| Auth
+   Query -->|запрос| Stats
+   Query -->|запрос| Subs
    StaticServ --> UI
    Stats --> StatSvc
    Subs --> StatSvc
@@ -93,8 +93,8 @@ flowchart LR
 ```mermaid
 flowchart TD
    App["App.tsx"] --> Router["Маршрутизация"]
-   Router --> AuthGuard["AuthProvider"]
-   AuthGuard -->|нет токена| Login["LoginPage"]
+   Router --> AuthGuard["Провайдер авторизации (AuthProvider)"]
+   AuthGuard -->|нет токена| Login["Страница входа (LoginPage)"]
    AuthGuard -->|валидная сессия| Layout["Layout"]
    Layout --> Dashboard["DashboardPage"]
    Layout --> Submissions["SubmissionsPage"]
@@ -145,12 +145,12 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-   User[Telegram Client] -->|Bot API| BotCore[Telegraf + Fastify App]
-   Admin[Admin SPA<br>React/Vite] -->|REST /admin/api| BotCore
+   User["Клиент Telegram"] -->|API бота| BotCore["Telegraf + Fastify приложение"]
+   Admin["Админ SPA<br>React/Vite"] -->|REST /admin/api| BotCore
    BotCore -->|Prisma ORM| DB[(PostgreSQL)]
-   BotCore -->|Static catalog| Catalog[src/data/sections.ts]
-   BotCore -->|Scoring| Engine[src/recommendation.ts]
-   Admin -->|Static bundle| Vite[Vite build output]
+   BotCore -->|Статический каталог| Catalog[src/data/sections.ts]
+   BotCore -->|Рейтинг (scoring)| Engine[src/recommendation.ts]
+   Admin -->|Статический бандл| Vite[Vite build output]
 ```
 
 - **Развёртывание**: один Node.js процесс обслуживает и бота, и API; статика админ-панели раздаётся Fastify, а база может быть общедоступной или управляемой через облако.
@@ -204,16 +204,16 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-   user(Telegram user):::actor
-   marketing(Marketing team):::actor
+   user("Пользователь Telegram"):::actor
+   marketing("Маркетинговая команда"):::actor
 
-   subgraph Bot [Digital marketing bot]
-      start[/Start dialog/]
-      profile[Collect profile]
-      recommend[Deliver recommendations]
-      sections[Browse sections]
-      feedback[Leave feedback]
-      export[Export insights]
+   subgraph Bot ["Цифровой маркетинговый бот"]
+      start[/Начало диалога/]
+      profile[Сбор профиля]
+      recommend[Выдача рекомендаций]
+      sections[Обзор секций]
+      feedback[Оставить отзыв]
+      export[Экспорт инсайтов]
    end
 
    user --> start
@@ -232,19 +232,19 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-   A[User starts bot with /start] --> B{Session exists?}
-   B -- No --> C[Create session and show greeting]
-   B -- Yes --> D[Offer resume or restart]
-   C --> E[Wizard: age -> gender -> fitness -> format -> goals -> contact]
+   A[Пользователь запускает бота командой /start] --> B{Сессия существует?}
+   B -- Нет --> C[Создать сессию и показать приветствие]
+   B -- Да --> D[Предложить продолжить или перезапустить]
+   C --> E[Мастер: возраст -> пол -> физподготовка -> формат -> цели -> контактность]
    D --> E
-   E --> F[Build user profile]
-   F --> G[Calculate recommendations recommendSections]
-   G --> H{Relevant sections found?}
-   H -- Yes --> I[Send top-N sections with reasoning]
-   H -- No --> J[Show fallback section and feedback hint]
-   I --> K[Inline buttons: enroll, browse, restart]
+   E --> F[Собрать профиль пользователя]
+   F --> G[Вычислить рекомендации (recommendSections)]
+   G --> H{Найдены релевантные секции?}
+   H -- Да --> I[Отправить топ-N секций с обоснованием]
+   H -- Нет --> J[Показать запасную секцию и подсказку для обратной связи]
+   I --> K[Инлайн-кнопки: записаться, просмотреть, перезапустить]
    J --> K
-   K --> L[Log interest and finish scenario]
+   K --> L[Зафиксировать интерес и завершить сценарий]
 ```
 
 **Расшифровка:** Пользователь запускает бота, заполняет анкету, после чего движок рекомендаций выбирает секции; далее пользователь взаимодействует с кнопками, а система фиксирует интерес.
@@ -253,50 +253,50 @@ flowchart TD
 
 ```mermaid
 erDiagram
-      USER_PROFILE ||--o{ ANSWER : содержит
-      USER_PROFILE }o--|| RECOMMENDATION : формирует
-      RECOMMENDATION }o--|| SPORT_SECTION : сопоставляет
-      SPORT_SECTION ||--o{ RESULT_PROJECTION : описывает
-      SPORT_SECTION ||--o{ MEDIA_ASSET : иллюстрирует
+   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ ОТВЕТ : содержит
+   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ }o--|| РЕКОМЕНДАЦИЯ : формирует
+   РЕКОМЕНДАЦИЯ }o--|| СПОРТ_СЕКЦИЯ : сопоставляет
+   СПОРТ_СЕКЦИЯ ||--o{ ПРОГНОЗ_РЕЗУЛЬТАТА : описывает
+   СПОРТ_СЕКЦИЯ ||--o{ МЕДИА_АКТИВ : иллюстрирует
 
-      USER_PROFILE {
-            string telegramId
-            int age
-            enum gender
-            enum fitnessLevel
-            enum formatPreference
-            enum goal
-            boolean contactSportsOk
-      }
+   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ {
+      string telegramId
+      int age
+      enum gender
+      enum fitnessLevel
+      enum formatPreference
+      enum goal
+      boolean contactSportsOk
+   }
 
-      ANSWER {
-            string stepId
-            string value
-            datetime timestamp
-      }
+   ОТВЕТ {
+      string stepId
+      string value
+      datetime timestamp
+   }
 
-      SPORT_SECTION {
-            string id
-            string title
-            string location
-            string scheduleSummary
-      }
+   СПОРТ_СЕКЦИЯ {
+      string id
+      string title
+      string location
+      string scheduleSummary
+   }
 
-      RECOMMENDATION {
-            string sectionId
-            float score
-            string[] reasons
-      }
+   РЕКОМЕНДАЦИЯ {
+      string sectionId
+      float score
+      string[] reasons
+   }
 
-      RESULT_PROJECTION {
-            string horizon
-            string description
-      }
+   ПРОГНОЗ_РЕЗУЛЬТАТА {
+      string horizon
+      string description
+   }
 
-      MEDIA_ASSET {
-            string path
-            string altText
-      }
+   МЕДИА_АКТИВ {
+      string path
+      string altText
+   }
 ```
 
 **Расшифровка:** Профиль пользователя связан с ответами и рекомендациями; рекомендации привязаны к секциям, для которых описаны прогнозы результатов и медиаматериалы.

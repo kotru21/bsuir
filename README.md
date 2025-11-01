@@ -22,40 +22,15 @@
 
 Прототип системы цифрового маркетинга образовательно-спортивных услуг БГУИР — это чат-бот в Telegram, который помогает абитуриентам, студентам и сотрудникам подобрать подходящие спортивные секции, понять ожидаемую динамику прогресса и быстро связаться с организаторами. Бот сочетает маркетинговый подход (акцент на ценностях и результатах) и персонализированную аналитику (учёт анамнеза, целей, предпочтений по формату занятий).
 
-```mermaid
-flowchart TD
-   subgraph Презентация
-      A["bot/app.ts"]
-      B["bot/scenes/onboarding/index.ts"]
-      C["admin/web/src"]
-   end
-   subgraph Сервисы
-      D["recommendation.ts"]
-      E["services/profileAssembler.ts"]
-      F["services/submissionRecorder.ts"]
-      G["admin/services/statisticsService.ts"]
-   end
-   subgraph Инфраструктура
-      H["infrastructure/prismaClient.ts"]
-      I["prisma/schema.prisma"]
-      J["bot/services/imageResolver.ts"]
-   end
-   subgraph Данные
-      K["data/sections.ts"]
-   end
+## Основные функции бота
 
-   A --> B
-   A --> D
-   B --> E
-   E --> D
-   F --> H
-   G --> H
-   H --> I
-   D --> K
-   C --> G
-   A --> F
-   A --> J
-```
+- **Интерактивная анкета**: пошаговый wizard для сбора профиля пользователя (возраст, пол, физподготовка, цели, предпочтения).
+- **Персонализированные рекомендации**: алгоритм scoring на основе соответствия параметров пользователя и характеристик секций.
+- **Визуальное представление**: карточки секций с изображениями, прогнозами результатов и обоснованием выбора.
+- **Каталог секций**: команда `/sections` для просмотра всех доступных направлений с фильтрацией.
+- **Обработка интереса**: фиксация действий пользователя (просмотр, запись, обратная связь) для аналитики.
+
+## Основные функции веб-панели
 
 - **Дашборд аналитики**: главная страница отображает ключевые KPI — количество анкет, динамику вовлечённости, распределение по полу, возрасту, уровню подготовки и целям.
 - **Просмотр анкет**: таблица откликов позволяет искать, фильтровать и раскрывать профиль каждого пользователя вместе с рекомендациями и обоснованиями.
@@ -69,7 +44,7 @@ flowchart TD
 SPA общается с Fastify API через защищённые cookie-сессии и CSRF-токены, а API агрегирует статистику на основе Prisma и кеша в памяти.
 
 ```mermaid
-flowchart LR
+flowchart TB
    subgraph Browser["Админ SPA (Vite/React)"]
       UI["Страницы и компоненты"]
       Query["TanStack Query"]
@@ -80,46 +55,67 @@ flowchart LR
       Auth["Маршруты авторизации"]
       Stats["REST /admin/api/stats"]
       Subs["REST /admin/api/submissions"]
-      StaticServ["Раздача бандла"]
+      StaticServ["Раздача статики"]
    end
 
    subgraph Services["Сервисы"]
-      StatSvc["Сервис статистики (statisticsService)"]
-      SubRec["Регистратор откликов (submissionRecorder)"]
+      StatSvc["Сервис статистики<br/>(statisticsService)"]
+      SubRec["Регистратор откликов<br/>(submissionRecorder)"]
    end
 
    subgraph DataLayer["Данные"]
       Prisma["Prisma Client"]
       PG[(PostgreSQL)]
+      Catalog[("Каталог секций<br/>sections.ts")]
    end
 
    UI -->|хуки + контекст| Query
-   Query -->|запрос| Auth
-   Query -->|запрос| Stats
-   Query -->|запрос| Subs
-   StaticServ --> UI
+   Query ==>|POST /login| Auth
+   Query ==>|GET /stats| Stats
+   Query ==>|GET /submissions| Subs
+   UI -.->|загрузка бандла| StaticServ
+
    Stats --> StatSvc
    Subs --> StatSvc
-   StatSvc --> Prisma
-   SubRec --> Prisma
-   Prisma --> PG
+   Subs --> SubRec
+
+   StatSvc ==> Prisma
+   SubRec ==> Prisma
+   StatSvc -.-> Catalog
+
+   Prisma ==> PG
+
+   style Browser fill:#e3f2fd
+   style Fastify fill:#fff3e0
+   style Services fill:#f3e5f5
+   style DataLayer fill:#e8f5e9
 ```
 
 ### Логика клиентского приложения
 
 ```mermaid
 flowchart TD
-   App["App.tsx"] --> Router["Маршрутизация"]
-   Router --> AuthGuard["Провайдер авторизации (AuthProvider)"]
-   AuthGuard -->|нет токена| Login["Страница входа (LoginPage)"]
-   AuthGuard -->|валидная сессия| Layout["Layout"]
-   Layout --> Dashboard["DashboardPage"]
-   Layout --> Submissions["SubmissionsPage"]
-   Dashboard --> ChartsSetup["charts/setup.ts"]
-   Dashboard --> Metrics["components/MetricCard.tsx"]
-   Dashboard --> DistCharts["components/FitnessDistributionChart.tsx"]
-   Submissions --> TableQuery["api/stats.ts"]
-   Layout --> Locale["localization.ts"]
+   App["App.tsx<br/>Корневой компонент"] --> Router["React Router<br/>Маршрутизация"]
+   Router --> AuthGuard["AuthProvider<br/>Провайдер авторизации"]
+
+   AuthGuard -->|нет токена| Login["LoginPage<br/>Страница входа"]
+   AuthGuard -->|валидная сессия| Layout["Layout<br/>Общий каркас"]
+
+   Layout --> Dashboard["DashboardPage<br/>Дашборд"]
+   Layout --> Submissions["SubmissionsPage<br/>Анкеты"]
+
+   Dashboard --> ChartsSetup["charts/setup.ts<br/>Настройка Chart.js"]
+   Dashboard --> Metrics["MetricCard.tsx<br/>Карточки метрик"]
+   Dashboard --> DistCharts["FitnessDistributionChart.tsx<br/>Графики распределения"]
+
+   Submissions --> TableQuery["api/stats.ts<br/>API запросы"]
+
+   Layout --> Locale["localization.ts<br/>Локализация"]
+
+   style App fill:#1976d2,color:#fff
+   style AuthGuard fill:#f57c00,color:#fff
+   style Dashboard fill:#388e3c,color:#fff
+   style Submissions fill:#388e3c,color:#fff
 ```
 
 ### Ключевые файлы SPA
@@ -161,16 +157,67 @@ flowchart TD
 - **Интерфейсы**: REST API `/admin/api` обслуживает SPA, а бот получает апдейты и отправляет ответы, используя общие сервисы и форматтеры.
 
 ```mermaid
-flowchart LR
-   User["Клиент Telegram"] -->|API бота| BotCore["Telegraf + Fastify приложение"]
-   Admin["Админ SPA React/Vite"] -->|REST /admin/api| BotCore
-   BotCore -->|Prisma ORM| DB[(PostgreSQL)]
-   BotCore -->|Статический каталог| Catalog["sections.ts"]
-   BotCore -->|Рейтинг scoring| Engine["recommendation.ts"]
-   Admin -->|Статический бандл| Vite["Vite build output"]
+flowchart TB
+   User["Клиент Telegram"]
+   AdminBrowser["Браузер администратора"]
+
+   subgraph Backend["Node.js Backend"]
+      subgraph Telegraf["Telegraf Bot"]
+         BotHandlers["Обработчики команд"]
+         BotScenes["Wizard сцены"]
+      end
+
+      subgraph FastifyApp["Fastify Server"]
+         AdminAPI["REST API /admin/api"]
+         StaticFiles["Раздача статики"]
+         Sessions["Cookie-сессии"]
+      end
+
+      subgraph BusinessLogic["Бизнес-логика"]
+         RecEngine["Recommendation Engine<br/>scoring алгоритм"]
+         ProfileAssembler["Profile Assembler"]
+         StatService["Statistics Service"]
+      end
+   end
+
+   subgraph Data["Слой данных"]
+      Prisma["Prisma ORM"]
+      DB[(PostgreSQL)]
+      Catalog[("Каталог секций<br/>sections.ts + images")]
+   end
+
+   User <-->|Telegram Bot API| BotHandlers
+   BotHandlers --> BotScenes
+   BotScenes --> ProfileAssembler
+   ProfileAssembler --> RecEngine
+
+   AdminBrowser -->|HTTPS| Sessions
+   Sessions --> AdminAPI
+   AdminBrowser -.->|загрузка SPA| StaticFiles
+
+   AdminAPI --> StatService
+   RecEngine --> Catalog
+   RecEngine ==> Prisma
+   BotScenes ==> Prisma
+   StatService ==> Prisma
+   Prisma ==> DB
+
+   style Backend fill:#e3f2fd
+   style Data fill:#e8f5e9
+   style User fill:#fff3e0
+   style AdminBrowser fill:#fff3e0
 ```
 
-- **Развёртывание**: один Node.js процесс обслуживает и бота, и API; статика админ-панели раздаётся Fastify, а база может быть общедоступной или управляемой через облако.
+**Легенда:**
+
+- `==>` Основные потоки данных (критичные)
+- `-->` Синхронные вызовы
+- `<-->` Двусторонняя коммуникация
+- `-.->` Загрузка статических ресурсов
+
+### Развёртывание
+
+Один Node.js процесс обслуживает и бота, и API; статика админ-панели раздаётся Fastify, а база может быть общедоступной или управляемой через облако.
 
 ## Структура кода
 
@@ -180,143 +227,234 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-   subgraph Презентационный слой
-      A["bot/app.ts"]
-      B["bot/scenes/onboarding/index.ts"]
-      C["admin/web/src"]
-   end
-   subgraph Сервисы
-      D["recommendation.ts"]
-      E["services/profileAssembler.ts"]
-      F["services/submissionRecorder.ts"]
-      G["admin/services/statisticsService.ts"]
-   end
-   subgraph Инфраструктура
-      H["infrastructure/prismaClient.ts"]
-      I["prisma/schema.prisma"]
-      J["bot/services/imageResolver.ts"]
-   end
-   subgraph Слой данных
-      K["data/sections.ts"]
+   subgraph Presentation["Презентационный слой"]
+      A["bot/app.ts<br/>Telegraf App"]
+      B["bot/scenes/onboarding<br/>Wizard сцены"]
+      C["admin/web/src<br/>React SPA"]
    end
 
-   A --> B
-   A --> D
-   B --> E
-   E --> D
-   F --> H
-   G --> H
-   H --> I
-   D --> K
-   C --> G
+   subgraph Services["Сервисы"]
+      D["recommendation.ts<br/>Scoring Engine"]
+      E["profileAssembler.ts<br/>Сборка профилей"]
+      F["submissionRecorder.ts<br/>Запись анкет"]
+      G["statisticsService.ts<br/>Аналитика"]
+   end
+
+   subgraph Infrastructure["Инфраструктура"]
+      H["prismaClient.ts<br/>ORM клиент"]
+      I["schema.prisma<br/>Схема БД"]
+      J["imageResolver.ts<br/>Резолвинг изображений"]
+   end
+
+   subgraph DataLayer["Слой данных"]
+      K["sections.ts<br/>Каталог секций"]
+   end
+
+   A ==> B
+   A ==> D
+   A ==> J
    A --> F
-   A --> J
+
+   B ==> E
+   E ==> D
+
+   C -.->|HTTP API| G
+
+   F ==> H
+   G ==> H
+   H ==> I
+
+   D --> K
+   J -.-> K
+
+   style Presentation fill:#e3f2fd
+   style Services fill:#fff3e0
+   style Infrastructure fill:#f3e5f5
+   style DataLayer fill:#e8f5e9
 ```
 
-- **Зависимости**: визуальная схема показывает, как Telegraf сцены используют сервисы для сборки профиля и рекомендаций, а админ-панель опирается на статистический сервис, который агрегирует данные из той же инфраструктуры.
+**Зависимости:** Визуальная схема показывает, как Telegraf сцены используют сервисы для сборки профиля и рекомендаций, а админ-панель опирается на статистический сервис, который агрегирует данные из той же инфраструктуры.
 
 ## Диаграммы чат-бота
 
 ### Диаграмма вариантов использования
 
 ```mermaid
-flowchart LR
-   user("Пользователь Telegram"):::actor
-   marketing("Маркетинговая команда"):::actor
+flowchart TB
+   user("Пользователь<br/>Telegram")
+   marketing("Маркетинговая<br/>команда")
 
-   subgraph Bot ["Цифровой маркетинговый бот"]
-      start[/Начало диалога/]
-      profile[Сбор профиля]
-      recommend[Выдача рекомендаций]
-      sections[Обзор секций]
-      feedback[Оставить отзыв]
-      export[Экспорт инсайтов]
+   subgraph system ["Система цифрового маркетинга БГУИР"]
+      direction TB
+
+      subgraph user_functions ["Функции пользователя"]
+         start["Начать диалог<br/>/start"]
+         profile["Заполнить анкету<br/>профилирование"]
+         recommend["Получить<br/>рекомендации"]
+         sections["Просмотреть<br/>каталог секций"]
+      end
+
+      subgraph admin_functions ["Функции администратора"]
+         analytics["Просмотреть<br/>аналитику"]
+         export["Экспортировать<br/>данные"]
+      end
    end
 
    user --> start
+   user --> sections
+
+
    start --> profile
    profile --> recommend
-   user --> sections
-   user --> feedback
+
+   marketing --> analytics
+   marketing --> submissions
    marketing --> export
 
-   classDef actor fill:#f0f0f0,stroke:#333,stroke-width:1;
+   style system fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+   style user_functions fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+   style admin_functions fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+   style user fill:#ffebee,stroke:#c62828,stroke-width:2px
+   style marketing fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
 ```
 
-**Расшифровка:** Пользователь Telegram инициирует диалог, проходит сбор профиля и получает рекомендации; маркетинговая команда использует экспорт интересов.
+**Расшифровка:** Пользователь Telegram инициирует диалог, проходит профилирование и получает рекомендации; маркетинговая команда использует административные функции для анализа и экспорта данных.
 
 ### Бизнес-процесс взаимодействия
 
 ```mermaid
 flowchart TD
-   A[Пользователь запускает бота командой /start] --> B{Сессия существует?}
-   B -- Нет --> C[Создать сессию и показать приветствие]
-   B -- Да --> D[Предложить продолжить или перезапустить]
-   C --> E[Мастер: возраст -> пол -> физподготовка -> формат -> цели -> контактность]
-   D --> E
-   E --> F[Собрать профиль пользователя]
-   F --> G[Вычислить рекомендации recommendSections]
-   G --> H{Найдены релевантные секции?}
-   H -- Да --> I[Отправить топ-N секций с обоснованием]
-   H -- Нет --> J[Показать запасную секцию и подсказку для обратной связи]
-   I --> K[Инлайн-кнопки: записаться, просмотреть, перезапустить]
-   J --> K
-   K --> L[Зафиксировать интерес и завершить сценарий]
+   Start([Пользователь запускает /start])
+
+   Start --> CheckSession{Сессия<br/>существует?}
+
+   CheckSession -->|Нет| CreateSession[Создать новую сессию<br/>и показать приветствие]
+   CheckSession -->|Да| CreateSession
+
+   CreateSession --> Wizard[Wizard анкеты:<br/>возраст → пол → подготовка<br/>→ формат → цели → контактность]
+
+   Wizard --> AssembleProfile[Собрать профиль<br/>пользователя]
+
+   AssembleProfile --> ComputeRecs[Вычислить рекомендации<br/>recommendSections]
+
+   ComputeRecs --> CheckResults{Найдены<br/>релевантные<br/>секции?}
+
+   CheckResults -->|Да| SendTop[Отправить топ-N секций<br/>с обоснованием и изображениями]
+   CheckResults -->|Нет| SendFallback[Показать запасную секцию<br/>и подсказку для связи]
+
+   SendTop --> ShowButtons
+   SendFallback --> ShowButtons
+
+   ShowButtons[Инлайн-кнопки:<br/>Записаться / Подробнее<br/>Перезапустить]
+
+   ShowButtons --> UserAction{Действие<br/>пользователя}
+
+   UserAction -.->|Записаться<br/>будущий функционал| RecordInterest[Зафиксировать интерес<br/>в БД]
+   UserAction -->|Подробнее| ShowDetails[Показать детальную<br/>информацию о секции]
+   UserAction -->|Перезапустить| CreateSession
+
+   RecordInterest -.-> End([Завершение сценария])
+   ShowDetails --> ShowButtons
+
+   style Start fill:#4caf50,color:#fff
+   style End fill:#f44336,color:#fff
+   style CheckSession fill:#ff9800,color:#fff
+   style CheckResults fill:#ff9800,color:#fff
+   style UserAction fill:#ff9800,color:#fff
+   style Wizard fill:#2196f3,color:#fff
+   style ComputeRecs fill:#9c27b0,color:#fff
+   style RecordInterest fill:#9e9e9e,color:#fff,stroke-dasharray: 5 5
 ```
 
-**Расшифровка:** Пользователь запускает бота, заполняет анкету, после чего движок рекомендаций выбирает секции; далее пользователь взаимодействует с кнопками, а система фиксирует интерес.
+**Расшифровка:** При запуске бота проверяется наличие сессии и заполненного профиля. Если профиль есть, пользователь может продолжить с ним или перезапустить. После заполнения анкеты движок рекомендаций подбирает секции, а пользователь взаимодействует с результатами через инлайн-кнопки.
 
 ### Логическая диаграмма сущность-связь
 
 ```mermaid
 erDiagram
-   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ ОТВЕТ : содержит
-   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ }o--|| РЕКОМЕНДАЦИЯ : формирует
-   РЕКОМЕНДАЦИЯ }o--|| СПОРТ_СЕКЦИЯ : сопоставляет
-   СПОРТ_СЕКЦИЯ ||--o{ ПРОГНОЗ_РЕЗУЛЬТАТА : описывает
-   СПОРТ_СЕКЦИЯ ||--o{ МЕДИА_АКТИВ : иллюстрирует
+   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ ОТВЕТ : "содержит"
+   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ РЕКОМЕНДАЦИЯ : "получает"
+   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ ИНТЕРЕС_К_СЕКЦИИ : "проявляет"
+
+   РЕКОМЕНДАЦИЯ }o--|| СПОРТ_СЕКЦИЯ : "указывает_на"
+   ИНТЕРЕС_К_СЕКЦИИ }o--|| СПОРТ_СЕКЦИЯ : "относится_к"
+
+   СПОРТ_СЕКЦИЯ ||--o{ ПРОГНОЗ_РЕЗУЛЬТАТА : "описывает"
+   СПОРТ_СЕКЦИЯ ||--o{ МЕДИА_АКТИВ : "иллюстрирует"
 
    ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ {
-      string telegramId
-      int age
-      enum gender
-      enum fitnessLevel
-      enum formatPreference
-      enum goal
-      boolean contactSportsOk
+      int id PK
+      string telegramId UK "Уникальный ID Telegram"
+      int age "Возраст пользователя"
+      enum gender "Пол (male/female/other)"
+      enum fitnessLevel "Уровень подготовки"
+      enum formatPreference "Предпочтительный формат"
+      enum goal "Основная цель"
+      boolean contactSportsOk "Согласие на контактные виды"
+      timestamp createdAt
+      timestamp updatedAt
    }
 
    ОТВЕТ {
-      string stepId
-      string value
-      datetime timestamp
+      int id PK
+      int profileId FK
+      string stepId "Идентификатор шага"
+      string value "Значение ответа"
+      timestamp timestamp "Время ответа"
    }
 
    СПОРТ_СЕКЦИЯ {
-      string id
-      string title
-      string location
-      string scheduleSummary
+      string id PK "Уникальный идентификатор"
+      string title "Название секции"
+      string description "Описание"
+      string location "Место проведения"
+      string scheduleSummary "Расписание (текст)"
+      enum contactType "contact/non-contact"
+      int minAge "Минимальный возраст"
+      int maxAge "Максимальный возраст"
+      string[] suitableFor "Подходящие цели"
    }
 
    РЕКОМЕНДАЦИЯ {
-      string sectionId
-      float score
-      string[] reasons
+      int id PK
+      int profileId FK
+      string sectionId FK
+      float score "Оценка соответствия (0-100)"
+      string[] reasons "Причины рекомендации"
+      int rank "Позиция в рейтинге"
+      timestamp createdAt
+   }
+
+   ИНТЕРЕС_К_СЕКЦИИ {
+      int id PK
+      int profileId FK
+      string sectionId FK
+      enum actionType "view/contact/register"
+      timestamp timestamp
    }
 
    ПРОГНОЗ_РЕЗУЛЬТАТА {
-      string horizon
-      string description
+      int id PK
+      string sectionId FK
+      string horizon "1_month/3_months/6_months"
+      string description "Описание ожидаемого результата"
    }
 
    МЕДИА_АКТИВ {
-      string path
-      string altText
+      int id PK
+      string sectionId FK
+      string path "Путь к файлу"
+      string altText "Альтернативный текст"
+      enum type "image/video"
    }
 ```
 
-**Расшифровка:** Профиль пользователя связан с ответами и рекомендациями; рекомендации привязаны к секциям, для которых описаны прогнозы результатов и медиаматериалы.
+**Расшифровка:**
+
+- Один профиль может иметь много ответов, рекомендаций и интересов к секциям
+- Каждая рекомендация и интерес привязаны к конкретной спортивной секции
+- Секции имеют множественные прогнозы результатов и медиа-активы
+- Добавлена сущность `ИНТЕРЕС_К_СЕКЦИИ` для отслеживания взаимодействий пользователя
 
 ## Подробное описание функций
 
@@ -382,7 +520,7 @@ prisma/
 
 ### Назначение ключевых файлов и модулей
 
-## Бот (Telegram)
+#### Бот (Telegram)
 
 | Путь                                      | Назначение                                                                                              |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -413,7 +551,7 @@ prisma/
 | `prisma/schema.prisma`                    | Схема базы данных Prisma (PostgreSQL) для хранения опросов и рекомендаций                               |
 | `test/*.test.ts`                          | Набор Jest-тестов для рекомендаций и сценариев онбординга                                               |
 
-## Админ: web (frontend)
+#### Админ: web (frontend)
 
 | Путь (admin/web/src)               | Назначение                                                                          |
 | ---------------------------------- | ----------------------------------------------------------------------------------- |
@@ -448,62 +586,126 @@ prisma/
 
 ## Установка и запуск
 
-1. **Клонирование и установка зависимостей**
+### 1. Клонирование и установка зависимостей
 
-   ```powershell
-   cd d:\projects\bsuir
-   npm install
-   ```
+```powershell
+cd d:\projects\bsuir
+npm install
+```
 
-2. **Настройка переменных окружения**
+### 2. Настройка переменных окружения
 
-   ```powershell
-   Copy-Item .env.example .env
-   # Обязательно заполните:
-   # BOT_TOKEN                – токен бота из BotFather
-   # DATABASE_URL             – строка подключения к PostgreSQL
-   # ADMIN_USERNAME           – логин для панели
-   # ADMIN_PASSWORD           – пароль (хэш будет подсчитан автоматически)
-   #   или ADMIN_PASSWORD_HASH – заранее подготовленный Argon2-хэш
-   # ADMIN_SESSION_SECRET     – секрет с длиной >= 32 символа
-   ```
+```powershell
+Copy-Item .env.example .env
+```
 
-3. **Применение миграций базы данных** (один раз на окружение)
+Обязательно заполните:
 
-   ```powershell
-   npx prisma migrate deploy
-   ```
+- `BOT_TOKEN` – токен бота из BotFather
+- `DATABASE_URL` – строка подключения к PostgreSQL
+- `ADMIN_USERNAME` – логин для панели
+- `ADMIN_PASSWORD` – пароль (хэш будет подсчитан автоматически)
+  или `ADMIN_PASSWORD_HASH` – заранее подготовленный Argon2-хэш
+- `ADMIN_SESSION_SECRET` – секрет с длиной >= 32 символа
 
-4. **Разработка**
+### 3. Применение миграций базы данных
 
-   - API + бот: `npm run dev` (Telegraf + Fastify на <http://localhost:3000>)
-   - UI: `npm run dev:admin` (Vite dev-server на <http://localhost:5173> с прокси на API)
+Один раз на окружение:
 
-5. **Сборка и продакшен-запуск**
+```powershell
+npx prisma migrate deploy
+```
 
-   ```powershell
-   npm run build   # vite build + tsc
-   npm start       # запускает бота и Fastify-сервер
-   ```
+### 4. Разработка
 
-6. **Проверка типов**
+**API + бот:**
 
-   ```powershell
-   npx tsc --noEmit
-   ```
+```powershell
+npm run dev
+```
 
-Важно: токен бота храните конфиденциально. В случае утечки немедленно перевыпустите его через BotFather и обновите `.env`.
+Telegraf + Fastify на http://localhost:3000
+
+**UI:**
+
+```powershell
+npm run dev:admin
+```
+
+Vite dev-server на http://localhost:5173 с прокси на API
+
+### 5. Сборка и продакшен-запуск
+
+```powershell
+npm run build   # vite build + tsc
+npm start       # запускает бота и Fastify-сервер
+```
+
+### 6. Проверка типов
+
+```powershell
+npx tsc --noEmit
+```
+
+> ⚠️ **Важно:** Токен бота храните конфиденциально. В случае утечки немедленно перевыпустите его через BotFather и обновите `.env`.
 
 ## Тестирование и контроль качества
 
-- **Модульные тесты**: `npm test` выполняет Jest-спеки `recommendation.test.ts` и `recommendation.cover.test.ts`, проверяющие корректность алгоритма, и `onboarding.*.test.ts`, подтверждающие сценарии Wizard-а.
-- **Статический анализ**: регулярная проверка `npx tsc --noEmit` предотвращает типовые несоответствия и ошибочные импорты.
-- **Ручное тестирование**: пройдите полный сценарий `/start` → заполнение анкеты → получение рекомендаций → просмотр `/sections` → нажатие инлайн-кнопок.
-- **Верификация ассетов**: убедитесь, что изображения секций находятся в `src/data/images`, а `imageResolver` находит их и в dev, и в prod.
+### Автоматические тесты
+
+```powershell
+npm test
+```
+
+Выполняет Jest-спеки:
+
+- `recommendation.test.ts` и `recommendation.cover.test.ts` — проверка корректности алгоритма scoring
+- `onboarding.*.test.ts` — подтверждение сценариев Wizard-а
+
+### Статический анализ
+
+```powershell
+npx tsc --noEmit
+```
+
+Предотвращает типовые несоответствия и ошибочные импорты.
+
+### Ручное тестирование
+
+Полный сценарий проверки:
+
+1. `/start` → заполнение анкеты
+2. Получение рекомендаций с изображениями
+3. Просмотр `/sections`
+4. Нажатие инлайн-кнопок (записаться, подробнее)
+5. Проверка админ-панели (логин, дашборд, анкеты)
+
+### Верификация ассетов
+
+Убедитесь, что:
+
+- Изображения секций находятся в `src/data/images`
+- `imageResolver` корректно находит их в dev и prod окружениях
+- Все пути в `sections.ts` актуальны
 
 ## Планы развития
 
-- **Интеграция CRM**: передача профилей в систему лид-менеджмента для отслеживания конверсии в записи.
-- **Поддержка многоязычности**: перевод интерфейса и контента на русский/английский/белорусский языки.
-- **Расширение каталога**: динамическая загрузка расписаний, стоимости и наличия мест из внешних источников.
-- **Интеграция оплаты**: оформление записи и предоплаты прямо в чат-боте.
+### Краткосрочные (Q1-Q2 2025)
+
+- **Интеграция CRM**: передача профилей в систему лид-менеджмента для отслеживания конверсии в записи
+- **Поддержка многоязычности**: перевод интерфейса и контента на английский/белорусский языки
+- **Расширение аналитики**: когортный анализ, воронка конверсии, A/B тесты
+
+### Среднесрочные (Q3-Q4 2025)
+
+- **Расширение каталога**: динамическая загрузка расписаний, стоимости и наличия мест из внешних источников
+- **Интеграция оплаты**: оформление записи и предоплаты прямо в чат-боте
+- **Система уведомлений**: напоминания о занятиях, достижениях, акциях
+
+### Долгосрочные (2026+)
+
+- **AI-ассистент**: интеграция GPT для консультаций по тренировкам
+- **Мобильное приложение**: нативные iOS/Android клиенты
+- **Геймификация**: система достижений, рейтинги, челленджи
+
+---

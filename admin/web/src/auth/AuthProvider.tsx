@@ -101,8 +101,27 @@ export function AuthProvider({
     void initialize();
   }, [initialize]);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setState((prev: AuthState) => ({
+        ...prev,
+        authenticated: false,
+        username: null,
+        csrfToken: null,
+        loading: false,
+        error: "Сессия истекла. Войдите снова.",
+      }));
+    };
+
+    window.addEventListener("admin:unauthorized", handleUnauthorized);
+    return () => {
+      window.removeEventListener("admin:unauthorized", handleUnauthorized);
+    };
+  }, []);
+
   const login = useCallback(
     async (username: string, password: string) => {
+      setState((prev: AuthState) => ({ ...prev, error: null }));
       const token = state.csrfToken ?? (await refreshCsrf());
       await loginRequest({ username, password, csrfToken: token });
       await Promise.all([refreshSession(), refreshCsrf()]);

@@ -1,3 +1,9 @@
+import {
+  translateFitnessLevel,
+  translateGenderSingle,
+  translateGoal,
+  translateTrainingFormat,
+} from "../localization";
 import { useState } from "react";
 import type { ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -86,8 +92,10 @@ export function SubmissionsPage(): ReactElement {
               <td>{new Date(item.createdAt).toLocaleString("ru-RU")}</td>
               <td>
                 <div>Возраст: {item.profile.age}</div>
-                <div>Пол: {item.profile.gender}</div>
-                <div>Подготовка: {item.profile.fitnessLevel}</div>
+                <div>Пол: {translateGenderSingle(item.profile.gender)}</div>
+                <div>
+                  Подготовка: {translateFitnessLevel(item.profile.fitnessLevel)}
+                </div>
                 <div>
                   Контакт:{" "}
                   {item.profile.avoidContact ? "Избегает" : "Допускает"}
@@ -101,13 +109,17 @@ export function SubmissionsPage(): ReactElement {
                 <div>
                   Форматы:{" "}
                   {item.profile.preferredFormats.length
-                    ? item.profile.preferredFormats.join(", ")
+                    ? item.profile.preferredFormats
+                        .map((format) => translateTrainingFormat(format))
+                        .join(", ")
                     : "—"}
                 </div>
                 <div>
                   Цели:{" "}
                   {item.profile.desiredGoals.length
-                    ? item.profile.desiredGoals.join(", ")
+                    ? item.profile.desiredGoals
+                        .map((goal) => translateGoal(goal))
+                        .join(", ")
                     : "—"}
                 </div>
               </td>

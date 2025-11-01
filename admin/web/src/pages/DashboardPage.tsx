@@ -7,6 +7,13 @@ import { GenderDistributionChart } from "../components/GenderDistributionChart";
 import { FitnessDistributionChart } from "../components/FitnessDistributionChart";
 import { TimelineChart } from "../components/TimelineChart";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
+import {
+  GENDER_ORDER,
+  mapRecordWithTranslation,
+  translateGenderPlural,
+  translateGoal,
+  translateTrainingFormat,
+} from "../localization";
 
 function formatAverageAge(value: number | null): string {
   if (value === null || Number.isNaN(value)) {
@@ -45,6 +52,37 @@ export function DashboardPage(): ReactElement {
   const timeline = timelineQuery.data;
 
   const timelinePoints = useMemo(() => timeline?.points ?? [], [timeline]);
+
+  const genderDistribution = useMemo(() => {
+    const source = overview?.genderDistribution ?? {};
+    return mapRecordWithTranslation(
+      source,
+      translateGenderPlural,
+      GENDER_ORDER
+    );
+  }, [overview]);
+
+  const topFormats = useMemo(() => {
+    const leaders = overview?.formatLeaders ?? [];
+    return leaders
+      .filter((entry) => Boolean(entry?.format))
+      .map(({ format, count }) => ({
+        key: format,
+        label: translateTrainingFormat(format),
+        count,
+      }));
+  }, [overview]);
+
+  const topGoals = useMemo(() => {
+    const leaders = overview?.goalLeaders ?? [];
+    return leaders
+      .filter((entry) => Boolean(entry?.goal))
+      .map(({ goal, count }) => ({
+        key: goal,
+        label: translateGoal(goal),
+        count,
+      }));
+  }, [overview]);
 
   const loading =
     overviewQuery.isLoading ||
@@ -88,9 +126,6 @@ export function DashboardPage(): ReactElement {
     return <p>Нет данных для отображения.</p>;
   }
 
-  const topFormats = overview.formatLeaders;
-  const topGoals = overview.goalLeaders;
-
   return (
     <div className="dashboard">
       <div className="dashboard-grid">
@@ -123,31 +158,41 @@ export function DashboardPage(): ReactElement {
       </div>
 
       <div className="charts-grid">
-        <GenderDistributionChart data={overview.genderDistribution} />
+        <GenderDistributionChart data={genderDistribution} />
         <FitnessDistributionChart data={overview.fitnessDistribution} />
         <div className="card">
           <h2>Популярные форматы</h2>
           <div className="metrics-list">
-            {topFormats.map(
-              ({ format, count }: { format: string; count: number }) => (
-                <div key={format} className="metrics-item">
-                  <span>{format}</span>
+            {topFormats.length ? (
+              topFormats.map(({ key, label, count }) => (
+                <div key={key} className="metrics-item">
+                  <span>{label}</span>
                   <strong>{count}</strong>
                 </div>
-              )
+              ))
+            ) : (
+              <div className="metrics-item">
+                <span>Пока нет данных</span>
+                <strong>—</strong>
+              </div>
             )}
           </div>
         </div>
         <div className="card">
           <h2>Популярные цели</h2>
           <div className="metrics-list">
-            {topGoals.map(
-              ({ goal, count }: { goal: string; count: number }) => (
-                <div key={goal} className="metrics-item">
-                  <span>{goal}</span>
+            {topGoals.length ? (
+              topGoals.map(({ key, label, count }) => (
+                <div key={key} className="metrics-item">
+                  <span>{label}</span>
                   <strong>{count}</strong>
                 </div>
-              )
+              ))
+            ) : (
+              <div className="metrics-item">
+                <span>Пока нет данных</span>
+                <strong>—</strong>
+              </div>
             )}
           </div>
         </div>

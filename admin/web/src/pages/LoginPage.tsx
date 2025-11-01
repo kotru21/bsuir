@@ -33,6 +33,8 @@ export function LoginPage(): React.JSX.Element {
     }
   }
 
+  const globalError = auth.error;
+
   return (
     <div className="login-screen">
       <form className="login-form" onSubmit={handleSubmit}>
@@ -40,6 +42,11 @@ export function LoginPage(): React.JSX.Element {
           <img src={logoUrl} alt="Логотип" className="login-logo" />
         </div>
         <h1>Вход администратора</h1>
+        {globalError ? (
+          <p className="form-error" role="alert">
+            {globalError}
+          </p>
+        ) : null}
         <label>
           Логин
           <input
@@ -63,7 +70,11 @@ export function LoginPage(): React.JSX.Element {
             required
           />
         </label>
-        {error ? <p className="form-error">{error}</p> : null}
+        {error ? (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        ) : null}
         <button className="button" type="submit" disabled={submitting}>
           {submitting ? "Входим..." : "Войти"}
         </button>

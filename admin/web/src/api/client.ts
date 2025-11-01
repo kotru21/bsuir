@@ -9,6 +9,7 @@ interface ApiFetchOptions extends Omit<RequestInit, "body"> {
   csrfToken?: string;
   skipJson?: boolean;
   body?: unknown;
+  suppressUnauthorizedEvent?: boolean;
 }
 
 function buildError(status: number, payload: unknown): ApiError {
@@ -22,7 +23,15 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: ApiFetchOptions = {}
 ): Promise<T> {
-  const { csrfToken, skipJson, headers, body, method, ...rest } = options;
+  const {
+    csrfToken,
+    skipJson,
+    headers,
+    body,
+    method,
+    suppressUnauthorizedEvent,
+    ...rest
+  } = options;
   const finalHeaders = new Headers(headers);
   finalHeaders.set("Accept", "application/json");
 
@@ -50,10 +59,17 @@ export async function apiFetch<T = unknown>(
   });
 
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      !suppressUnauthorizedEvent &&
+      typeof window !== "undefined"
+    ) {
+      window.dispatchEvent(new CustomEvent("admin:unauthorized"));
+    }
     let payload: unknown = null;
     try {
       payload = await response.json();
-    } catch (err) {
+    } catch (_err) {
       payload = await response.text();
     }
     throw buildError(response.status, payload);

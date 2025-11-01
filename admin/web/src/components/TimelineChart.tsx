@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import type { TimelinePoint } from "../types/stats";
 import "../charts/setup";
+import { translateTimelineDate } from "../localization";
 
 interface TimelineChartProps {
   points: TimelinePoint[];
@@ -11,7 +12,7 @@ export function TimelineChart({
   points,
 }: TimelineChartProps): React.JSX.Element {
   const chartData = useMemo(() => {
-    const labels = points.map((point) => point.date);
+    const labels = points.map((point) => translateTimelineDate(point.date));
     const values = points.map((point) => point.submissions);
     return {
       labels,

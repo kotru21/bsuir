@@ -25,6 +25,7 @@ export async function loginRequest(payload: LoginPayload): Promise<void> {
     method: "POST",
     body: payload,
     csrfToken: payload.csrfToken,
+    suppressUnauthorizedEvent: true,
   });
 }
 

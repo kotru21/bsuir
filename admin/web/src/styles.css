@@ -163,6 +163,15 @@ button {
   justify-content: center;
 }
 
+/* When sidebar is collapsed, remove the extra right margin
+   that was added for expanded state so icons are perfectly centered */
+.sidebar--collapsed .nav-link .nav-link__icon-img,
+.sidebar--collapsed .sidebar__footer .sidebar-footer__icon-img {
+  margin-right: 0;
+  margin-left: 0;
+  display: block; /* ensure block-level centering inside the flex parent */
+}
+
 /* Keep links left-aligned in expanded state */
 .sidebar .nav-link {
   justify-content: flex-start;

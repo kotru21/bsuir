@@ -52,10 +52,10 @@ interface AgeBucketRow {
   count: bigint;
 }
 
-interface GenderFitnessRow {
+interface GenderFitnessGroup {
   gender: string;
   fitnessLevel: string;
-  count: bigint;
+  _count: CountAggregate;
 }
 
 interface GoalFormatRow {
@@ -327,7 +327,7 @@ export async function getDemographicStats(): Promise<DemographicStats> {
   };
 
   try {
-    const [ageRows, genderFitnessRows, goalRows] = (await Promise.all([
+    const [ageRows, genderFitnessGroups, goalRows] = (await Promise.all([
       prisma.$queryRaw<AgeBucketRow[]>`
         SELECT bucket, COUNT(*)::bigint AS count
         FROM (
@@ -342,11 +342,10 @@ export async function getDemographicStats(): Promise<DemographicStats> {
         ) AS buckets
         GROUP BY bucket
       `,
-      prisma.$queryRaw<GenderFitnessRow[]>`
-        SELECT gender, "fitnessLevel" AS "fitnessLevel", COUNT(*)::bigint AS count
-        FROM "SurveySubmission"
-        GROUP BY gender, "fitnessLevel"
-      `,
+      prisma.surveySubmission.groupBy({
+        by: ["gender", "fitnessLevel"],
+        _count: { _all: true },
+      }),
       prisma.$queryRaw<GoalFormatRow[]>`
         SELECT
           lower(goal) AS goal,
@@ -357,7 +356,7 @@ export async function getDemographicStats(): Promise<DemographicStats> {
         CROSS JOIN LATERAL unnest("preferredFormats") AS format
         GROUP BY lower(goal), lower(format)
       `,
-    ])) as [AgeBucketRow[], GenderFitnessRow[], GoalFormatRow[]];
+    ])) as [AgeBucketRow[], GenderFitnessGroup[], GoalFormatRow[]];
 
     const ageMap = new Map<string, number>();
     for (const row of ageRows) {
@@ -369,10 +368,10 @@ export async function getDemographicStats(): Promise<DemographicStats> {
         label,
         count: ageMap.get(label) ?? 0,
       })),
-      genderByFitness: genderFitnessRows.map((row: GenderFitnessRow) => ({
+      genderByFitness: genderFitnessGroups.map((row) => ({
         gender: row.gender,
         fitnessLevel: row.fitnessLevel,
-        count: toNumber(row.count),
+        count: toNumber(row._count._all),
       })),
       goalOverlap: (() => {
         const overlap: { goal: string; format: string; count: number }[] = [];

@@ -32,6 +32,15 @@ export function DashboardPage(): JSX.Element {
     queryFn: () => fetchTimeline(rangeDays),
   });
 
+  const overview = overviewQuery.data;
+  const demographics = demographicsQuery.data;
+  const timeline = timelineQuery.data;
+
+  const timelinePoints = useMemo(
+    () => timeline?.points ?? [],
+    [timeline]
+  );
+
   const loading =
     overviewQuery.isLoading ||
     demographicsQuery.isLoading ||
@@ -41,21 +50,12 @@ export function DashboardPage(): JSX.Element {
     return <FullscreenSpinner message="Загружаем статистику..." />;
   }
 
-  const overview = overviewQuery.data;
-  const demographics = demographicsQuery.data;
-  const timeline = timelineQuery.data;
-
   if (!overview || !demographics || !timeline) {
     return <p>Нет данных для отображения.</p>;
   }
 
   const topFormats = overview.formatLeaders;
   const topGoals = overview.goalLeaders;
-
-  const timelinePoints = useMemo(
-    () => timeline.points ?? [],
-    [timeline.points]
-  );
 
   return (
     <div className="dashboard">

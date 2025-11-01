@@ -14,7 +14,7 @@ const FITNESS_LABELS: Record<string, string> = {
 
 export function FitnessDistributionChart({
   data,
-}: FitnessDistributionChartProps): JSX.Element {
+}: FitnessDistributionChartProps): React.JSX.Element {
   const chartData = useMemo(() => {
     const labels = Object.keys(data);
     const dataset = labels.map((label) => data[label] ?? 0);

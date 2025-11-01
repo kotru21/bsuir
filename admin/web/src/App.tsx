@@ -6,7 +6,11 @@ import { LoginPage } from "./pages/LoginPage";
 import { Layout } from "./components/Layout";
 import { FullscreenSpinner } from "./components/FullscreenSpinner";
 
-function ProtectedRoute({ children }: { children: JSX.Element }): JSX.Element {
+function ProtectedRoute({
+  children,
+}: {
+  children: React.JSX.Element;
+}): React.JSX.Element {
   const auth = useAuth();
 
   if (auth.loading) {
@@ -20,7 +24,7 @@ function ProtectedRoute({ children }: { children: JSX.Element }): JSX.Element {
   return children;
 }
 
-function AuthenticatedLayout(): JSX.Element {
+function AuthenticatedLayout(): React.JSX.Element {
   return (
     <ProtectedRoute>
       <Layout>
@@ -30,7 +34,7 @@ function AuthenticatedLayout(): JSX.Element {
   );
 }
 
-export default function App(): JSX.Element {
+export default function App(): React.JSX.Element {
   return (
     <AuthProvider>
       <Routes>

@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
 import logoUrl from "../assets/logo.png";
 
-export function LoginPage(): JSX.Element {
+export function LoginPage(): React.JSX.Element {
   const auth = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

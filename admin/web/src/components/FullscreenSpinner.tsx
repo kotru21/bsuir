@@ -2,7 +2,7 @@ export function FullscreenSpinner({
   message,
 }: {
   message?: string;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <div className="fullscreen-spinner">
       <div className="spinner" />

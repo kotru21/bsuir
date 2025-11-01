@@ -7,7 +7,9 @@ interface TimelineChartProps {
   points: TimelinePoint[];
 }
 
-export function TimelineChart({ points }: TimelineChartProps): JSX.Element {
+export function TimelineChart({
+  points,
+}: TimelineChartProps): React.JSX.Element {
   const chartData = useMemo(() => {
     const labels = points.map((point) => point.date);
     const values = points.map((point) => point.submissions);

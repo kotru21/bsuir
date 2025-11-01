@@ -8,7 +8,7 @@ export function MetricCard({
   title,
   value,
   hint,
-}: MetricCardProps): JSX.Element {
+}: MetricCardProps): React.JSX.Element {
   return (
     <div className="card">
       <h2>{title}</h2>

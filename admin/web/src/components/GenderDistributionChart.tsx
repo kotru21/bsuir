@@ -10,7 +10,7 @@ const COLORS = ["#38bdf8", "#a855f7", "#f97316", "#14b8a6"];
 
 export function GenderDistributionChart({
   data,
-}: GenderDistributionChartProps): JSX.Element {
+}: GenderDistributionChartProps): React.JSX.Element {
   const chartData = useMemo(() => {
     const labels = Object.keys(data);
     const values = labels.map((label) => data[label] ?? 0);

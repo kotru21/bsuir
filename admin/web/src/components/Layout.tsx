@@ -67,12 +67,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             disabled={auth.logoutInProgress}
             aria-disabled={auth.logoutInProgress}
             title={auth.logoutInProgress ? "Выходим..." : "Выйти"}
-            style={{
-              marginTop: "1rem",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}>
+            style={{ marginTop: "1rem" }}>
             <span className="sidebar-footer__icon" aria-hidden>
               🔓
             </span>

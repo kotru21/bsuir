@@ -133,6 +133,10 @@ button {
   align-items: center;
   gap: 8px;
   justify-content: flex-start;
+  /* match nav-link spacing */
+  padding: 10px 12px;
+  width: 100%;
+  border-radius: 8px;
 }
 .sidebar-footer__icon {
   display: none;
@@ -144,6 +148,8 @@ button {
 }
 .sidebar--collapsed .sidebar__footer .sidebar__logout {
   justify-content: center;
+  width: 44px;
+  padding: 10px 6px;
 }
 .sidebar--collapsed .sidebar__footer .sidebar__logout .sidebar-footer__text {
   display: none;

@@ -80,7 +80,11 @@ button {
   font-size: 18px;
   line-height: 1;
   width: 24px;
+  height: 24px;
   text-align: center;
+  /* when visible, center the image inside */
+  align-items: center;
+  justify-content: center;
 }
 /* SVG/icon images used inside nav links and footer */
 .nav-link__icon-img,
@@ -90,6 +94,16 @@ button {
   display: inline-block;
   object-fit: contain;
   vertical-align: middle;
+}
+/* make SVG icons white (works well for monochrome icons) */
+.nav-link__icon-img,
+.sidebar-footer__icon-img {
+  filter: brightness(0) invert(1);
+}
+
+/* small spacing when nav is expanded */
+.nav-link .nav-link__icon-img {
+  margin-right: 6px;
 }
 .sidebar__logo {
   display: block;
@@ -141,7 +155,7 @@ button {
 }
 
 .sidebar--collapsed .nav-link__icon {
-  display: inline-block;
+  display: flex; /* center icon horizontally/vertically when sidebar is collapsed */
 }
 
 /* Center icons inside nav-links when sidebar is collapsed */
@@ -169,6 +183,11 @@ button {
   display: none;
   font-size: 18px;
   line-height: 1;
+  width: 24px;
+  height: 24px;
+  display: none;
+  align-items: center;
+  justify-content: center;
 }
 .sidebar__footer .sidebar__logout .sidebar-footer__text {
   display: inline-block;
@@ -182,7 +201,7 @@ button {
   display: none;
 }
 .sidebar--collapsed .sidebar__footer .sidebar__logout .sidebar-footer__icon {
-  display: inline-block;
+  display: flex;
 }
 
 /* Mobile improvements */

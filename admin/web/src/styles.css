@@ -302,8 +302,17 @@ button {
 
 .main__header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 12px;
+}
+
+/* Ensure header text and username are left-aligned */
+.main__header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .main__header h1 {
@@ -360,6 +369,8 @@ button {
   padding: 20px;
   border: 1px solid rgba(148, 163, 184, 0.15);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.5);
+  /* allow horizontal scroll inside cards (e.g. wide tables) */
+  overflow-x: auto;
 }
 
 .card h2 {
@@ -451,6 +462,8 @@ button {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  /* allow table to be wider than card and be scrolled inside */
+  min-width: 640px;
 }
 
 .table thead {
@@ -464,6 +477,8 @@ button {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  white-space: normal;
+  word-break: break-word;
 }
 
 .badge {

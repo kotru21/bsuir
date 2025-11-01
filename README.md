@@ -146,11 +146,11 @@ flowchart TD
 ```mermaid
 flowchart LR
    User["Клиент Telegram"] -->|API бота| BotCore["Telegraf + Fastify приложение"]
-   Admin["Админ SPA<br>React/Vite"] -->|REST /admin/api| BotCore
+   Admin["Админ SPA React/Vite"] -->|REST /admin/api| BotCore
    BotCore -->|Prisma ORM| DB[(PostgreSQL)]
-   BotCore -->|Статический каталог| Catalog[src/data/sections.ts]
-   BotCore -->|Рейтинг (scoring)| Engine[src/recommendation.ts]
-   Admin -->|Статический бандл| Vite[Vite build output]
+   BotCore -->|Статический каталог| Catalog["sections.ts"]
+   BotCore -->|Рейтинг scoring| Engine["recommendation.ts"]
+   Admin -->|Статический бандл| Vite["Vite build output"]
 ```
 
 - **Развёртывание**: один Node.js процесс обслуживает и бота, и API; статика админ-панели раздаётся Fastify, а база может быть общедоступной или управляемой через облако.
@@ -164,23 +164,23 @@ flowchart LR
 ```mermaid
 flowchart TD
    subgraph Presentation
-      A[src/bot/app.ts]
-      B[src/bot/scenes/onboarding/index.ts]
-      C[admin/web/src]
+      A["bot/app.ts"]
+      B["bot/scenes/onboarding/index.ts"]
+      C["admin/web/src"]
    end
    subgraph Services
-      D[src/recommendation.ts]
-      E[src/services/profileAssembler.ts]
-      F[src/services/submissionRecorder.ts]
-      G[src/admin/services/statisticsService.ts]
+      D["recommendation.ts"]
+      E["services/profileAssembler.ts"]
+      F["services/submissionRecorder.ts"]
+      G["admin/services/statisticsService.ts"]
    end
    subgraph Infrastructure
-      H[src/infrastructure/prismaClient.ts]
-      I[prisma/schema.prisma]
-      J[src/bot/services/imageResolver.ts]
+      H["infrastructure/prismaClient.ts"]
+      I["prisma/schema.prisma"]
+      J["bot/services/imageResolver.ts"]
    end
    subgraph Data
-      K[src/data/sections.ts]
+      K["data/sections.ts"]
    end
 
    A --> B
@@ -238,7 +238,7 @@ flowchart TD
    C --> E[Мастер: возраст -> пол -> физподготовка -> формат -> цели -> контактность]
    D --> E
    E --> F[Собрать профиль пользователя]
-   F --> G[Вычислить рекомендации (recommendSections)]
+   F --> G[Вычислить рекомендации recommendSections]
    G --> H{Найдены релевантные секции?}
    H -- Да --> I[Отправить топ-N секций с обоснованием]
    H -- Нет --> J[Показать запасную секцию и подсказку для обратной связи]

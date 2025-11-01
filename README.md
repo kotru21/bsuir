@@ -21,25 +21,41 @@
 ## Введение
 
 Прототип системы цифрового маркетинга образовательно-спортивных услуг БГУИР — это чат-бот в Telegram, который помогает абитуриентам, студентам и сотрудникам подобрать подходящие спортивные секции, понять ожидаемую динамику прогресса и быстро связаться с организаторами. Бот сочетает маркетинговый подход (акцент на ценностях и результатах) и персонализированную аналитику (учёт анамнеза, целей, предпочтений по формату занятий).
-subgraph Презентация
-A["bot/app.ts"]
-B["bot/scenes/onboarding/index.ts"]
-C["admin/web/src"]
-end
-subgraph Сервисы
-D["recommendation.ts"]
-E["services/profileAssembler.ts"]
-F["services/submissionRecorder.ts"]
-G["admin/services/statisticsService.ts"]
-end
-subgraph Инфраструктура
-H["infrastructure/prismaClient.ts"]
-I["prisma/schema.prisma"]
-J["bot/services/imageResolver.ts"]
-end
-subgraph Данные
-K["data/sections.ts"]
-end
+
+```mermaid
+flowchart TD
+   subgraph Презентация
+      A["bot/app.ts"]
+      B["bot/scenes/onboarding/index.ts"]
+      C["admin/web/src"]
+   end
+   subgraph Сервисы
+      D["recommendation.ts"]
+      E["services/profileAssembler.ts"]
+      F["services/submissionRecorder.ts"]
+      G["admin/services/statisticsService.ts"]
+   end
+   subgraph Инфраструктура
+      H["infrastructure/prismaClient.ts"]
+      I["prisma/schema.prisma"]
+      J["bot/services/imageResolver.ts"]
+   end
+   subgraph Данные
+      K["data/sections.ts"]
+   end
+
+   A --> B
+   A --> D
+   B --> E
+   E --> D
+   F --> H
+   G --> H
+   H --> I
+   D --> K
+   C --> G
+   A --> F
+   A --> J
+```
 
 - **Дашборд аналитики**: главная страница отображает ключевые KPI — количество анкет, динамику вовлечённости, распределение по полу, возрасту, уровню подготовки и целям.
 - **Просмотр анкет**: таблица откликов позволяет искать, фильтровать и раскрывать профиль каждого пользователя вместе с рекомендациями и обоснованиями.

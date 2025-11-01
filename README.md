@@ -289,7 +289,8 @@ test/
    # BOT_TOKEN                – токен бота из BotFather
    # DATABASE_URL             – строка подключения к PostgreSQL
    # ADMIN_USERNAME           – логин для панели
-   # ADMIN_PASSWORD_HASH      – Argon2-хэш пароля (например, npx argon2-cli "Пароль")
+   # ADMIN_PASSWORD           – пароль (хэш будет подсчитан автоматически)
+   #   или ADMIN_PASSWORD_HASH – заранее подготовленный Argon2-хэш
    # ADMIN_SESSION_SECRET     – секрет с длиной >= 32 символа
    ```
 

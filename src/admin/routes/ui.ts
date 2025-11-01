@@ -12,7 +12,7 @@ async function loadIndex(staticRoot: string): Promise<string | null> {
   const indexPath = path.join(staticRoot, "index.html");
   try {
     return await fs.readFile(indexPath, "utf8");
-  } catch (err) {
+  } catch (_err) {
     console.warn(`Admin UI index not found at ${indexPath}`);
     return null;
   }

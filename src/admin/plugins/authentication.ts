@@ -22,7 +22,7 @@ async function verifyCredentials(
   }
 
   if (!config.adminPasswordHash) {
-    instance.log.error("Admin password hash is not configured.");
+    instance.log.error("Admin password is not configured.");
     return false;
   }
 

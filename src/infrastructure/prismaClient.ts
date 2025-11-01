@@ -1,19 +1,34 @@
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient | null = null;
 
-export type PrismaClientInstance = typeof prisma;
+export type PrismaClientInstance = PrismaClient;
 
-export async function connectPrisma(): Promise<void> {
-  await prisma.$connect();
-}
-
-export function getPrismaClient(): PrismaClientInstance {
+function ensurePrisma(): PrismaClientInstance {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
   return prisma;
 }
 
+export async function connectPrisma(): Promise<void> {
+  await ensurePrisma().$connect();
+}
+
+export function getPrismaClient(): PrismaClientInstance {
+  return ensurePrisma();
+}
+
 export async function disconnectPrisma(): Promise<void> {
-  await prisma.$disconnect().catch((err: unknown) => {
-    console.error("Failed to disconnect Prisma client", err);
-  });
+  if (!prisma) {
+    return;
+  }
+  await prisma
+    .$disconnect()
+    .catch((err: unknown) => {
+      console.error("Failed to disconnect Prisma client", err);
+    })
+    .finally(() => {
+      prisma = null;
+    });
 }

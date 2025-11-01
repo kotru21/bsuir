@@ -328,70 +328,40 @@ erDiagram
 - **Инфраструктура** — Node.js 18 (ESM), TypeScript, `tsx` для запуска в dev, `tsc` и `vite build` для сборки, деплой на Heroku.
 - **Сессии** — в памяти Telegraf для бота и cookie-based Fastify session для админ-панели.
 
-### Дерево проекта
+### Структура проекта
+
+#### Backend (src/)
 
 ```text
 src/
-   index.ts
-   recommendation.ts
-   types.ts
-   admin/
-      config.ts
-      server.ts
-      routes/
-         auth.ts
-         stats.ts
-         submissions.ts
-         ui.ts
-      plugins/
-         authentication.ts
-      services/
-         statisticsService.ts
-   bot/
-      app.ts
-      constants.ts
-      formatters.ts
-      keyboards.ts
-      session.ts
-      telegram.ts
-      handlers/
-         commands.ts
-         sections.ts
-      scenes/
-         onboarding.ts
-         onboarding/
-            helpers.ts
-            prompts.ts
-            steps/
-               *.ts
-      services/
-         imageResolver.ts
-      utils/
-         safeHandler.ts
-   data/
-      sections.ts
-      images/
-   domain/
-      profileDefaults.ts
-   infrastructure/
-      prismaClient.ts
-   services/
-      profileAssembler.ts
-      submissionRecorder.ts
-admin/web/
-   index.html
-   vite.config.ts
-   src/
-      App.tsx
-      main.tsx
-      pages/
-      components/
-      api/
+├── bot/              # Telegram бот (Telegraf)
+│   ├── scenes/       # Онбординг-сценарии
+│   ├── handlers/     # Команды и действия
+│   └── services/     # Резолвинг изображений
+├── admin/            # REST API для админки (Fastify)
+│   ├── routes/       # Эндпоинты
+│   └── services/     # Статистика
+├── services/         # Бизнес-логика
+├── data/             # Каталог секций + изображения
+├── infrastructure/   # Prisma, DB
+└── recommendation.ts # Алгоритм подбора
+```
+
+#### Frontend (admin/web/)
+
+```text
+admin/web/src/
+├── pages/         # Страницы админки
+├── components/    # UI компоненты
+└── api/           # HTTP клиент
+```
+
+#### Database (prisma/)
+
+```text
 prisma/
-   schema.prisma
-   migrations/
-test/
-   *.test.ts
+├── schema.prisma  # Модели данных
+└── migrations/    # История миграций
 ```
 
 ### Назначение ключевых файлов и модулей

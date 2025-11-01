@@ -1,3 +1,8 @@
+import {
+  PrismaClientInitializationError,
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+} from "@prisma/client/runtime/library";
 import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
 interface RecommendationEntity {
@@ -23,6 +28,24 @@ interface SubmissionEntity {
   interestedInCompetition: boolean;
   createdAt: Date;
   recommendations?: RecommendationEntity[];
+}
+
+function isRecoverablePrismaError(err: unknown): boolean {
+  if (err instanceof PrismaClientKnownRequestError) {
+    return ["P2021", "P2022", "P1010", "P1001"].includes(err.code);
+  }
+  if (err instanceof PrismaClientInitializationError) {
+    return true;
+  }
+  if (err instanceof PrismaClientUnknownRequestError) {
+    return true;
+  }
+  return false;
+}
+
+function logAndReturn<T>(err: unknown, fallback: T): T {
+  console.warn("Prisma statistics query failed, returning fallback", err);
+  return fallback;
 }
 
 type SubmissionBooleanField = "avoidContact" | "interestedInCompetition";
@@ -198,22 +221,32 @@ function aggregateCounts(
 
 export async function getOverviewStats(): Promise<OverviewStats> {
   const prisma = getPrismaClient();
-  const submissions =
-    (await prisma.surveySubmission.findMany()) as SubmissionEntity[];
+  const empty: OverviewStats = {
+    totalSubmissions: 0,
+    submissionsLast7Days: 0,
+    averageAge: null,
+    genderDistribution: {},
+    fitnessDistribution: {},
+    contactPreference: { avoidContact: 0, allowContact: 0 },
+    competitionInterest: { interested: 0, notInterested: 0 },
+    formatLeaders: [],
+    goalLeaders: [],
+    lastSubmissionAt: null,
+  };
+
+  let submissions: SubmissionEntity[];
+  try {
+    submissions =
+      (await prisma.surveySubmission.findMany()) as SubmissionEntity[];
+  } catch (err) {
+    if (isRecoverablePrismaError(err)) {
+      return logAndReturn(err, empty);
+    }
+    throw err;
+  }
 
   if (!submissions.length) {
-    return {
-      totalSubmissions: 0,
-      submissionsLast7Days: 0,
-      averageAge: null,
-      genderDistribution: {},
-      fitnessDistribution: {},
-      contactPreference: { avoidContact: 0, allowContact: 0 },
-      competitionInterest: { interested: 0, notInterested: 0 },
-      formatLeaders: [],
-      goalLeaders: [],
-      lastSubmissionAt: null,
-    };
+    return empty;
   }
 
   const now = new Date();
@@ -293,14 +326,26 @@ export async function getOverviewStats(): Promise<OverviewStats> {
 
 export async function getDemographicStats(): Promise<DemographicStats> {
   const prisma = getPrismaClient();
-  const submissions =
-    (await prisma.surveySubmission.findMany()) as SubmissionEntity[];
-
-  return {
-    ageBuckets: buildAgeBuckets(submissions),
-    genderByFitness: buildGenderFitnessMatrix(submissions),
-    goalOverlap: buildGoalOverlap(submissions),
+  const empty: DemographicStats = {
+    ageBuckets: buildAgeBuckets([]),
+    genderByFitness: [],
+    goalOverlap: [],
   };
+
+  try {
+    const submissions =
+      (await prisma.surveySubmission.findMany()) as SubmissionEntity[];
+    return {
+      ageBuckets: buildAgeBuckets(submissions),
+      genderByFitness: buildGenderFitnessMatrix(submissions),
+      goalOverlap: buildGoalOverlap(submissions),
+    };
+  } catch (err) {
+    if (isRecoverablePrismaError(err)) {
+      return logAndReturn(err, empty);
+    }
+    throw err;
+  }
 }
 
 export async function getTimelineStats(
@@ -309,16 +354,24 @@ export async function getTimelineStats(
   const prisma = getPrismaClient();
   const rangeStart = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000);
 
-  const submissions = await prisma.surveySubmission.findMany({
-    where: {
-      createdAt: {
-        gte: rangeStart,
+  let submissionEntries: SubmissionEntity[];
+  try {
+    const submissions = await prisma.surveySubmission.findMany({
+      where: {
+        createdAt: {
+          gte: rangeStart,
+        },
       },
-    },
-    orderBy: { createdAt: "asc" },
-  });
+      orderBy: { createdAt: "asc" },
+    });
 
-  const submissionEntries = submissions as SubmissionEntity[];
+    submissionEntries = submissions as SubmissionEntity[];
+  } catch (err) {
+    if (isRecoverablePrismaError(err)) {
+      return logAndReturn(err, []);
+    }
+    throw err;
+  }
 
   const map = new Map<string, number>();
   for (const submission of submissionEntries) {
@@ -338,21 +391,32 @@ export async function getSubmissionPage(
   const prisma = getPrismaClient();
   const skip = (page - 1) * pageSize;
 
-  const [total, entries] = await prisma.$transaction([
-    prisma.surveySubmission.count(),
-    prisma.surveySubmission.findMany({
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: pageSize,
-      include: {
-        recommendations: {
-          orderBy: { rank: "asc" },
+  let total = 0;
+  let entries: SubmissionEntity[] = [];
+  try {
+    const [count, result] = await prisma.$transaction([
+      prisma.surveySubmission.count(),
+      prisma.surveySubmission.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+        include: {
+          recommendations: {
+            orderBy: { rank: "asc" },
+          },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
+    total = count;
+    entries = result as SubmissionEntity[];
+  } catch (err) {
+    if (isRecoverablePrismaError(err)) {
+      return logAndReturn(err, { items: [], total: 0 });
+    }
+    throw err;
+  }
 
-  const submissionEntries = entries as SubmissionEntity[];
+  const submissionEntries = entries;
 
   const items: SubmissionListItem[] = submissionEntries.map((submission) => {
     const recommendations = submission.recommendations ?? [];

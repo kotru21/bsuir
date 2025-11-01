@@ -66,6 +66,54 @@ button {
   border-radius: 8px;
   transition: background 0.2s ease;
 }
+.sidebar__logo {
+  display: block;
+  width: 48px; /* фиксированная ширина логотипа */
+  height: 48px; /* фиксированная высота для выравнивания */
+  object-fit: contain;
+}
+
+/* Burger button in header */
+.burger {
+  background: transparent;
+  border: none;
+  color: #cbd5f5;
+  font-size: 20px;
+  cursor: pointer;
+  margin-right: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.burger:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+/* Collapsed sidebar state */
+.sidebar--collapsed {
+  width: 72px;
+}
+.sidebar--collapsed .sidebar__brand {
+  justify-content: center;
+  gap: 8px;
+}
+.sidebar--collapsed .sidebar__brand-text {
+  display: none;
+}
+.sidebar--collapsed .sidebar__logo {
+  width: 36px;
+  height: 36px;
+}
+.sidebar--collapsed .sidebar__nav {
+  align-items: center;
+}
+.sidebar--collapsed .nav-link {
+  width: 44px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.sidebar--collapsed .nav-link__text {
+  display: none;
+}
 
 .nav-link:hover {
   background: rgba(59, 130, 246, 0.15);

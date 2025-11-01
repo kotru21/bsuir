@@ -1,21 +1,39 @@
 import { NavLink } from "react-router-dom";
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import logoUrl from "../assets/logo.png";
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("sidebarCollapsed") === "1";
+    } catch (e) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
+    } catch (e) {
+      /* ignore */
+    }
+  }, [collapsed]);
+
   const handleLogout = useCallback(() => {
     void auth.logout();
   }, [auth]);
 
+  const toggleCollapsed = useCallback(() => setCollapsed((c) => !c), []);
+
   return (
     <div className="layout-container">
-      <aside className="sidebar">
+      <aside className={"sidebar" + (collapsed ? " sidebar--collapsed" : "")}>
         <div className="sidebar__brand">
           <img src={logoUrl} alt="Логотип" className="sidebar__logo" />
-          <div>
+          <div className="sidebar__brand-text">
             <strong>Админ-панель</strong>
           </div>
         </div>
@@ -26,19 +44,27 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             className={({ isActive }: { isActive: boolean }) =>
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
-            Обзор
+            <span className="nav-link__text">Обзор</span>
           </NavLink>
           <NavLink
             to="/submissions"
             className={({ isActive }: { isActive: boolean }) =>
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
-            Опросы
+            <span className="nav-link__text">Опросы</span>
           </NavLink>
         </nav>
       </aside>
       <main className="main">
         <header className="main__header">
+          <button
+            className="burger"
+            onClick={toggleCollapsed}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Развернуть сайдбар" : "Свернуть сайдбар"}>
+            ☰
+          </button>
+
           <div className="main__header-info">
             <h1>Контрольная панель</h1>
             {auth.username ? (

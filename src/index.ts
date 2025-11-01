@@ -63,16 +63,6 @@ async function start(): Promise<void> {
     );
   }
 
-  configureBot(bot);
-
-  try {
-    await bot.launch();
-    console.log("Telegram-бот запущен.");
-  } catch (err) {
-    console.error("Failed to launch Telegram bot:", err);
-    throw err;
-  }
-
   try {
     adminServer = await buildAdminServer({
       config: adminConfig,
@@ -84,6 +74,26 @@ async function start(): Promise<void> {
     console.log(`Админ-панель доступна по порту ${port}.`);
   } catch (err) {
     console.error("Failed to start admin server:", err);
+    throw err;
+  }
+
+  configureBot(bot);
+
+  try {
+    await bot.launch();
+    console.log("Telegram-бот запущен.");
+  } catch (err) {
+    console.error("Failed to launch Telegram bot:", err);
+    if (adminServer) {
+      try {
+        await adminServer.close();
+      } catch (closeErr) {
+        console.error(
+          "Failed to close admin server after bot launch failure:",
+          closeErr
+        );
+      }
+    }
     throw err;
   }
 }

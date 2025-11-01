@@ -30,6 +30,7 @@
 - **Обзор каталога секций**: команда `/sections` выводит галерею с кратким описанием и преимуществами каждой секции, включая изображения и контактную информацию.
 - **Гибкий UX**: кнопки-инлайн облегчают выбор ответов, а безопасные обработчики взаимодействий защищают от ошибок Telegram API.
 - **Маркетинговые инсайты**: формирование профиля пользователя на основе ответов облегчает последующую сегментацию аудитории и планирование коммуникаций.
+- **Админ-панель и аналитика**: веб-интерфейс на Fastify + React показывает агрегированную статистику опросов, диаграммы распределения и список всех заполненных анкет.
 
 ## Диаграммы чат-бота
 
@@ -152,11 +153,14 @@ erDiagram
 
 ### Архитектурный обзор
 
-- **Интерфейс взаимодействия** — Telegram бот, реализованный на базе Telegraf WizardScene, управляет многошаговыми сценариями.
-- **Доменная логика** — модуль `recommendation.ts` со scoring-движком и причинными объяснениями, использующий статический каталог.
-- **Данные** — статический каталог секций (`src/data/sections.ts`) с изображениями и прогнозами результатов.
-- **Инфраструктура** — Node.js 18 (ESM), TypeScript, `tsx` для запуска в dev, `tsc` для сборки.
-- **Сессии** — хранятся в памяти (Telegraf session middleware), включают профиль и временные состояния.
+- **Интерфейс взаимодействия** — Telegram бот на Telegraf WizardScene управляет многошаговыми сценариями и безопасной отправкой сообщений.
+- **Доменная логика** — модуль `src/recommendation.ts` со scoring-движком и причинными объяснениями поверх статического каталога.
+- **Каталог** — статические данные секций (`src/data/sections.ts`) с изображениями, прогнозами результатов и атрибутами отбора.
+- **Админ-HTTP слой** — Fastify-сервер (`src/admin`) с сессиями, CSRF-защитой, статикой Vite и REST API под `/admin/api`.
+- **Хранилище** — PostgreSQL + Prisma (`prisma/schema.prisma`, `src/infrastructure/prismaClient.ts`) для сохранения анкет и рекомендаций.
+- **Админ-UI** — одностраничное приложение на React/Vite (`admin/web`) с TanStack Query и Chart.js для дашборда.
+- **Инфраструктура** — Node.js 18 (ESM), TypeScript, `tsx` для запуска в dev, `tsc` и `vite build` для сборки, деплой на Heroku.
+- **Сессии** — в памяти Telegraf для бота и cookie-based Fastify session для админ-панели.
 
 ### Дерево проекта
 
@@ -165,9 +169,18 @@ src/
    index.ts
    recommendation.ts
    types.ts
-   data/
-      sections.ts
-      images/
+   admin/
+      config.ts
+      server.ts
+      routes/
+         auth.ts
+         stats.ts
+         submissions.ts
+         ui.ts
+      plugins/
+         authentication.ts
+      services/
+         statisticsService.ts
    bot/
       app.ts
       constants.ts
@@ -189,45 +202,72 @@ src/
          imageResolver.ts
       utils/
          safeHandler.ts
+   data/
+      sections.ts
+      images/
    domain/
       profileDefaults.ts
-services/
-   profileAssembler.ts
+   infrastructure/
+      prismaClient.ts
+   services/
+      profileAssembler.ts
+      submissionRecorder.ts
+admin/web/
+   index.html
+   vite.config.ts
+   src/
+      App.tsx
+      main.tsx
+      pages/
+      components/
+      api/
+prisma/
+   schema.prisma
+   migrations/
 test/
    *.test.ts
 ```
 
 ### Назначение ключевых файлов и модулей
 
-| Путь                                   | Назначение                                                                                              |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                         | Точка входа: загрузка `.env`, запуск Telegraf, регистрация сцен и middleware                            |
-| `src/recommendation.ts`                | Алгоритм расчёта рейтинга секций, набор эвристик, fallback-логика                                       |
-| `src/types.ts`                         | Определения типов: `UserProfile`, `SportSection`, `RecommendationResult` и вспомогательные перечисления |
-| `src/data/sections.ts`                 | Каталог секций с описанием, локацией, расписанием, прогнозами результатов и изображениями               |
-| `src/bot/app.ts`                       | Конфигурация Telegraf, подключение сцен, общие middlewares                                              |
-| `src/bot/constants.ts`                 | Константы проекта (префиксы callback-данных, лимиты рекомендаций)                                       |
-| `src/bot/formatters.ts`                | Утилиты MarkdownV2, форматирование карточек рекомендаций                                                |
-| `src/bot/keyboards.ts`                 | Генераторы inline-клавиатур и раскладок для шагов анкеты                                                |
-| `src/bot/session.ts`                   | Структура и helpers работы с сессией (`ensureProfile`, `ensureTemp`)                                    |
-| `src/bot/telegram.ts`                  | Безопасные методы отправки сообщений/фото с fallback на plain text                                      |
-| `src/bot/handlers/commands.ts`         | Регистрация команд `/start`, `/restart`, `/sections`                                                    |
-| `src/bot/handlers/sections.ts`         | Рендер каталога секций и обработка инлайн-навигации                                                     |
-| `src/bot/scenes/onboarding.ts`         | Центральная сцена-оркестратор анкеты                                                                    |
-| `src/bot/scenes/onboarding/steps/*.ts` | Модули, описывающие отдельные шаги Wizard-сцены                                                         |
-| `src/bot/scenes/onboarding/prompts.ts` | Текстовые шаблоны и подсказки для шагов                                                                 |
-| `src/bot/scenes/onboarding/helpers.ts` | Общие функции для работы сцен (например, `sendPromptMessage`)                                           |
-| `src/bot/services/imageResolver.ts`    | Нахождение файлов изображений в dev/prod среде                                                          |
-| `src/bot/utils/safeHandler.ts`         | Обёртка для ловли исключений внутри Telegraf-хэндлеров                                                  |
-| `src/domain/profileDefaults.ts`        | Значения профиля по умолчанию и базовые веса                                                            |
-| `src/services/profileAssembler.ts`     | Компоновка пользовательских ответов в `UserProfile`                                                     |
-| `test/*.test.ts`                       | Набор Jest-тестов для рекомендаций и сценариев онбординга                                               |
+| Путь                                      | Назначение                                                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`                            | Точка входа: загрузка `.env`, запуск Telegraf, регистрация сцен и middleware                            |
+| `src/recommendation.ts`                   | Алгоритм расчёта рейтинга секций, набор эвристик, fallback-логика                                       |
+| `src/types.ts`                            | Определения типов: `UserProfile`, `SportSection`, `RecommendationResult` и вспомогательные перечисления |
+| `src/data/sections.ts`                    | Каталог секций с описанием, локацией, расписанием, прогнозами результатов и изображениями               |
+| `src/bot/app.ts`                          | Конфигурация Telegraf, подключение сцен, общие middlewares                                              |
+| `src/bot/constants.ts`                    | Константы проекта (префиксы callback-данных, лимиты рекомендаций)                                       |
+| `src/bot/formatters.ts`                   | Утилиты MarkdownV2, форматирование карточек рекомендаций                                                |
+| `src/bot/keyboards.ts`                    | Генераторы inline-клавиатур и раскладок для шагов анкеты                                                |
+| `src/bot/session.ts`                      | Структура и helpers работы с сессией (`ensureProfile`, `ensureTemp`)                                    |
+| `src/bot/telegram.ts`                     | Безопасные методы отправки сообщений/фото с fallback на plain text                                      |
+| `src/bot/handlers/commands.ts`            | Регистрация команд `/start`, `/restart`, `/sections`                                                    |
+| `src/bot/handlers/sections.ts`            | Рендер каталога секций и обработка инлайн-навигации                                                     |
+| `src/bot/scenes/onboarding.ts`            | Центральная сцена-оркестратор анкеты                                                                    |
+| `src/bot/scenes/onboarding/steps/*.ts`    | Модули, описывающие отдельные шаги Wizard-сцены                                                         |
+| `src/bot/scenes/onboarding/prompts.ts`    | Текстовые шаблоны и подсказки для шагов                                                                 |
+| `src/bot/scenes/onboarding/helpers.ts`    | Общие функции для работы сцен (например, `sendPromptMessage`)                                           |
+| `src/bot/services/imageResolver.ts`       | Нахождение файлов изображений в dev/prod среде                                                          |
+| `src/bot/utils/safeHandler.ts`            | Обёртка для ловли исключений внутри Telegraf-хэндлеров                                                  |
+| `src/domain/profileDefaults.ts`           | Значения профиля по умолчанию и базовые веса                                                            |
+| `src/services/profileAssembler.ts`        | Компоновка пользовательских ответов в `UserProfile`                                                     |
+| `src/services/submissionRecorder.ts`      | Сохранение заполненных анкет и рекомендаций в базе данных                                               |
+| `src/admin/server.ts`                     | Fastify-приложение с конфигурацией сессий, статикой и подключением REST-маршрутов                       |
+| `src/admin/services/statisticsService.ts` | Агрегация статистики и выборка анкет для админ-панели                                                   |
+| `src/admin/routes/*.ts`                   | REST-эндпойнты `/admin/api` для авторизации, статистики и списка анкет                                  |
+| `prisma/schema.prisma`                    | Схема базы данных Prisma (PostgreSQL) для хранения опросов и рекомендаций                               |
+| `admin/web/src`                           | Исходники SPA админ-панели (React + Vite + TanStack Query + Chart.js)                                   |
+| `test/*.test.ts`                          | Набор Jest-тестов для рекомендаций и сценариев онбординга                                               |
 
 ### Технологический стек
 
 - **Node.js 18 + ES Modules** — основная платформа исполнения и сборки.
 - **TypeScript** — статическая типизация, NodeNext-модули для корректных `.js` импортов.
 - **Telegraf** — фреймворк для Telegram-ботов с поддержкой сцен и middleware.
+- **Fastify** — HTTP-сервер для админ-панели с сессиями, CSRF и статикой.
+- **Prisma + PostgreSQL** — слой данных для хранения ответов опросов и рекомендаций.
+- **React + Vite + TanStack Query + Chart.js** — SPA-дэшборд для визуализации статистики.
 - **Jest** — модульные тесты для рекомендаций и сценариев опроса.
 - **tsx** — быстрый запуск TypeScript без предварительной компиляции в режиме разработки.
 - **dotenv** — загрузка токена бота и других секретов из `.env`.
@@ -245,23 +285,33 @@ test/
 
    ```powershell
    Copy-Item .env.example .env
-   # Откройте .env и задайте BOT_TOKEN, выданный BotFather
+   # Обязательно заполните:
+   # BOT_TOKEN                – токен бота из BotFather
+   # DATABASE_URL             – строка подключения к PostgreSQL
+   # ADMIN_USERNAME           – логин для панели
+   # ADMIN_PASSWORD_HASH      – Argon2-хэш пароля (например, npx argon2-cli "Пароль")
+   # ADMIN_SESSION_SECRET     – секрет с длиной >= 32 символа
    ```
 
-3. **Запуск в режиме разработки** (горячая перезагрузка через `tsx`)
+3. **Применение миграций базы данных** (один раз на окружение)
 
    ```powershell
-   npm run dev
+   npx prisma migrate deploy
    ```
 
-4. **Сборка и продакшен-запуск**
+4. **Разработка**
+
+   - API + бот: `npm run dev` (Telegraf + Fastify на <http://localhost:3000>)
+   - UI: `npm run dev:admin` (Vite dev-server на <http://localhost:5173> с прокси на API)
+
+5. **Сборка и продакшен-запуск**
 
    ```powershell
-   npm run build
-   npm start
+   npm run build   # vite build + tsc
+   npm start       # запускает бота и Fastify-сервер
    ```
 
-5. **Проверка типов**
+6. **Проверка типов**
 
    ```powershell
    npx tsc --noEmit

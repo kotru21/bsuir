@@ -12,6 +12,7 @@ import {
 import { renderRecommendationSummary } from "../../../formatters.js";
 import { replyMarkdownV2Safe } from "../../../telegram.js";
 import type { RecommendationResult } from "../../../../types.js";
+import { recordSubmission } from "../../../../services/submissionRecorder.js";
 
 export async function competitionInterestStep(
   ctx: RecommendationContext
@@ -84,6 +85,17 @@ export async function competitionInterestStep(
         buildRecommendationKeyboard(item.section.id)
       );
     }
+  }
+
+  try {
+    await recordSubmission({
+      profile,
+      recommendations: temp.recommendations ?? [],
+      telegramUserId: ctx.from?.id,
+      chatId: ctx.chat?.id,
+    });
+  } catch (err) {
+    console.error("Failed to persist survey submission", err);
   }
 
   await ctx.reply(

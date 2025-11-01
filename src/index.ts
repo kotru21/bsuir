@@ -2,6 +2,12 @@ import dotenv from "dotenv";
 import { Telegraf } from "telegraf";
 import type { RecommendationContext } from "./bot/session.js";
 import { configureBot } from "./bot/app.js";
+import { loadAdminConfig } from "./admin/config.js";
+import { buildAdminServer } from "./admin/server.js";
+import {
+  connectPrisma,
+  disconnectPrisma,
+} from "./infrastructure/prismaClient.js";
 
 dotenv.config();
 
@@ -26,6 +32,10 @@ if (!BOT_TOKEN) {
 }
 
 const bot = new Telegraf<RecommendationContext>(BOT_TOKEN);
+const adminConfig = loadAdminConfig(nodeProcess?.env ?? {});
+const hasDatabase = Boolean(nodeProcess?.env?.DATABASE_URL);
+
+let adminServer: Awaited<ReturnType<typeof buildAdminServer>> | null = null;
 
 function setupProcessErrorHandling(): void {
   if (!nodeProcess?.on) {
@@ -39,16 +49,73 @@ function setupProcessErrorHandling(): void {
 
 setupProcessErrorHandling();
 
-configureBot(bot);
+async function start(): Promise<void> {
+  if (hasDatabase) {
+    try {
+      await connectPrisma();
+    } catch (err) {
+      console.error("Failed to connect to database:", err);
+      throw err;
+    }
+  } else {
+    console.warn(
+      "DATABASE_URL is not configured. Analytics persistence disabled."
+    );
+  }
 
-bot
-  .launch()
-  .then(() => {
+  configureBot(bot);
+
+  try {
+    await bot.launch();
     console.log("Telegram-бот запущен.");
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error("Failed to launch Telegram bot:", err);
-    nodeProcess?.exit?.(1);
+    throw err;
+  }
+
+  try {
+    adminServer = await buildAdminServer({
+      config: adminConfig,
+      trustProxy: true,
+    });
+
+    const port = Number(nodeProcess?.env?.PORT ?? 3000);
+    await adminServer.listen({ port, host: "0.0.0.0" });
+    console.log(`Админ-панель доступна по порту ${port}.`);
+  } catch (err) {
+    console.error("Failed to start admin server:", err);
+    throw err;
+  }
+}
+
+void start().catch((err) => {
+  console.error("Startup error:", err);
+  nodeProcess?.exit?.(1);
+});
+
+async function shutdown(signal: string): Promise<void> {
+  console.log(`Получен сигнал ${signal}, останавливаем сервисы...`);
+  await bot.stop(signal);
+
+  if (adminServer) {
+    try {
+      await adminServer.close();
+    } catch (err) {
+      console.error("Failed to close admin server:", err);
+    }
+  }
+
+  if (hasDatabase) {
+    await disconnectPrisma();
+  }
+  nodeProcess?.exit?.(0);
+}
+
+if (nodeProcess?.once) {
+  nodeProcess.once("SIGINT", () => {
+    void shutdown("SIGINT");
   });
-nodeProcess?.once?.("SIGINT", () => bot.stop("SIGINT"));
-nodeProcess?.once?.("SIGTERM", () => bot.stop("SIGTERM"));
+  nodeProcess.once("SIGTERM", () => {
+    void shutdown("SIGTERM");
+  });
+}

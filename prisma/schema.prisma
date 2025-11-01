@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SurveySubmission {
+  id                       String                     @id @default(cuid())
+  telegramUserId           String?
+  chatId                   String?
+  age                      Int
+  gender                   String
+  fitnessLevel             String
+  preferredFormats         String[]
+  desiredGoals             String[]
+  avoidContact             Boolean
+  interestedInCompetition  Boolean
+  createdAt                DateTime                   @default(now())
+  recommendations          RecommendationSnapshot[]
+
+  @@index([createdAt])
+  @@index([gender])
+  @@index([fitnessLevel])
+}
+
+model RecommendationSnapshot {
+  id            String           @id @default(cuid())
+  submission    SurveySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId  String
+  sectionId     String
+  sectionName   String
+  score         Float
+  rank          Int
+  reasons       Json?
+  createdAt     DateTime         @default(now())
+
+  @@index([submissionId, rank])
+  @@index([sectionId])
+}

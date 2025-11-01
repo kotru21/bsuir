@@ -3,7 +3,6 @@ import type { GoalTag, TrainingFormat } from "../types.js";
 import {
   fitnessLevelLabelsRu,
   fitnessOrder,
-  formatLabelsRu,
   goalOptions,
 } from "./constants.js";
 

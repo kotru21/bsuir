@@ -500,6 +500,12 @@ button {
   margin-top: 12px;
 }
 
+/* Ensure buttons inside pagination are spaced evenly */
+.pagination > div {
+  display: flex;
+  gap: 10px;
+}
+
 .login-screen {
   min-height: 100vh;
   display: flex;

@@ -48,5 +48,11 @@ export function TimelineChart({
     []
   );
 
-  return <Line data={chartData} options={options} />;
+  return (
+    <div className="w-full">
+      <div className="w-full h-56 sm:h-64 md:h-52">
+        <Line data={chartData} options={options} />
+      </div>
+    </div>
+  );
 }

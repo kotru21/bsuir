@@ -30,10 +30,14 @@ export function GenderDistributionChart({
   return (
     <Card className="flex flex-col gap-4">
       <h2>Распределение по полу</h2>
-      <Doughnut
-        data={chartData}
-        options={{ plugins: { legend: { position: "bottom" } } }}
-      />
+      <div className="w-full">
+        <div className="w-full h-56 sm:h-64 md:h-52">
+          <Doughnut
+            data={chartData}
+            options={{ plugins: { legend: { position: "bottom" } } }}
+          />
+        </div>
+      </div>
     </Card>
   );
 }

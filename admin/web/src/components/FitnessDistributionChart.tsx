@@ -57,7 +57,11 @@ export function FitnessDistributionChart({
   return (
     <Card className="flex flex-col gap-4">
       <h2>Уровень подготовки</h2>
-      <Bar data={chartData} options={options} />
+      <div className="w-full">
+        <div className="w-full h-56 sm:h-64 md:h-52">
+          <Bar data={chartData} options={options} />
+        </div>
+      </div>
     </Card>
   );
 }

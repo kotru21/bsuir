@@ -204,13 +204,13 @@ export function DashboardPage(): ReactElement {
                 Количество заполненных анкет по выбранному диапазону
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
               {[7, 30, 90].map((value) => (
                 <Button
                   key={value}
                   variant={value === rangeDays ? "primary" : "secondary"}
                   size="sm"
-                  className="min-w-[64px] md:min-w-[84px]"
+                  className="w-full sm:min-w-[84px]"
                   onClick={() => setRangeDays(value)}>
                   {value} дн.
                 </Button>

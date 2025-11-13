@@ -43,8 +43,8 @@ export function LoginPage(): React.JSX.Element {
         <div className="absolute right-0 top-48 h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-500/10" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-6 py-16">
-        <div className="grid w-full gap-12 rounded-3xl border border-slate-200/60 bg-white/90 p-8 shadow-elevated backdrop-blur dark:border-slate-800/60 dark:bg-slate-950/70 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:p-12">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-4 py-12 sm:px-6 sm:py-16">
+        <div className="grid w-full gap-8 rounded-3xl border border-slate-200/60 bg-white/90 p-6 sm:p-8 lg:p-12 shadow-elevated backdrop-blur dark:border-slate-800/60 dark:bg-slate-950/70 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] min-w-0">
           <section className="hidden flex-col justify-center gap-6 lg:flex">
             <div className="flex items-center gap-4">
               <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-500/15 text-sky-600 dark:bg-sky-500/20 dark:text-sky-200">
@@ -82,7 +82,7 @@ export function LoginPage(): React.JSX.Element {
           </section>
 
           <form
-            className="flex flex-col gap-6 rounded-2xl border border-slate-200/80 bg-white/95 p-8 shadow-[0_25px_80px_-40px_rgba(15,23,42,0.45)] dark:border-slate-800/60 dark:bg-slate-950/70"
+            className="flex flex-col gap-6 rounded-2xl border border-slate-200/80 bg-white/95 p-6 sm:p-8 shadow-[0_25px_80px_-40px_rgba(15,23,42,0.45)] dark:border-slate-800/60 dark:bg-slate-950/70 min-w-0"
             onSubmit={handleSubmit}
             aria-labelledby="loginTitle">
             <div className="flex flex-col items-center gap-3 lg:hidden">

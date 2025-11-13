@@ -71,7 +71,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 aria-label={collapsed ? label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    "group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white",
+                    "group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white h-12",
                     isActive &&
                       "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200",
                     collapsed && "lg:justify-center lg:px-2"
@@ -87,7 +87,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 </span>
                 <span
                   className={cn(
-                    "truncate text-sm font-medium text-slate-700 transition-opacity duration-200 dark:text-slate-100",
+                    "truncate text-sm font-medium text-slate-700 transition-opacity duration-200 dark:text-slate-100 whitespace-nowrap",
                     collapsed ? "lg:hidden" : ""
                   )}>
                   {label}
@@ -109,7 +109,11 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                 <LogoutIcon className="h-4 w-4" aria-hidden />
               </span>
-              <span className={cn(collapsed ? "lg:hidden" : "")}>
+              <span
+                className={cn(
+                  collapsed ? "lg:hidden" : "",
+                  "whitespace-nowrap"
+                )}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}
               </span>
             </Button>

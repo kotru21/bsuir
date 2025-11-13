@@ -164,7 +164,7 @@ export function DashboardPage(): ReactElement {
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <GenderDistributionChart data={genderDistribution} />
         <FitnessDistributionChart data={overview.fitnessDistribution} />
         {[
@@ -210,6 +210,7 @@ export function DashboardPage(): ReactElement {
                   key={value}
                   variant={value === rangeDays ? "primary" : "secondary"}
                   size="sm"
+                  className="min-w-[64px] md:min-w-[84px]"
                   onClick={() => setRangeDays(value)}>
                   {value} дн.
                 </Button>

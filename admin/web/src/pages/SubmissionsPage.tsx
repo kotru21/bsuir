@@ -6,6 +6,7 @@ import {
 } from "../localization";
 import { useState } from "react";
 import type { ReactElement } from "react";
+import Modal from "../components/Modal";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSubmissions } from "../api/stats";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
@@ -47,7 +48,7 @@ function getErrorMessage(error: unknown): string {
 
 export function SubmissionsPage(): ReactElement {
   const [page, setPage] = useState(1);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [modalContent, setModalContent] = useState<string | null>(null);
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["submissions", page],
@@ -161,40 +162,24 @@ export function SubmissionsPage(): ReactElement {
                 {item.aiSummary
                   ? (() => {
                       const lines = normalizeAiSummary(item.aiSummary);
-                      const isExpanded = expandedRows.has(item.id);
-                      if (isExpanded) {
-                        return (
-                          <div>
-                            {lines.map((line, idx) => (
-                              <p key={`${item.id}-summary-${idx}`}>{line}</p>
-                            ))}
-                            <button
-                              className="button button--secondary"
-                              onClick={() => {
-                                const next = new Set(expandedRows);
-                                next.delete(item.id);
-                                setExpandedRows(next);
-                              }}
-                              aria-label="Свернуть">
-                              Скрыть
-                            </button>
-                          </div>
-                        );
-                      }
-
                       const preview = buildPreview(lines, 12);
                       return (
-                        <div>
-                          <p>{preview}</p>
+                        <div style={{ maxWidth: 420 }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              whiteSpace: "normal",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}>
+                            {preview}
+                          </p>
                           {preview !== lines.join(" ") ? (
                             <button
                               className="button button--secondary"
-                              onClick={() => {
-                                const next = new Set(expandedRows);
-                                next.add(item.id);
-                                setExpandedRows(next);
-                              }}
-                              aria-label="Показать полностью">
+                              onClick={() => setModalContent(lines.join("\n"))}
+                              aria-label="Показать полностью"
+                              style={{ marginTop: 6 }}>
                               Показать
                             </button>
                           ) : null}
@@ -231,6 +216,13 @@ export function SubmissionsPage(): ReactElement {
           </button>
         </div>
       </div>
+      <Modal open={Boolean(modalContent)} onClose={() => setModalContent(null)}>
+        {modalContent ? (
+          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+            {modalContent}
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

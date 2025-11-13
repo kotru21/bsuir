@@ -43,29 +43,31 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 lg:flex-row lg:items-start">
         <aside
           className={cn(
-            "flex min-h-0 flex-col gap-8 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-elevated backdrop-blur transition-[width] duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
+            "flex min-h-0 flex-col gap-8 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-elevated backdrop-blur transition-all duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
             collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
           )}>
-          <div className="flex items-center gap-4 h-12">
+          {/* Заголовок с логотипом */}
+          <div className="flex items-center gap-4">
             <img
               src={logoUrl}
               alt="Логотип"
-              className="h-12 w-12 rounded-2xl border border-slate-200/60 bg-white/80 p-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-950"
+              className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200/60 bg-white/80 p-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-950"
             />
             <div
               className={cn(
-                "flex flex-col justify-center",
-                collapsed ? "lg:opacity-0 lg:pointer-events-none" : ""
+                "min-w-0 flex-1 overflow-hidden transition-all duration-300",
+                collapsed ? "lg:w-0 lg:opacity-0" : "lg:w-auto lg:opacity-100"
               )}>
-              <span className="text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              <span className="block whitespace-nowrap text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                 BSUIR Sports
               </span>
-              <strong className="text-lg text-slate-900 dark:text-slate-100">
+              <strong className="block whitespace-nowrap text-lg text-slate-900 dark:text-slate-100">
                 Админ-панель
               </strong>
             </div>
           </div>
 
+          {/* Навигация */}
           <nav className="flex flex-col gap-2">
             {NAV_ITEMS.map(({ to, label, icon }) => (
               <NavLink
@@ -75,13 +77,13 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 aria-label={collapsed ? label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    "group flex min-w-0 items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white h-12",
+                    "group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white",
                     isActive &&
                       "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200",
-                    collapsed && "lg:justify-center lg:px-2"
+                    collapsed && "lg:justify-center"
                   )
                 }>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
                   {(() => {
                     const Icon = icon as unknown as ComponentType<
                       SVGProps<SVGSVGElement>
@@ -91,8 +93,10 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 </span>
                 <span
                   className={cn(
-                    "flex-1 truncate text-sm font-medium text-slate-700 transition-opacity duration-200 dark:text-slate-100 whitespace-nowrap overflow-hidden",
-                    collapsed ? "lg:opacity-0 lg:pointer-events-none" : ""
+                    "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-sm font-medium text-slate-700 transition-all duration-300 dark:text-slate-100",
+                    collapsed
+                      ? "lg:w-0 lg:opacity-0"
+                      : "lg:w-auto lg:opacity-100"
                   )}>
                   {label}
                 </span>
@@ -100,23 +104,24 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             ))}
           </nav>
 
+          {/* Кнопка выхода */}
           <div className="mt-auto">
             <Button
               variant="secondary"
               className={cn(
-                "w-full justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-200",
+                "w-full gap-3 text-sm font-medium text-slate-600 dark:text-slate-200",
                 collapsed ? "lg:justify-center" : "lg:justify-start"
               )}
               onClick={handleLogout}
               disabled={auth.logoutInProgress}
               aria-label={collapsed ? "Выйти из аккаунта" : undefined}>
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                <LogoutIcon className="h-4 w-4" aria-hidden />
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                <LogoutIcon className="h-5 w-5" aria-hidden />
               </span>
               <span
                 className={cn(
-                  collapsed ? "lg:opacity-0 lg:pointer-events-none" : "",
-                  "whitespace-nowrap"
+                  "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-left transition-all duration-300",
+                  collapsed ? "lg:w-0 lg:opacity-0" : "lg:w-auto lg:opacity-100"
                 )}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}
               </span>

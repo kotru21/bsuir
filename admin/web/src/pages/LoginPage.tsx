@@ -10,7 +10,6 @@ export function LoginPage(): React.JSX.Element {
   const auth = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,7 +36,6 @@ export function LoginPage(): React.JSX.Element {
   }
 
   const globalError = auth.error;
-
   return (
     <div className={loginStyles.screen}>
       <form
@@ -93,25 +91,6 @@ export function LoginPage(): React.JSX.Element {
             {error}
           </p>
         ) : null}
-
-        <div className={loginStyles.actions}>
-          <label className={loginStyles.remember}>
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setRemember(e.target.checked)
-              }
-            />
-            Запомнить меня
-          </label>
-          <a
-            className={loginStyles.forgot}
-            href="#"
-            onClick={(e) => e.preventDefault()}>
-            Забыли пароль?
-          </a>
-        </div>
 
         <div className={loginStyles.submitRow}>
           <button

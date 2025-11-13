@@ -49,27 +49,6 @@
   margin-bottom: 6px;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #cbd5f5;
-  font-size: 13px;
-}
-
-.forgot {
-  font-size: 13px;
-  color: #93c5fd;
-  text-decoration: none;
-}
-
 .submitRow {
   display: flex;
   justify-content: center;

@@ -44,10 +44,12 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
         <aside
           className={cn(
             "flex min-h-0 flex-col gap-8 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-elevated backdrop-blur transition-all duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
+            // Фиксация сайдбара
+            "lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto",
             collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
           )}>
           {/* Заголовок с логотипом */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
             <img
               src={logoUrl}
               alt="Логотип"
@@ -68,7 +70,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           </div>
 
           {/* Навигация */}
-          <nav className="flex flex-col gap-2">
+          <nav className="flex flex-col gap-2 shrink-0">
             {NAV_ITEMS.map(({ to, label, icon }) => (
               <NavLink
                 key={to}
@@ -105,7 +107,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           </nav>
 
           {/* Кнопка выхода */}
-          <div className="mt-auto">
+          <div className="mt-auto shrink-0">
             <Button
               variant="secondary"
               className={cn(

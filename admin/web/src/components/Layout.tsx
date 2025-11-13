@@ -1,17 +1,17 @@
 import { NavLink } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import type { ReactElement, ReactNode } from "react";
+import type { ReactElement, ReactNode, ComponentType, SVGProps } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import logoUrl from "../assets/logo.png";
-import statsUrl from "../assets/stats.svg";
-import viewRespUrl from "../assets/viewResp.svg";
-import logoutUrl from "../assets/logout.svg";
+import { StatsIcon } from "./icons/StatsIcon";
+import { ViewRespIcon } from "./icons/ViewRespIcon";
+import { LogoutIcon } from "./icons/LogoutIcon";
 import { cn } from "../lib/cn";
 import { Button } from "./Button";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Обзор", icon: statsUrl },
-  { to: "/submissions", label: "Опросы", icon: viewRespUrl },
+  { to: "/", label: "Обзор", icon: StatsIcon },
+  { to: "/submissions", label: "Опросы", icon: ViewRespIcon },
 ];
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
@@ -78,12 +78,12 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                   )
                 }>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
-                  <img
-                    src={icon}
-                    alt=""
-                    className="h-5 w-5 text-current"
-                    aria-hidden
-                  />
+                  {(() => {
+                    const Icon = icon as unknown as ComponentType<
+                      SVGProps<SVGSVGElement>
+                    >;
+                    return <Icon className="h-5 w-5" aria-hidden />;
+                  })()}
                 </span>
                 <span
                   className={cn(
@@ -107,12 +107,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               disabled={auth.logoutInProgress}
               aria-label={collapsed ? "Выйти из аккаунта" : undefined}>
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                <img
-                  src={logoutUrl}
-                  alt=""
-                  className="h-4 w-4 text-current"
-                  aria-hidden
-                />
+                <LogoutIcon className="h-4 w-4" aria-hidden />
               </span>
               <span className={cn(collapsed ? "lg:hidden" : "")}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}

@@ -34,7 +34,11 @@ export function GenderDistributionChart({
         <div className="w-full h-56 sm:h-64 md:h-52">
           <Doughnut
             data={chartData}
-            options={{ plugins: { legend: { position: "bottom" } } }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { position: "bottom" } },
+            }}
           />
         </div>
       </div>

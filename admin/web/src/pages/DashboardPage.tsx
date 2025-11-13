@@ -210,7 +210,7 @@ export function DashboardPage(): ReactElement {
                   key={value}
                   variant={value === rangeDays ? "primary" : "secondary"}
                   size="sm"
-                  className="w-full sm:min-w-[84px]"
+                  className="w-full sm:w-auto sm:min-w-[84px]"
                   onClick={() => setRangeDays(value)}>
                   {value} дн.
                 </Button>

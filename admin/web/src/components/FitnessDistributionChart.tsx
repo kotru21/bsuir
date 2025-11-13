@@ -36,6 +36,7 @@ export function FitnessDistributionChart({
   const options = useMemo(
     () => ({
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
       },

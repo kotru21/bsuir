@@ -93,10 +93,7 @@ export async function competitionInterestStep(
 
       if (aiSummaryResult.content) {
         temp.aiSummary = aiSummaryResult.content;
-        const text = [
-          "*Краткое пояснение*",
-          escapeMarkdown(aiSummaryResult.content),
-        ].join("\n");
+        const text = ["*Краткое пояснение*", aiSummaryResult.content].join(" ");
         await replyMarkdownV2Safe(ctx, text);
       } else {
         temp.aiSummary = undefined;

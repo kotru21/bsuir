@@ -5,14 +5,13 @@ import {
   recommendSections,
   fallbackSection,
 } from "../../../../recommendation.js";
-import {
-  buildCompletionKeyboard,
-  buildRecommendationKeyboard,
-} from "../../../keyboards.js";
-import { renderRecommendationSummary } from "../../../formatters.js";
+import { buildCompletionKeyboard } from "../../../keyboards.js";
+import { escapeMarkdown } from "../../../formatters.js";
 import { replyMarkdownV2Safe } from "../../../telegram.js";
 import type { RecommendationResult } from "../../../../types.js";
 import { recordSubmission } from "../../../../services/submissionRecorder.js";
+import { generateRecommendationSummary } from "../../../../services/aiSummary.js";
+import { sendWizardRecommendationCard } from "../../../services/recommendationPresenter.js";
 
 export async function competitionInterestStep(
   ctx: RecommendationContext
@@ -53,9 +52,9 @@ export async function competitionInterestStep(
   }
 
   const temp = ensureTemp(ctx);
-  temp.recommendations = recommendations;
+  let finalRecommendations = recommendations;
 
-  if (!recommendations.length) {
+  if (!finalRecommendations.length) {
     let fallback: RecommendationResult | null = null;
     try {
       fallback = fallbackSection(profile);
@@ -64,27 +63,37 @@ export async function competitionInterestStep(
     }
 
     if (fallback) {
-      temp.recommendations = [fallback];
-      const summary = renderRecommendationSummary(1, fallback);
-      await replyMarkdownV2Safe(
-        ctx,
-        summary,
-        buildRecommendationKeyboard(fallback.section.id)
-      );
-    } else {
-      await ctx.reply(
-        "Не удалось подобрать точное совпадение. Попробуйте изменить ответы командой /start."
-      );
+      finalRecommendations = [fallback];
     }
+  }
+
+  temp.recommendations = finalRecommendations;
+
+  if (!finalRecommendations.length) {
+    await ctx.reply(
+      "Не удалось подобрать точное совпадение. Попробуйте изменить ответы командой /start."
+    );
   } else {
-    for (const [index, item] of recommendations.entries()) {
-      const summary = renderRecommendationSummary(index + 1, item);
-      await replyMarkdownV2Safe(
-        ctx,
-        summary,
-        buildRecommendationKeyboard(item.section.id)
+    const aiSummaryResult = await generateRecommendationSummary(
+      profile,
+      finalRecommendations
+    );
+
+    if (aiSummaryResult.content) {
+      temp.aiSummary = aiSummaryResult.content;
+      const text = [
+        "*Краткое пояснение*",
+        escapeMarkdown(aiSummaryResult.content),
+      ].join("\n");
+      await replyMarkdownV2Safe(ctx, text);
+    } else if (aiSummaryResult.attempted) {
+      await ctx.reply(
+        "⚠️ Не удалось получить пояснение от AI. Показываю результаты стандартного алгоритма."
       );
     }
+
+    temp.recommendationIndex = 0;
+    await sendWizardRecommendationCard(ctx, 0, finalRecommendations);
   }
 
   try {

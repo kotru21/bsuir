@@ -120,6 +120,26 @@ export function buildRecommendationKeyboard(
   ]);
 }
 
+export function buildRecommendationCarouselKeyboard(
+  index: number,
+  total: number,
+  sectionId: string
+): ReturnType<typeof Markup.inlineKeyboard> {
+  if (total <= 1) {
+    return buildRecommendationKeyboard(sectionId);
+  }
+  const prevIndex = (index - 1 + total) % total;
+  const nextIndex = (index + 1) % total;
+  return Markup.inlineKeyboard([
+    [
+      Markup.button.callback("\u23ee\ufe0f", `wizardrec:${prevIndex}`),
+      Markup.button.callback(`${index + 1}/${total}`, "wizardrec:noop"),
+      Markup.button.callback("\u23ed\ufe0f", `wizardrec:${nextIndex}`),
+    ],
+    [Markup.button.callback("Подробнее", `rec:${sectionId}`)],
+  ]);
+}
+
 export function buildSectionsKeyboard(
   index: number,
   total: number,

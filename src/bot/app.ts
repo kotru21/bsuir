@@ -4,6 +4,7 @@ import type { RecommendationContext } from "./session.js";
 import { onboardingScene } from "./scenes/onboarding.js";
 import { registerCoreCommands } from "./handlers/commands.js";
 import { registerSectionHandlers } from "./handlers/sections.js";
+import { registerRecommendationCarouselHandlers } from "./handlers/recommendations.js";
 import { wrapBotHandler } from "./utils/safeHandler.js";
 
 export function configureBot(bot: Telegraf<RecommendationContext>): void {
@@ -13,6 +14,7 @@ export function configureBot(bot: Telegraf<RecommendationContext>): void {
 
   registerCoreCommands(bot);
   registerSectionHandlers(bot);
+  registerRecommendationCarouselHandlers(bot);
 
   bot.on(
     message("text"),

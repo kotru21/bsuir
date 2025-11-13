@@ -12,8 +12,10 @@ export interface TempState {
   formatSelection?: TrainingFormat[];
   goalSelection?: GoalTag[];
   recommendations?: RecommendationResult[];
+  recommendationIndex?: number;
   promptMessageId?: number;
   promptChatId?: number | string;
+  aiSummary?: string;
 }
 
 export interface RecommendationSession extends Scenes.WizardSessionData {

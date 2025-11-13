@@ -15,6 +15,9 @@ function createCallbackCtx(data: string): RecommendationContext & any {
     replyWithMarkdownV2: vi
       .fn()
       .mockResolvedValue({ message_id: 1, chat: { id: 1 } }),
+    replyWithPhoto: vi
+      .fn()
+      .mockResolvedValue({ message_id: 1, chat: { id: 1 } }),
     editMessageText: vi.fn().mockResolvedValue(undefined),
     answerCbQuery: vi.fn().mockResolvedValue(undefined),
     deleteMessage: vi.fn().mockResolvedValue(undefined),

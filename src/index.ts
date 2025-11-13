@@ -8,6 +8,7 @@ import {
   connectPrisma,
   disconnectPrisma,
 } from "./infrastructure/prismaClient.js";
+import { resolveAiConfig } from "./services/aiSummary.js";
 
 dotenv.config();
 
@@ -34,6 +35,11 @@ if (!BOT_TOKEN) {
 const bot = new Telegraf<RecommendationContext>(BOT_TOKEN);
 const adminConfig = loadAdminConfig(nodeProcess?.env ?? {});
 const hasDatabase = Boolean(nodeProcess?.env?.DATABASE_URL);
+const aiConfig = resolveAiConfig(nodeProcess?.env ?? {});
+
+if (aiConfig) {
+  console.log(`AI summary enabled with model ${aiConfig.model}.`);
+}
 
 let adminServer: Awaited<ReturnType<typeof buildAdminServer>> | null = null;
 

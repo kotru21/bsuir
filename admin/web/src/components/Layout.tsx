@@ -46,13 +46,17 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             "flex min-h-0 flex-col gap-8 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-elevated backdrop-blur transition-[width] duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
             collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
           )}>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 h-12">
             <img
               src={logoUrl}
               alt="Логотип"
               className="h-12 w-12 rounded-2xl border border-slate-200/60 bg-white/80 p-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-950"
             />
-            <div className={cn("flex flex-col", collapsed ? "lg:hidden" : "")}>
+            <div
+              className={cn(
+                "flex flex-col justify-center",
+                collapsed ? "lg:invisible" : ""
+              )}>
               <span className="text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                 BSUIR Sports
               </span>
@@ -88,7 +92,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 <span
                   className={cn(
                     "truncate text-sm font-medium text-slate-700 transition-opacity duration-200 dark:text-slate-100 whitespace-nowrap",
-                    collapsed ? "lg:hidden" : ""
+                    collapsed ? "lg:invisible" : ""
                   )}>
                   {label}
                 </span>
@@ -111,7 +115,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               </span>
               <span
                 className={cn(
-                  collapsed ? "lg:hidden" : "",
+                  collapsed ? "lg:invisible" : "",
                   "whitespace-nowrap"
                 )}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}

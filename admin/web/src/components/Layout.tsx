@@ -78,11 +78,13 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 aria-label={collapsed ? label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    "group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:hover:bg-slate-800/70 dark:hover:text-white",
+                    "group relative flex items-center rounded-2xl text-sm font-medium transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:hover:bg-slate-800/70 dark:hover:text-white",
                     isActive
                       ? "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200"
                       : "text-slate-600 dark:text-slate-300",
-                    collapsed && "lg:justify-center lg:px-3"
+                    collapsed
+                      ? "lg:justify-center lg:px-3 lg:py-3"
+                      : "gap-3 px-4 py-3"
                   )
                 }>
                 {/* Иконка */}
@@ -97,10 +99,10 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 {/* Текст */}
                 <span
                   className={cn(
-                    "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300",
+                    "whitespace-nowrap text-sm font-medium transition-all duration-300",
                     collapsed
-                      ? "lg:w-0 lg:opacity-0"
-                      : "lg:w-auto lg:opacity-100"
+                      ? "lg:absolute lg:left-0 lg:w-0 lg:opacity-0 lg:overflow-hidden"
+                      : ""
                   )}>
                   {label}
                 </span>
@@ -115,9 +117,11 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               disabled={auth.logoutInProgress}
               aria-label={collapsed ? "Выйти из аккаунта" : undefined}
               className={cn(
-                "group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
+                "group relative flex w-full items-center rounded-2xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                collapsed && "lg:justify-center lg:px-3"
+                collapsed
+                  ? "lg:justify-center lg:px-3 lg:py-3"
+                  : "gap-3 px-4 py-3"
               )}>
               {/* Иконка */}
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 transition-colors group-hover:bg-rose-100 group-hover:text-rose-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-rose-500/20 dark:group-hover:text-rose-200">
@@ -126,8 +130,10 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               {/* Текст */}
               <span
                 className={cn(
-                  "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-left text-sm font-medium transition-all duration-300",
-                  collapsed ? "lg:w-0 lg:opacity-0" : "lg:w-auto lg:opacity-100"
+                  "whitespace-nowrap text-sm font-medium transition-all duration-300",
+                  collapsed
+                    ? "lg:absolute lg:left-0 lg:w-0 lg:opacity-0 lg:overflow-hidden"
+                    : ""
                 )}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}
               </span>

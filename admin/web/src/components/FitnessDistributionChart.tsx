@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import "../charts/setup";
+import cardStyles from "./Card.module.css";
 
 interface FitnessDistributionChartProps {
   data: Record<string, number>;
@@ -54,7 +55,7 @@ export function FitnessDistributionChart({
   );
 
   return (
-    <div className="card">
+    <div className={cardStyles.card}>
       <h2>Уровень подготовки</h2>
       <Bar data={chartData} options={options} />
     </div>

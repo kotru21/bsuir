@@ -1,0 +1,107 @@
+.sidebar {
+  width: 240px;
+  background: rgba(15, 23, 42, 0.9);
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.collapsed {
+  width: 72px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #f8fafc;
+}
+.logo {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.brandText {
+  /* text next to logo */
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.navLink {
+  color: #cbd5f5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+.navLinkActive {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #f8fafc;
+  font-weight: 600;
+}
+.navLinkIcon {
+  display: none;
+  font-size: 18px;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+}
+.navLinkIconImg {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  object-fit: contain;
+  vertical-align: middle;
+  filter: brightness(0) invert(1);
+  margin-right: 6px;
+}
+.navLinkText {
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  width: 100%;
+  border-radius: 8px;
+}
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  width: 100%;
+  border-radius: 8px;
+}
+.footerIcon {
+  display: none;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+}
+.footerIconImg {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  object-fit: contain;
+  vertical-align: middle;
+  filter: brightness(0) invert(1);
+}
+.footerText {
+  display: inline-block;
+}

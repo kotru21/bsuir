@@ -7,6 +7,10 @@ import { GenderDistributionChart } from "../components/GenderDistributionChart";
 import { FitnessDistributionChart } from "../components/FitnessDistributionChart";
 import { TimelineChart } from "../components/TimelineChart";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
+import cardStyles from "../components/Card.module.css";
+import statusStyles from "../components/StatusMessage.module.css";
+import buttonStyles from "../components/Button.module.css";
+import dashboardStyles from "../components/Dashboard.module.css";
 import {
   GENDER_ORDER,
   mapRecordWithTranslation,
@@ -102,12 +106,12 @@ export function DashboardPage(): ReactElement {
     const message = getErrorMessage(firstError);
 
     return (
-      <div className="card">
+      <div className={cardStyles.card}>
         <h2>Не удалось загрузить статистику</h2>
-        <div className="status-message status-message--error">
-          <span className="status-message__text">{message}</span>
+        <div className={`${statusStyles.status} ${statusStyles.error}`}>
+          <span className={statusStyles.text}>{message}</span>
           <button
-            className="button button--secondary"
+            className={`${buttonStyles.button} ${buttonStyles.secondary}`}
             onClick={() => {
               void Promise.all([
                 overviewQuery.refetch(),
@@ -127,8 +131,8 @@ export function DashboardPage(): ReactElement {
   }
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-grid">
+    <div className={dashboardStyles.dashboard}>
+      <div className={dashboardStyles.dashboardGrid}>
         <MetricCard
           title="Всего опросов"
           value={overview.totalSubmissions.toString()}
@@ -162,67 +166,47 @@ export function DashboardPage(): ReactElement {
         />
       </div>
 
-      <div className="charts-grid">
+      <div className={dashboardStyles.chartsGrid}>
         <GenderDistributionChart data={genderDistribution} />
         <FitnessDistributionChart data={overview.fitnessDistribution} />
-        <div className="card">
-          <h2>Популярные форматы</h2>
-          <div className="metrics-list">
-            {topFormats.length ? (
-              topFormats.map(({ key, label, count }) => (
-                <div key={key} className="metrics-item">
-                  <span>{label}</span>
-                  <strong>{count}</strong>
+        {[
+          { title: "Популярные форматы", items: topFormats },
+          { title: "Популярные цели", items: topGoals },
+          { title: "Возрастные группы", items: demographics.ageBuckets },
+        ].map((block) => (
+          <div key={block.title} className={cardStyles.card}>
+            <h2>{block.title}</h2>
+            <div className={dashboardStyles.metricsList}>
+              {block.items.length ? (
+                block.items.map((it: any) => (
+                  <div
+                    key={it.key ?? it.label}
+                    className={dashboardStyles.metricsItem}>
+                    <span>{it.label ?? it.label}</span>
+                    <strong>{it.count ?? "—"}</strong>
+                  </div>
+                ))
+              ) : (
+                <div className={dashboardStyles.metricsItem}>
+                  <span>Пока нет данных</span>
+                  <strong>—</strong>
                 </div>
-              ))
-            ) : (
-              <div className="metrics-item">
-                <span>Пока нет данных</span>
-                <strong>—</strong>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-        <div className="card">
-          <h2>Популярные цели</h2>
-          <div className="metrics-list">
-            {topGoals.length ? (
-              topGoals.map(({ key, label, count }) => (
-                <div key={key} className="metrics-item">
-                  <span>{label}</span>
-                  <strong>{count}</strong>
-                </div>
-              ))
-            ) : (
-              <div className="metrics-item">
-                <span>Пока нет данных</span>
-                <strong>—</strong>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="card">
-          <h2>Возрастные группы</h2>
-          <div className="metrics-list">
-            {demographics.ageBuckets.map(
-              ({ label, count }: { label: string; count: number }) => (
-                <div key={label} className="metrics-item">
-                  <span>{label}</span>
-                  <strong>{count}</strong>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-        <div className="card timeline">
-          <div className="timeline__header">
+        ))}
+
+        <div className={`${cardStyles.card} ${dashboardStyles.timeline}`}>
+          <div className={dashboardStyles.timelineHeader}>
             <h2>Динамика опросов</h2>
-            <div className="timeline__filters">
+            <div className={dashboardStyles.timelineFilters}>
               {[7, 30, 90].map((value) => (
                 <button
                   key={value}
                   className={
-                    value === rangeDays ? "button" : "button button--secondary"
+                    value === rangeDays
+                      ? buttonStyles.button
+                      : `${buttonStyles.button} ${buttonStyles.secondary}`
                   }
                   onClick={() => setRangeDays(value)}>
                   {value} дн.

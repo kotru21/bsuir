@@ -7,6 +7,11 @@ import {
 import { useState } from "react";
 import type { ReactElement } from "react";
 import Modal from "../components/Modal";
+import cardStyles from "../components/Card.module.css";
+import statusStyles from "../components/StatusMessage.module.css";
+import buttonStyles from "../components/Button.module.css";
+import tableStyles from "../components/Table.module.css";
+import paginationStyles from "../components/Pagination.module.css";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSubmissions } from "../api/stats";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
@@ -63,12 +68,12 @@ export function SubmissionsPage(): ReactElement {
   if (isError && !data) {
     const message = getErrorMessage(error);
     return (
-      <div className="card">
+      <div className={cardStyles.card}>
         <h2>Не удалось загрузить ответы</h2>
-        <div className="status-message status-message--error">
-          <span className="status-message__text">{message}</span>
+        <div className={`${statusStyles.status} ${statusStyles.error}`}>
+          <span className={statusStyles.text}>{message}</span>
           <button
-            className="button button--secondary"
+            className={`${buttonStyles.button} ${buttonStyles.secondary}`}
             onClick={() => {
               void refetch().catch(() => undefined);
             }}>
@@ -87,15 +92,15 @@ export function SubmissionsPage(): ReactElement {
   const transientError = isError ? getErrorMessage(error) : null;
 
   return (
-    <div className="card">
+    <div className={cardStyles.card}>
       <h2>Ответы пользователей</h2>
       {transientError ? (
-        <div className="status-message status-message--error">
-          <span className="status-message__text">
+        <div className={`${statusStyles.status} ${statusStyles.error}`}>
+          <span className={statusStyles.text}>
             {transientError} Обновите страницу позже.
           </span>
           <button
-            className="button button--secondary"
+            className={`${buttonStyles.button} ${buttonStyles.secondary}`}
             onClick={() => {
               void refetch().catch(() => undefined);
             }}>
@@ -104,7 +109,7 @@ export function SubmissionsPage(): ReactElement {
         </div>
       ) : null}
       {isFetching ? <p>Обновляем данные...</p> : null}
-      <table className="table">
+      <table className={tableStyles.table}>
         <thead>
           <tr>
             <th>Дата</th>
@@ -176,7 +181,7 @@ export function SubmissionsPage(): ReactElement {
                           </p>
                           {preview !== lines.join(" ") ? (
                             <button
-                              className="button button--secondary"
+                              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
                               onClick={() => setModalContent(lines.join("\n"))}
                               aria-label="Показать полностью"
                               style={{ marginTop: 6 }}>
@@ -192,28 +197,32 @@ export function SubmissionsPage(): ReactElement {
           ))}
         </tbody>
       </table>
-      <div className="pagination">
+      <div className={paginationStyles.pagination}>
         <span>
           Страница {pagination.page} из {pagination.totalPages} (всего{" "}
           {pagination.total})
         </span>
         <div>
-          <button
-            className="button button--secondary"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            disabled={pagination.page === 1}>
-            Назад
-          </button>
-          <button
-            className="button button--secondary"
-            onClick={() =>
-              setPage((prev) =>
-                prev < pagination.totalPages ? prev + 1 : pagination.totalPages
-              )
-            }
-            disabled={pagination.page >= pagination.totalPages}>
-            Далее
-          </button>
+          <div className={paginationStyles.controls}>
+            <button
+              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={pagination.page === 1}>
+              Назад
+            </button>
+            <button
+              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
+              onClick={() =>
+                setPage((prev) =>
+                  prev < pagination.totalPages
+                    ? prev + 1
+                    : pagination.totalPages
+                )
+              }
+              disabled={pagination.page >= pagination.totalPages}>
+              Далее
+            </button>
+          </div>
         </div>
       </div>
       <Modal open={Boolean(modalContent)} onClose={() => setModalContent(null)}>

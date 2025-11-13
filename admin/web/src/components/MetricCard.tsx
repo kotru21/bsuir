@@ -1,3 +1,6 @@
+import cardStyles from "./Card.module.css";
+import metricStyles from "./Metric.module.css";
+
 interface MetricCardProps {
   title: string;
   value: string;
@@ -10,10 +13,10 @@ export function MetricCard({
   hint,
 }: MetricCardProps): React.JSX.Element {
   return (
-    <div className="card">
+    <div className={cardStyles.card}>
       <h2>{title}</h2>
-      <div className="metric-value">{value}</div>
-      {hint ? <p className="metric-hint">{hint}</p> : null}
+      <div className={metricStyles.value}>{value}</div>
+      {hint ? <p className={metricStyles.hint}>{hint}</p> : null}
     </div>
   );
 }

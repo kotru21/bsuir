@@ -1,0 +1,46 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.metricsList {
+  display: grid;
+  gap: 8px;
+}
+
+.metricsItem {
+  display: flex;
+  justify-content: space-between;
+  color: #cbd5f5;
+  font-size: 14px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.timelineFilters {
+  display: flex;
+  gap: 8px;
+}

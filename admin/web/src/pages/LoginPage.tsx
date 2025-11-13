@@ -3,6 +3,8 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
 import logoUrl from "../assets/logo.png";
+import loginStyles from "../components/Login.module.css";
+import buttonStyles from "../components/Button.module.css";
 
 export function LoginPage(): React.JSX.Element {
   const auth = useAuth();
@@ -36,14 +38,14 @@ export function LoginPage(): React.JSX.Element {
   const globalError = auth.error;
 
   return (
-    <div className="login-screen">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <div className="login-logo-wrap">
-          <img src={logoUrl} alt="Логотип" className="login-logo" />
+    <div className={loginStyles.screen}>
+      <form className={loginStyles.form} onSubmit={handleSubmit}>
+        <div className={loginStyles.logoWrap}>
+          <img src={logoUrl} alt="Логотип" className={loginStyles.logo} />
         </div>
         <h1>Вход администратора</h1>
         {globalError ? (
-          <p className="form-error" role="alert">
+          <p className={loginStyles.error} role="alert">
             {globalError}
           </p>
         ) : null}
@@ -71,11 +73,14 @@ export function LoginPage(): React.JSX.Element {
           />
         </label>
         {error ? (
-          <p className="form-error" role="alert">
+          <p className={loginStyles.error} role="alert">
             {error}
           </p>
         ) : null}
-        <button className="button" type="submit" disabled={submitting}>
+        <button
+          className={`${buttonStyles.button}`}
+          type="submit"
+          disabled={submitting}>
           {submitting ? "Входим..." : "Войти"}
         </button>
       </form>

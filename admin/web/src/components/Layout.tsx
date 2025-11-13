@@ -6,6 +6,10 @@ import logoUrl from "../assets/logo.png";
 import statsUrl from "../assets/stats.svg";
 import viewRespUrl from "../assets/viewResp.svg";
 import logoutUrl from "../assets/logout.svg";
+import layoutStyles from "./Layout.module.css";
+import sidebarStyles from "./Sidebar.module.css";
+import buttonStyles from "./Button.module.css";
+import statusStyles from "./StatusMessage.module.css";
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
@@ -32,80 +36,96 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
   const toggleCollapsed = useCallback(() => setCollapsed((c) => !c), []);
 
   return (
-    <div className="layout-container">
-      <aside className={"sidebar" + (collapsed ? " sidebar--collapsed" : "")}>
-        <div className="sidebar__brand">
-          <img src={logoUrl} alt="Логотип" className="sidebar__logo" />
-          <div className="sidebar__brand-text">
+    <div className={layoutStyles.layoutContainer}>
+      <aside
+        className={
+          sidebarStyles.sidebar +
+          (collapsed ? ` ${sidebarStyles.collapsed}` : "")
+        }>
+        <div className={sidebarStyles.brand}>
+          <img src={logoUrl} alt="Логотип" className={sidebarStyles.logo} />
+          <div className={sidebarStyles.brandText}>
             <strong>Админ-панель</strong>
           </div>
         </div>
-        <nav className="sidebar__nav">
+        <nav className={sidebarStyles.nav}>
           <NavLink
             end
             to="/"
             className={({ isActive }: { isActive: boolean }) =>
-              isActive ? "nav-link nav-link--active" : "nav-link"
+              isActive
+                ? `${sidebarStyles.navLink} ${sidebarStyles.navLinkActive}`
+                : sidebarStyles.navLink
             }>
-            <span className="nav-link__icon" aria-hidden>
-              <img src={statsUrl} alt="" className="nav-link__icon-img" />
+            <span className={sidebarStyles.navLinkIcon} aria-hidden>
+              <img
+                src={statsUrl}
+                alt=""
+                className={sidebarStyles.navLinkIconImg}
+              />
             </span>
-            <span className="nav-link__text">Обзор</span>
+            <span className={sidebarStyles.navLinkText}>Обзор</span>
           </NavLink>
           <NavLink
             to="/submissions"
             className={({ isActive }: { isActive: boolean }) =>
-              isActive ? "nav-link nav-link--active" : "nav-link"
+              isActive
+                ? `${sidebarStyles.navLink} ${sidebarStyles.navLinkActive}`
+                : sidebarStyles.navLink
             }>
-            <span className="nav-link__icon" aria-hidden>
-              <img src={viewRespUrl} alt="" className="nav-link__icon-img" />
+            <span className={sidebarStyles.navLinkIcon} aria-hidden>
+              <img
+                src={viewRespUrl}
+                alt=""
+                className={sidebarStyles.navLinkIconImg}
+              />
             </span>
-            <span className="nav-link__text">Опросы</span>
+            <span className={sidebarStyles.navLinkText}>Опросы</span>
           </NavLink>
         </nav>
-        <div className="sidebar__footer">
+        <div className={sidebarStyles.footer}>
           <button
-            className="button button--secondary sidebar__logout"
+            className={`${buttonStyles.button} ${buttonStyles.secondary} ${sidebarStyles.logout}`}
             onClick={handleLogout}
             disabled={auth.logoutInProgress}
             aria-disabled={auth.logoutInProgress}
             title={auth.logoutInProgress ? "Выходим..." : "Выйти"}
             style={{ marginTop: "1rem" }}>
-            <span className="sidebar-footer__icon" aria-hidden>
+            <span className={sidebarStyles.footerIcon} aria-hidden>
               <img
                 src={logoutUrl}
                 alt=""
-                className="sidebar-footer__icon-img"
+                className={sidebarStyles.footerIconImg}
               />
             </span>
-            <span className="sidebar-footer__text">
+            <span className={sidebarStyles.footerText}>
               {auth.logoutInProgress ? "Выходим..." : "Выйти"}
             </span>
           </button>
         </div>
       </aside>
-      <main className="main">
-        <header className="main__header">
+      <main className={layoutStyles.main}>
+        <header className={layoutStyles.mainHeader}>
           <button
-            className="burger"
+            className={layoutStyles.burger}
             onClick={toggleCollapsed}
             aria-expanded={!collapsed}
             aria-label={collapsed ? "Развернуть сайдбар" : "Свернуть сайдбар"}>
             ☰
           </button>
 
-          <div className="main__header-info">
+          <div className={layoutStyles.headerInfo}>
             <h1>Контрольная панель</h1>
             {auth.username ? (
-              <span className="main__user">{auth.username}</span>
+              <span className={layoutStyles.user}>{auth.username}</span>
             ) : null}
           </div>
         </header>
         {auth.error ? (
-          <div className="status-message status-message--error">
-            <span className="status-message__text">{auth.error}</span>
+          <div className={`${statusStyles.status} ${statusStyles.error}`}>
+            <span className={statusStyles.text}>{auth.error}</span>
             <button
-              className="button button--secondary"
+              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
               onClick={() => {
                 void auth.refresh().catch(() => undefined);
               }}>
@@ -113,7 +133,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             </button>
           </div>
         ) : null}
-        <section className="main__content">{children}</section>
+        <section className={layoutStyles.mainContent}>{children}</section>
       </main>
     </div>
   );

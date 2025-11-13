@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
+import styles from "./Modal.module.css";
+import buttonStyles from "./Button.module.css";
 
 type ModalProps = {
   open: boolean;
@@ -23,12 +25,14 @@ export default function Modal({ open, onClose, children }: ModalProps) {
     <div
       role="dialog"
       aria-modal="true"
-      className="modal-overlay"
+      className={styles.overlay}
       onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-body">{children}</div>
-        <div className="modal-close">
-          <button className="button button--secondary" onClick={onClose}>
+      <div className={styles.content} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.body}>{children}</div>
+        <div className={styles.close}>
+          <button
+            className={`${buttonStyles.button} ${buttonStyles.secondary}`}
+            onClick={onClose}>
             Закрыть
           </button>
         </div>

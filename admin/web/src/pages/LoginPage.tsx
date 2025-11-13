@@ -53,6 +53,7 @@ export function LoginPage(): React.JSX.Element {
           Логин
           <input
             type="text"
+            className={loginStyles.input}
             value={username}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               setUsername(event.target.value)
@@ -65,6 +66,7 @@ export function LoginPage(): React.JSX.Element {
           Пароль
           <input
             type="password"
+            className={loginStyles.input}
             value={password}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               setPassword(event.target.value)

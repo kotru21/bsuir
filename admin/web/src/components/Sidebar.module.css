@@ -105,3 +105,32 @@
 .footerText {
   display: inline-block;
 }
+
+/* Collapsed state: show only icons */
+.collapsed .logo {
+  width: 36px;
+  height: 36px;
+}
+.collapsed .brandText {
+  display: none;
+}
+.collapsed .navLink {
+  width: 44px;
+  padding: 10px 6px;
+  text-align: center;
+  justify-content: center;
+}
+.collapsed .navLinkIcon {
+  display: flex;
+}
+.collapsed .navLinkText {
+  display: none;
+}
+.collapsed .footer {
+  justify-content: center;
+  width: 44px;
+  padding: 10px 6px;
+}
+.collapsed .footerText {
+  display: none;
+}

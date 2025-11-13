@@ -110,20 +110,22 @@ export function SubmissionsPage(): ReactElement {
       ) : null}
       {isFetching ? <p>Обновляем данные...</p> : null}
       <table className={tableStyles.table}>
-        <thead>
+        <thead className={tableStyles.thead}>
           <tr>
-            <th>Дата</th>
-            <th>Профиль</th>
-            <th>Предпочтения</th>
-            <th>Рекомендации</th>
-            <th>Пояснение AI</th>
+            <th className={tableStyles.cell}>Дата</th>
+            <th className={tableStyles.cell}>Профиль</th>
+            <th className={tableStyles.cell}>Предпочтения</th>
+            <th className={tableStyles.cell}>Рекомендации</th>
+            <th className={tableStyles.cell}>Пояснение AI</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item: SubmissionListItem) => (
             <tr key={item.id}>
-              <td>{new Date(item.createdAt).toLocaleString("ru-RU")}</td>
-              <td>
+              <td className={tableStyles.cell}>
+                {new Date(item.createdAt).toLocaleString("ru-RU")}
+              </td>
+              <td className={tableStyles.cell}>
                 <div>Возраст: {item.profile.age}</div>
                 <div>Пол: {translateGenderSingle(item.profile.gender)}</div>
                 <div>
@@ -138,7 +140,7 @@ export function SubmissionsPage(): ReactElement {
                   {item.profile.interestedInCompetition ? "Да" : "Нет"}
                 </div>
               </td>
-              <td>
+              <td className={tableStyles.cell}>
                 <div>
                   Форматы:{" "}
                   {item.profile.preferredFormats.length
@@ -156,14 +158,14 @@ export function SubmissionsPage(): ReactElement {
                     : "—"}
                 </div>
               </td>
-              <td>
+              <td className={tableStyles.cell}>
                 {item.recommendations.slice(0, 3).map((rec, index) => (
                   <div key={rec.sectionId}>
                     #{index + 1} {rec.sectionName} ({rec.score.toFixed(1)})
                   </div>
                 ))}
               </td>
-              <td>
+              <td className={tableStyles.cell}>
                 {item.aiSummary
                   ? (() => {
                       const lines = normalizeAiSummary(item.aiSummary);

@@ -13,11 +13,20 @@ export interface AdminConfig {
 export function loadAdminConfig(
   env: Record<string, string | undefined>
 ): AdminConfig {
+  const defaultSessionTtlSeconds = 60 * 60 * 24;
   const adminUsername = env.ADMIN_USERNAME ?? "admin";
   const adminPasswordHash = env.ADMIN_PASSWORD_HASH?.trim() ?? "";
   const adminPasswordPlain = env.ADMIN_PASSWORD?.trim() ?? "";
   const sessionSecret = env.ADMIN_SESSION_SECRET ?? "";
   const sessionCookieName = env.ADMIN_SESSION_COOKIE ?? "bsuir_admin_sid";
+  const parsedSessionTtl = Number.parseInt(
+    env.ADMIN_SESSION_TTL_SECONDS ?? "",
+    10
+  );
+  const sessionTtlSeconds =
+    Number.isFinite(parsedSessionTtl) && parsedSessionTtl > 0
+      ? parsedSessionTtl
+      : defaultSessionTtlSeconds;
 
   const cookieSecure = (env.NODE_ENV ?? "development") === "production";
 
@@ -31,7 +40,7 @@ export function loadAdminConfig(
     adminPasswordPlain: adminPasswordPlain || undefined,
     sessionSecret,
     sessionCookieName,
-    sessionTtlSeconds: 60 * 60 * 8,
+    sessionTtlSeconds,
     basePath: "/admin",
     cookieSecure,
   };

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import "../charts/setup";
-import cardStyles from "./Card.module.css";
+import { Card } from "./Card";
 
 interface FitnessDistributionChartProps {
   data: Record<string, number>;
@@ -55,9 +55,9 @@ export function FitnessDistributionChart({
   );
 
   return (
-    <div className={cardStyles.card}>
+    <Card className="flex flex-col gap-4">
       <h2>Уровень подготовки</h2>
       <Bar data={chartData} options={options} />
-    </div>
+    </Card>
   );
 }

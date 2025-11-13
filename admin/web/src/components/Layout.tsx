@@ -1,15 +1,18 @@
 import { NavLink } from "react-router-dom";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import logoUrl from "../assets/logo.png";
 import statsUrl from "../assets/stats.svg";
 import viewRespUrl from "../assets/viewResp.svg";
 import logoutUrl from "../assets/logout.svg";
-import layoutStyles from "./Layout.module.css";
-import sidebarStyles from "./Sidebar.module.css";
-import buttonStyles from "./Button.module.css";
-import statusStyles from "./StatusMessage.module.css";
+import { cn } from "../lib/cn";
+import { Button } from "./Button";
+
+const NAV_ITEMS = [
+  { to: "/", label: "Обзор", icon: statsUrl },
+  { to: "/submissions", label: "Опросы", icon: viewRespUrl },
+];
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
@@ -36,105 +39,118 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
   const toggleCollapsed = useCallback(() => setCollapsed((c) => !c), []);
 
   return (
-    <div className={layoutStyles.layoutContainer}>
-      <aside
-        className={
-          sidebarStyles.sidebar +
-          (collapsed ? ` ${sidebarStyles.collapsed}` : "")
-        }>
-        <div className={sidebarStyles.brand}>
-          <img src={logoUrl} alt="Логотип" className={sidebarStyles.logo} />
-          <div className={sidebarStyles.brandText}>
-            <strong>Админ-панель</strong>
+    <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 lg:flex-row lg:items-start">
+        <aside
+          className={cn(
+            "flex min-h-0 flex-col gap-8 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-elevated backdrop-blur transition-[width] duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
+            collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
+          )}>
+          <div className="flex items-center gap-4">
+            <img
+              src={logoUrl}
+              alt="Логотип"
+              className="h-12 w-12 rounded-2xl border border-slate-200/60 bg-white/80 p-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-950"
+            />
+            <div className={cn("flex flex-col", collapsed ? "lg:hidden" : "")}>
+              <span className="text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                BSUIR Sports
+              </span>
+              <strong className="text-lg text-slate-900 dark:text-slate-100">
+                Админ-панель
+              </strong>
+            </div>
           </div>
-        </div>
-        <nav className={sidebarStyles.nav}>
-          <NavLink
-            end
-            to="/"
-            className={({ isActive }: { isActive: boolean }) =>
-              isActive
-                ? `${sidebarStyles.navLink} ${sidebarStyles.navLinkActive}`
-                : sidebarStyles.navLink
-            }>
-            <span className={sidebarStyles.navLinkIcon} aria-hidden>
-              <img
-                src={statsUrl}
-                alt=""
-                className={sidebarStyles.navLinkIconImg}
-              />
-            </span>
-            <span className={sidebarStyles.navLinkText}>Обзор</span>
-          </NavLink>
-          <NavLink
-            to="/submissions"
-            className={({ isActive }: { isActive: boolean }) =>
-              isActive
-                ? `${sidebarStyles.navLink} ${sidebarStyles.navLinkActive}`
-                : sidebarStyles.navLink
-            }>
-            <span className={sidebarStyles.navLinkIcon} aria-hidden>
-              <img
-                src={viewRespUrl}
-                alt=""
-                className={sidebarStyles.navLinkIconImg}
-              />
-            </span>
-            <span className={sidebarStyles.navLinkText}>Опросы</span>
-          </NavLink>
-        </nav>
-        <div className={sidebarStyles.footer}>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.secondary} ${sidebarStyles.logout}`}
-            onClick={handleLogout}
-            disabled={auth.logoutInProgress}
-            aria-disabled={auth.logoutInProgress}
-            title={auth.logoutInProgress ? "Выходим..." : "Выйти"}
-            style={{ marginTop: "1rem" }}>
-            <span className={sidebarStyles.footerIcon} aria-hidden>
-              <img
-                src={logoutUrl}
-                alt=""
-                className={sidebarStyles.footerIconImg}
-              />
-            </span>
-            <span className={sidebarStyles.footerText}>
-              {auth.logoutInProgress ? "Выходим..." : "Выйти"}
-            </span>
-          </button>
-        </div>
-      </aside>
-      <main className={layoutStyles.main}>
-        <header className={layoutStyles.mainHeader}>
-          <button
-            className={layoutStyles.burger}
-            onClick={toggleCollapsed}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? "Развернуть сайдбар" : "Свернуть сайдбар"}>
-            ☰
-          </button>
 
-          <div className={layoutStyles.headerInfo}>
-            <h1>Контрольная панель</h1>
-            {auth.username ? (
-              <span className={layoutStyles.user}>{auth.username}</span>
-            ) : null}
+          <nav className="flex flex-col gap-2">
+            {NAV_ITEMS.map(({ to, label, icon }) => (
+              <NavLink
+                key={to}
+                end={to === "/"}
+                to={to}
+                aria-label={collapsed ? label : undefined}
+                className={({ isActive }) =>
+                  cn(
+                    "group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white",
+                    isActive &&
+                      "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200",
+                    collapsed && "lg:justify-center lg:px-2"
+                  )
+                }>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
+                  <img src={icon} alt="" className="h-5 w-5" aria-hidden />
+                </span>
+                <span
+                  className={cn(
+                    "truncate text-sm font-medium text-slate-700 transition-opacity duration-200 dark:text-slate-100",
+                    collapsed ? "lg:hidden" : ""
+                  )}>
+                  {label}
+                </span>
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="mt-auto">
+            <Button
+              variant="secondary"
+              className={cn(
+                "w-full justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-200",
+                collapsed ? "lg:justify-center" : "lg:justify-start"
+              )}
+              onClick={handleLogout}
+              disabled={auth.logoutInProgress}
+              aria-label={collapsed ? "Выйти из аккаунта" : undefined}>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                <img src={logoutUrl} alt="" className="h-4 w-4" aria-hidden />
+              </span>
+              <span className={cn(collapsed ? "lg:hidden" : "")}>
+                {auth.logoutInProgress ? "Выходим..." : "Выйти"}
+              </span>
+            </Button>
           </div>
-        </header>
-        {auth.error ? (
-          <div className={`${statusStyles.status} ${statusStyles.error}`}>
-            <span className={statusStyles.text}>{auth.error}</span>
-            <button
-              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
-              onClick={() => {
-                void auth.refresh().catch(() => undefined);
-              }}>
-              Повторить попытку
-            </button>
-          </div>
-        ) : null}
-        <section className={layoutStyles.mainContent}>{children}</section>
-      </main>
+        </aside>
+
+        <main className="flex flex-1 flex-col gap-6 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-elevated backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/70 lg:p-8">
+          <header className="flex flex-col gap-4 border-b border-slate-200/60 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700/60">
+            <div className="flex flex-col gap-1">
+              <h1>Контрольная панель</h1>
+              {auth.username ? (
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  Вошел: {auth.username}
+                </span>
+              ) : null}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white lg:inline-flex"
+              onClick={toggleCollapsed}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? "Развернуть меню" : "Свернуть меню"}>
+              {collapsed ? "Раскрыть меню" : "Свернуть меню"}
+            </Button>
+          </header>
+
+          {auth.error ? (
+            <div className="flex items-start gap-3 rounded-2xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
+              <span className="flex-1">{auth.error}</span>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  void auth.refresh().catch(() => undefined);
+                }}>
+                Повторить
+              </Button>
+            </div>
+          ) : null}
+
+          <section className="flex flex-1 flex-col gap-6 pb-2">
+            {children}
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

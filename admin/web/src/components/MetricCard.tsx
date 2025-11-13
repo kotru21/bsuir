@@ -1,5 +1,4 @@
-import cardStyles from "./Card.module.css";
-import metricStyles from "./Metric.module.css";
+import { Card } from "./Card";
 
 interface MetricCardProps {
   title: string;
@@ -13,10 +12,14 @@ export function MetricCard({
   hint,
 }: MetricCardProps): React.JSX.Element {
   return (
-    <div className={cardStyles.card}>
+    <Card className="flex flex-col gap-3">
       <h2>{title}</h2>
-      <div className={metricStyles.value}>{value}</div>
-      {hint ? <p className={metricStyles.hint}>{hint}</p> : null}
-    </div>
+      <div className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+        {value}
+      </div>
+      {hint ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">{hint}</p>
+      ) : null}
+    </Card>
   );
 }

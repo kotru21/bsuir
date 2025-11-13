@@ -7,11 +7,8 @@ import {
 import { useState } from "react";
 import type { ReactElement } from "react";
 import Modal from "../components/Modal";
-import cardStyles from "../components/Card.module.css";
-import statusStyles from "../components/StatusMessage.module.css";
-import buttonStyles from "../components/Button.module.css";
-import tableStyles from "../components/Table.module.css";
-import paginationStyles from "../components/Pagination.module.css";
+import { Card } from "../components/Card";
+import { Button } from "../components/Button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSubmissions } from "../api/stats";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
@@ -68,19 +65,19 @@ export function SubmissionsPage(): ReactElement {
   if (isError && !data) {
     const message = getErrorMessage(error);
     return (
-      <div className={cardStyles.card}>
+      <Card className="flex flex-col gap-4">
         <h2>Не удалось загрузить ответы</h2>
-        <div className={`${statusStyles.status} ${statusStyles.error}`}>
-          <span className={statusStyles.text}>{message}</span>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.secondary}`}
+        <div className="flex items-start gap-3 rounded-2xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
+          <span className="flex-1">{message}</span>
+          <Button
+            variant="secondary"
             onClick={() => {
               void refetch().catch(() => undefined);
             }}>
-            Повторить попытку
-          </button>
+            Повторить
+          </Button>
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -92,148 +89,186 @@ export function SubmissionsPage(): ReactElement {
   const transientError = isError ? getErrorMessage(error) : null;
 
   return (
-    <div className={cardStyles.card}>
-      <h2>Ответы пользователей</h2>
+    <Card className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <h2>Ответы пользователей</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          История поданных анкет с ключевыми параметрами и пояснениями AI
+        </p>
+      </div>
       {transientError ? (
-        <div className={`${statusStyles.status} ${statusStyles.error}`}>
-          <span className={statusStyles.text}>
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/60 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-200">
+          <span className="flex-1">
             {transientError} Обновите страницу позже.
           </span>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.secondary}`}
+          <Button
+            variant="secondary"
             onClick={() => {
               void refetch().catch(() => undefined);
             }}>
-            Повторить попытку
-          </button>
+            Повторить
+          </Button>
         </div>
       ) : null}
-      {isFetching ? <p>Обновляем данные...</p> : null}
-      <table className={tableStyles.table}>
-        <thead className={tableStyles.thead}>
-          <tr>
-            <th className={tableStyles.cell}>Дата</th>
-            <th className={tableStyles.cell}>Профиль</th>
-            <th className={tableStyles.cell}>Предпочтения</th>
-            <th className={tableStyles.cell}>Рекомендации</th>
-            <th className={tableStyles.cell}>Пояснение AI</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item: SubmissionListItem) => (
-            <tr key={item.id}>
-              <td className={tableStyles.cell}>
-                {new Date(item.createdAt).toLocaleString("ru-RU")}
-              </td>
-              <td className={tableStyles.cell}>
-                <div>Возраст: {item.profile.age}</div>
-                <div>Пол: {translateGenderSingle(item.profile.gender)}</div>
-                <div>
-                  Подготовка: {translateFitnessLevel(item.profile.fitnessLevel)}
-                </div>
-                <div>
-                  Контакт:{" "}
-                  {item.profile.avoidContact ? "Избегает" : "Допускает"}
-                </div>
-                <div>
-                  Соревнования:{" "}
-                  {item.profile.interestedInCompetition ? "Да" : "Нет"}
-                </div>
-              </td>
-              <td className={tableStyles.cell}>
-                <div>
-                  Форматы:{" "}
-                  {item.profile.preferredFormats.length
-                    ? item.profile.preferredFormats
-                        .map((format) => translateTrainingFormat(format))
-                        .join(", ")
-                    : "—"}
-                </div>
-                <div>
-                  Цели:{" "}
-                  {item.profile.desiredGoals.length
-                    ? item.profile.desiredGoals
-                        .map((goal) => translateGoal(goal))
-                        .join(", ")
-                    : "—"}
-                </div>
-              </td>
-              <td className={tableStyles.cell}>
-                {item.recommendations.slice(0, 3).map((rec, index) => (
-                  <div key={rec.sectionId}>
-                    #{index + 1} {rec.sectionName} ({rec.score.toFixed(1)})
-                  </div>
-                ))}
-              </td>
-              <td className={tableStyles.cell}>
-                {item.aiSummary
-                  ? (() => {
-                      const lines = normalizeAiSummary(item.aiSummary);
-                      const preview = buildPreview(lines, 12);
-                      return (
-                        <div style={{ maxWidth: 420 }}>
-                          <p
-                            style={{
-                              margin: 0,
-                              whiteSpace: "normal",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}>
-                            {preview}
-                          </p>
-                          {preview !== lines.join(" ") ? (
-                            <button
-                              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
-                              onClick={() => setModalContent(lines.join("\n"))}
-                              aria-label="Показать полностью"
-                              style={{ marginTop: 6 }}>
-                              Показать
-                            </button>
-                          ) : null}
-                        </div>
-                      );
-                    })()
-                  : "—"}
-              </td>
+      {isFetching ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Обновляем данные...
+        </p>
+      ) : null}
+      <div className="-mx-4 overflow-x-auto lg:-mx-6">
+        <table className="min-w-[720px] w-full border-collapse text-sm">
+          <thead className="text-left uppercase tracking-[0.12em] text-slate-400">
+            <tr>
+              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+                Дата
+              </th>
+              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+                Профиль
+              </th>
+              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+                Предпочтения
+              </th>
+              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+                Рекомендации
+              </th>
+              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+                Пояснение AI
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className={paginationStyles.pagination}>
+          </thead>
+          <tbody className="align-top text-slate-700 dark:text-slate-200">
+            {items.map((item: SubmissionListItem) => (
+              <tr
+                key={item.id}
+                className="odd:bg-slate-50/60 dark:odd:bg-slate-900/40">
+                <td className="border-b border-slate-200/60 px-4 py-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                  {new Date(item.createdAt).toLocaleString("ru-RU")}
+                </td>
+                <td className="border-b border-slate-200/60 px-4 py-4 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <div className="font-medium text-slate-900 dark:text-white">
+                      Возраст: {item.profile.age}
+                    </div>
+                    <div>Пол: {translateGenderSingle(item.profile.gender)}</div>
+                    <div>
+                      Подготовка:{" "}
+                      {translateFitnessLevel(item.profile.fitnessLevel)}
+                    </div>
+                    <div>
+                      Контакт:{" "}
+                      {item.profile.avoidContact ? "Избегает" : "Допускает"}
+                    </div>
+                    <div>
+                      Соревнования:{" "}
+                      {item.profile.interestedInCompetition ? "Да" : "Нет"}
+                    </div>
+                  </div>
+                </td>
+                <td className="border-b border-slate-200/60 px-4 py-4 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <div>
+                      Форматы:{" "}
+                      {item.profile.preferredFormats.length
+                        ? item.profile.preferredFormats
+                            .map((format) => translateTrainingFormat(format))
+                            .join(", ")
+                        : "—"}
+                    </div>
+                    <div>
+                      Цели:{" "}
+                      {item.profile.desiredGoals.length
+                        ? item.profile.desiredGoals
+                            .map((goal) => translateGoal(goal))
+                            .join(", ")
+                        : "—"}
+                    </div>
+                  </div>
+                </td>
+                <td className="border-b border-slate-200/60 px-4 py-4 dark:border-slate-800">
+                  <div className="space-y-1">
+                    {item.recommendations.slice(0, 3).map((rec, index) => (
+                      <div
+                        key={rec.sectionId}
+                        className="rounded-xl bg-slate-100/70 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
+                        #{index + 1} {rec.sectionName}
+                        <span className="ml-1 text-xs text-slate-400 dark:text-slate-400">
+                          {rec.score.toFixed(1)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </td>
+                <td className="border-b border-slate-200/60 px-4 py-4 dark:border-slate-800">
+                  {item.aiSummary
+                    ? (() => {
+                        const lines = normalizeAiSummary(item.aiSummary);
+                        const preview = buildPreview(lines, 12);
+                        return (
+                          <div className="flex max-w-xs flex-col gap-2">
+                            <p
+                              className="text-sm text-slate-600 dark:text-slate-200"
+                              style={{
+                                display: "-webkit-box",
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                              }}>
+                              {preview}
+                            </p>
+                            {preview !== lines.join(" ") ? (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() =>
+                                  setModalContent(lines.join("\n"))
+                                }
+                                aria-label="Показать полностью">
+                                Показать
+                              </Button>
+                            ) : null}
+                          </div>
+                        );
+                      })()
+                    : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-col gap-3 rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-600 dark:bg-slate-900/40 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
         <span>
           Страница {pagination.page} из {pagination.totalPages} (всего{" "}
           {pagination.total})
         </span>
-        <div>
-          <div className={paginationStyles.controls}>
-            <button
-              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              disabled={pagination.page === 1}>
-              Назад
-            </button>
-            <button
-              className={`${buttonStyles.button} ${buttonStyles.secondary}`}
-              onClick={() =>
-                setPage((prev) =>
-                  prev < pagination.totalPages
-                    ? prev + 1
-                    : pagination.totalPages
-                )
-              }
-              disabled={pagination.page >= pagination.totalPages}>
-              Далее
-            </button>
-          </div>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            disabled={pagination.page === 1}>
+            Назад
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              setPage((prev) =>
+                prev < pagination.totalPages ? prev + 1 : pagination.totalPages
+              )
+            }
+            disabled={pagination.page >= pagination.totalPages}>
+            Далее
+          </Button>
         </div>
       </div>
       <Modal open={Boolean(modalContent)} onClose={() => setModalContent(null)}>
         {modalContent ? (
-          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+          <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {modalContent}
           </div>
         ) : null}
       </Modal>
-    </div>
+    </Card>
   );
 }

@@ -3,7 +3,6 @@ import { Line } from "react-chartjs-2";
 import type { TimelinePoint } from "../types/stats";
 import "../charts/setup";
 import { translateTimelineDate } from "../localization";
-import cardStyles from "./Card.module.css";
 
 interface TimelineChartProps {
   points: TimelinePoint[];
@@ -49,10 +48,5 @@ export function TimelineChart({
     []
   );
 
-  return (
-    <div className={cardStyles.card}>
-      <h2>Динамика опросов</h2>
-      <Line data={chartData} options={options} />
-    </div>
-  );
+  return <Line data={chartData} options={options} />;
 }

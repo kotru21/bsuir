@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Doughnut } from "react-chartjs-2";
 import "../charts/setup";
-import cardStyles from "./Card.module.css";
+import { Card } from "./Card";
 
 interface GenderDistributionChartProps {
   data: Record<string, number>;
@@ -28,12 +28,12 @@ export function GenderDistributionChart({
   }, [data]);
 
   return (
-    <div className={cardStyles.card}>
+    <Card className="flex flex-col gap-4">
       <h2>Распределение по полу</h2>
       <Doughnut
         data={chartData}
         options={{ plugins: { legend: { position: "bottom" } } }}
       />
-    </div>
+    </Card>
   );
 }

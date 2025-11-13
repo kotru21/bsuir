@@ -7,10 +7,8 @@ import { GenderDistributionChart } from "../components/GenderDistributionChart";
 import { FitnessDistributionChart } from "../components/FitnessDistributionChart";
 import { TimelineChart } from "../components/TimelineChart";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
-import cardStyles from "../components/Card.module.css";
-import statusStyles from "../components/StatusMessage.module.css";
-import buttonStyles from "../components/Button.module.css";
-import dashboardStyles from "../components/Dashboard.module.css";
+import { Button } from "../components/Button";
+import { Card } from "../components/Card";
 import {
   GENDER_ORDER,
   mapRecordWithTranslation,
@@ -106,12 +104,12 @@ export function DashboardPage(): ReactElement {
     const message = getErrorMessage(firstError);
 
     return (
-      <div className={cardStyles.card}>
+      <Card className="flex flex-col gap-4">
         <h2>Не удалось загрузить статистику</h2>
-        <div className={`${statusStyles.status} ${statusStyles.error}`}>
-          <span className={statusStyles.text}>{message}</span>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.secondary}`}
+        <div className="flex items-start gap-3 rounded-2xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
+          <span className="flex-1">{message}</span>
+          <Button
+            variant="secondary"
             onClick={() => {
               void Promise.all([
                 overviewQuery.refetch(),
@@ -119,10 +117,10 @@ export function DashboardPage(): ReactElement {
                 timelineQuery.refetch(),
               ]).catch(() => undefined);
             }}>
-            Повторить попытку
-          </button>
+            Повторить
+          </Button>
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -131,8 +129,8 @@ export function DashboardPage(): ReactElement {
   }
 
   return (
-    <div className={dashboardStyles.dashboard}>
-      <div className={dashboardStyles.dashboardGrid}>
+    <div className="flex flex-col gap-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <MetricCard
           title="Всего опросов"
           value={overview.totalSubmissions.toString()}
@@ -166,7 +164,7 @@ export function DashboardPage(): ReactElement {
         />
       </div>
 
-      <div className={dashboardStyles.chartsGrid}>
+      <div className="grid gap-4 xl:grid-cols-2">
         <GenderDistributionChart data={genderDistribution} />
         <FitnessDistributionChart data={overview.fitnessDistribution} />
         {[
@@ -174,48 +172,52 @@ export function DashboardPage(): ReactElement {
           { title: "Популярные цели", items: topGoals },
           { title: "Возрастные группы", items: demographics.ageBuckets },
         ].map((block) => (
-          <div key={block.title} className={cardStyles.card}>
+          <Card key={block.title} className="flex flex-col gap-4">
             <h2>{block.title}</h2>
-            <div className={dashboardStyles.metricsList}>
+            <div className="flex flex-col gap-3">
               {block.items.length ? (
                 block.items.map((it: any) => (
                   <div
                     key={it.key ?? it.label}
-                    className={dashboardStyles.metricsItem}>
+                    className="flex items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
                     <span>{it.label ?? it.label}</span>
-                    <strong>{it.count ?? "—"}</strong>
+                    <strong className="text-base text-slate-900 dark:text-white">
+                      {it.count ?? "—"}
+                    </strong>
                   </div>
                 ))
               ) : (
-                <div className={dashboardStyles.metricsItem}>
+                <div className="flex items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-400 dark:bg-slate-800/50 dark:text-slate-500">
                   <span>Пока нет данных</span>
                   <strong>—</strong>
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         ))}
 
-        <div className={`${cardStyles.card} ${dashboardStyles.timeline}`}>
-          <div className={dashboardStyles.timelineHeader}>
-            <h2>Динамика опросов</h2>
-            <div className={dashboardStyles.timelineFilters}>
+        <Card className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2>Динамика опросов</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Количество заполненных анкет по выбранному диапазону
+              </p>
+            </div>
+            <div className="flex gap-2">
               {[7, 30, 90].map((value) => (
-                <button
+                <Button
                   key={value}
-                  className={
-                    value === rangeDays
-                      ? buttonStyles.button
-                      : `${buttonStyles.button} ${buttonStyles.secondary}`
-                  }
+                  variant={value === rangeDays ? "primary" : "secondary"}
+                  size="sm"
                   onClick={() => setRangeDays(value)}>
                   {value} дн.
-                </button>
+                </Button>
               ))}
             </div>
           </div>
           <TimelineChart points={timelinePoints} />
-        </div>
+        </Card>
       </div>
     </div>
   );

@@ -124,7 +124,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             <Button
               variant="ghost"
               size="sm"
-              className="hidden text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white lg:inline-flex"
+              className="hidden! text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white lg:inline-flex!"
               onClick={toggleCollapsed}
               aria-expanded={!collapsed}
               aria-label={collapsed ? "Развернуть меню" : "Свернуть меню"}>

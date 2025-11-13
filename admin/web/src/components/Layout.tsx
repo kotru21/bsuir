@@ -44,7 +44,6 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
         <aside
           className={cn(
             "flex min-h-0 flex-col gap-8 rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-elevated backdrop-blur transition-all duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
-            // Фиксация сайдбара
             "lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto",
             collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
           )}>
@@ -79,23 +78,26 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 aria-label={collapsed ? label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    "group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white",
-                    isActive &&
-                      "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200",
-                    collapsed && "lg:justify-center"
+                    "group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:hover:bg-slate-800/70 dark:hover:text-white",
+                    isActive
+                      ? "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200"
+                      : "text-slate-600 dark:text-slate-300",
+                    collapsed && "lg:justify-center lg:px-3"
                   )
                 }>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
+                {/* Иконка */}
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
                   {(() => {
                     const Icon = icon as unknown as ComponentType<
                       SVGProps<SVGSVGElement>
                     >;
-                    return <Icon className="h-5 w-5" aria-hidden />;
+                    return <Icon className="h-4 w-4" aria-hidden />;
                   })()}
                 </span>
+                {/* Текст */}
                 <span
                   className={cn(
-                    "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-sm font-medium text-slate-700 transition-all duration-300 dark:text-slate-100",
+                    "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300",
                     collapsed
                       ? "lg:w-0 lg:opacity-0"
                       : "lg:w-auto lg:opacity-100"
@@ -108,26 +110,28 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
 
           {/* Кнопка выхода */}
           <div className="mt-auto shrink-0">
-            <Button
-              variant="secondary"
-              className={cn(
-                "w-full gap-3 text-sm font-medium text-slate-600 dark:text-slate-200",
-                collapsed ? "lg:justify-center" : "lg:justify-start"
-              )}
+            <button
               onClick={handleLogout}
               disabled={auth.logoutInProgress}
-              aria-label={collapsed ? "Выйти из аккаунта" : undefined}>
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                <LogoutIcon className="h-5 w-5" aria-hidden />
+              aria-label={collapsed ? "Выйти из аккаунта" : undefined}
+              className={cn(
+                "group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+                collapsed && "lg:justify-center lg:px-3"
+              )}>
+              {/* Иконка */}
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 transition-colors group-hover:bg-rose-100 group-hover:text-rose-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-rose-500/20 dark:group-hover:text-rose-200">
+                <LogoutIcon className="h-4 w-4" aria-hidden />
               </span>
+              {/* Текст */}
               <span
                 className={cn(
-                  "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-left transition-all duration-300",
+                  "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-left text-sm font-medium transition-all duration-300",
                   collapsed ? "lg:w-0 lg:opacity-0" : "lg:w-auto lg:opacity-100"
                 )}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}
               </span>
-            </Button>
+            </button>
           </div>
         </aside>
 

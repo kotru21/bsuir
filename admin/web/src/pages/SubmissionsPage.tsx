@@ -31,6 +31,13 @@ function normalizeAiSummary(summary: string): string[] {
 }
 /* eslint-enable no-useless-escape */
 
+function buildPreview(summaryLines: string[], maxWords = 12): string {
+  const joined = summaryLines.join(" ");
+  const words = joined.split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return joined;
+  return words.slice(0, maxWords).join(" ") + "…";
+}
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -40,6 +47,7 @@ function getErrorMessage(error: unknown): string {
 
 export function SubmissionsPage(): ReactElement {
   const [page, setPage] = useState(1);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["submissions", page],
@@ -150,15 +158,50 @@ export function SubmissionsPage(): ReactElement {
                 ))}
               </td>
               <td>
-                {item.aiSummary ? (
-                  <div>
-                    {normalizeAiSummary(item.aiSummary).map((line, idx) => (
-                      <p key={`${item.id}-summary-${idx}`}>{line}</p>
-                    ))}
-                  </div>
-                ) : (
-                  "—"
-                )}
+                {item.aiSummary
+                  ? (() => {
+                      const lines = normalizeAiSummary(item.aiSummary);
+                      const isExpanded = expandedRows.has(item.id);
+                      if (isExpanded) {
+                        return (
+                          <div>
+                            {lines.map((line, idx) => (
+                              <p key={`${item.id}-summary-${idx}`}>{line}</p>
+                            ))}
+                            <button
+                              className="button button--secondary"
+                              onClick={() => {
+                                const next = new Set(expandedRows);
+                                next.delete(item.id);
+                                setExpandedRows(next);
+                              }}
+                              aria-label="Свернуть">
+                              Скрыть
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      const preview = buildPreview(lines, 12);
+                      return (
+                        <div>
+                          <p>{preview}</p>
+                          {preview !== lines.join(" ") ? (
+                            <button
+                              className="button button--secondary"
+                              onClick={() => {
+                                const next = new Set(expandedRows);
+                                next.add(item.id);
+                                setExpandedRows(next);
+                              }}
+                              aria-label="Показать полностью">
+                              Показать
+                            </button>
+                          ) : null}
+                        </div>
+                      );
+                    })()
+                  : "—"}
               </td>
             </tr>
           ))}

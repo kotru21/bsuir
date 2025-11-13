@@ -78,7 +78,12 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                   )
                 }>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
-                  <img src={icon} alt="" className="h-5 w-5" aria-hidden />
+                  <img
+                    src={icon}
+                    alt=""
+                    className="h-5 w-5 text-current"
+                    aria-hidden
+                  />
                 </span>
                 <span
                   className={cn(
@@ -102,7 +107,12 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               disabled={auth.logoutInProgress}
               aria-label={collapsed ? "Выйти из аккаунта" : undefined}>
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                <img src={logoutUrl} alt="" className="h-4 w-4" aria-hidden />
+                <img
+                  src={logoutUrl}
+                  alt=""
+                  className="h-4 w-4 text-current"
+                  aria-hidden
+                />
               </span>
               <span className={cn(collapsed ? "lg:hidden" : "")}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}

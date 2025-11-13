@@ -10,6 +10,7 @@ export function LoginPage(): React.JSX.Element {
   const auth = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,19 +40,28 @@ export function LoginPage(): React.JSX.Element {
 
   return (
     <div className={loginStyles.screen}>
-      <form className={loginStyles.form} onSubmit={handleSubmit}>
+      <form
+        className={loginStyles.form}
+        onSubmit={handleSubmit}
+        aria-labelledby="loginTitle">
         <div className={loginStyles.logoWrap}>
           <img src={logoUrl} alt="Логотип" className={loginStyles.logo} />
         </div>
-        <h1>Вход администратора</h1>
+        <h1 id="loginTitle">Вход администратора</h1>
+        <div className={loginStyles.meta}>
+          Введите учетные данные для доступа к панели
+        </div>
         {globalError ? (
           <p className={loginStyles.error} role="alert">
             {globalError}
           </p>
         ) : null}
-        <label>
-          Логин
+
+        <div>
+          <div className={loginStyles.fieldLabel}>Логин</div>
           <input
+            name="username"
+            autoComplete="username"
             type="text"
             className={loginStyles.input}
             value={username}
@@ -61,10 +71,13 @@ export function LoginPage(): React.JSX.Element {
             required
             autoFocus
           />
-        </label>
-        <label>
-          Пароль
+        </div>
+
+        <div>
+          <div className={loginStyles.fieldLabel}>Пароль</div>
           <input
+            name="current-password"
+            autoComplete="current-password"
             type="password"
             className={loginStyles.input}
             value={password}
@@ -73,18 +86,42 @@ export function LoginPage(): React.JSX.Element {
             }
             required
           />
-        </label>
+        </div>
+
         {error ? (
           <p className={loginStyles.error} role="alert">
             {error}
           </p>
         ) : null}
-        <button
-          className={`${buttonStyles.button}`}
-          type="submit"
-          disabled={submitting}>
-          {submitting ? "Входим..." : "Войти"}
-        </button>
+
+        <div className={loginStyles.actions}>
+          <label className={loginStyles.remember}>
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setRemember(e.target.checked)
+              }
+            />
+            Запомнить меня
+          </label>
+          <a
+            className={loginStyles.forgot}
+            href="#"
+            onClick={(e) => e.preventDefault()}>
+            Забыли пароль?
+          </a>
+        </div>
+
+        <div className={loginStyles.submitRow}>
+          <button
+            className={`${buttonStyles.button}`}
+            type="submit"
+            disabled={submitting}
+            aria-label={submitting ? "Входим" : "Войти"}>
+            {submitting ? "Входим..." : "Войти"}
+          </button>
+        </div>
       </form>
     </div>
   );

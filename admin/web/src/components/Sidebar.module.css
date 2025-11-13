@@ -49,7 +49,7 @@
   font-weight: 600;
 }
 .navLinkIcon {
-  display: none;
+  display: flex;
   font-size: 18px;
   line-height: 1;
   width: 24px;
@@ -88,7 +88,7 @@
   border-radius: 8px;
 }
 .footerIcon {
-  display: none;
+  display: flex;
   width: 24px;
   height: 24px;
   align-items: center;

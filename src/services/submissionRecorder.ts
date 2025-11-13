@@ -6,6 +6,7 @@ export interface SubmissionRecordPayload {
   recommendations: RecommendationResult[];
   telegramUserId?: number;
   chatId?: number | string;
+  aiSummary?: string | null;
 }
 
 export async function recordSubmission(
@@ -24,6 +25,9 @@ export async function recordSubmission(
   if (!profile) {
     throw new Error("Submission profile is required");
   }
+
+  const aiSummary =
+    typeof payload.aiSummary === "string" ? payload.aiSummary.trim() : null;
 
   const recommendationData = recommendations.slice(0, 5).map((item, index) => ({
     sectionId: item.section.id,
@@ -46,6 +50,7 @@ export async function recordSubmission(
       desiredGoals: profile.desiredGoals,
       avoidContact: profile.avoidContact,
       interestedInCompetition: profile.interestedInCompetition,
+      aiSummary: aiSummary && aiSummary.length ? aiSummary : undefined,
       recommendations: recommendationData.length
         ? {
             create: recommendationData,

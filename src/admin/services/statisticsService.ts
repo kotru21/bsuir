@@ -1,29 +1,11 @@
-﻿import { getPrismaClient } from "../../infrastructure/prismaClient.js";
+﻿import type { Prisma } from "@prisma/client";
+import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
-interface RecommendationEntity {
-  id: string;
-  sectionId: string;
-  sectionName: string;
-  score: number;
-  rank: number;
-  reasons: unknown;
-  createdAt: Date;
-}
+type SubmissionEntity = Prisma.SurveySubmissionGetPayload<{
+  include: { recommendations: true };
+}>;
 
-interface SubmissionEntity {
-  id: string;
-  telegramUserId: string | null;
-  chatId: string | null;
-  age: number;
-  gender: string;
-  fitnessLevel: string;
-  preferredFormats: string[] | null;
-  desiredGoals: string[] | null;
-  avoidContact: boolean;
-  interestedInCompetition: boolean;
-  createdAt: Date;
-  recommendations?: RecommendationEntity[];
-}
+type RecommendationEntity = SubmissionEntity["recommendations"][number];
 
 type CountAggregate = { _all: number | bigint };
 
@@ -110,6 +92,11 @@ export interface OverviewStats {
   formatLeaders: { format: string; count: number }[];
   goalLeaders: { goal: string; count: number }[];
   lastSubmissionAt: string | null;
+  aiSummaryStats: {
+    withSummary: number;
+    withoutSummary: number;
+    coveragePercent: number;
+  };
 }
 
 export interface DemographicStats {
@@ -135,6 +122,7 @@ export interface SubmissionListItem {
     avoidContact: boolean;
     interestedInCompetition: boolean;
   };
+  aiSummary: string | null;
   recommendations: {
     sectionId: string;
     sectionName: string;
@@ -185,6 +173,11 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     formatLeaders: [],
     goalLeaders: [],
     lastSubmissionAt: null,
+    aiSummaryStats: {
+      withSummary: 0,
+      withoutSummary: 0,
+      coveragePercent: 0,
+    },
   };
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -201,6 +194,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       lastSubmission,
       rawFormatRows,
       rawGoalRows,
+      aiSummaryCount,
     ] = await Promise.all([
       prisma.surveySubmission.count(),
       prisma.surveySubmission.count({
@@ -245,6 +239,18 @@ export async function getOverviewStats(): Promise<OverviewStats> {
         ORDER BY COUNT(*) DESC
         LIMIT 5
       `,
+      prisma.surveySubmission.count({
+        where: {
+          aiSummary: {
+            not: null,
+          },
+          NOT: {
+            aiSummary: {
+              equals: "",
+            },
+          },
+        },
+      }),
     ]);
 
     const genderGroups = rawGenderGroups as GenderGroupRow[];
@@ -290,6 +296,12 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       });
     }
 
+    const withSummary = aiSummaryCount;
+    const withoutSummary = totalSubmissions - withSummary;
+    const coveragePercent = totalSubmissions
+      ? Number(((withSummary / totalSubmissions) * 100).toFixed(1))
+      : 0;
+
     return {
       totalSubmissions,
       submissionsLast7Days,
@@ -309,6 +321,11 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       lastSubmissionAt: lastSubmission?.createdAt
         ? lastSubmission.createdAt.toISOString()
         : null,
+      aiSummaryStats: {
+        withSummary,
+        withoutSummary,
+        coveragePercent,
+      },
     };
   } catch (err) {
     if (isRecoverablePrismaError(err)) {
@@ -447,7 +464,7 @@ export async function getSubmissionPage(
       }),
     ]);
     total = count;
-    entries = result as SubmissionEntity[];
+    entries = result;
   } catch (err) {
     if (isRecoverablePrismaError(err)) {
       return logAndReturn(err, { items: [], total: 0 });
@@ -457,6 +474,7 @@ export async function getSubmissionPage(
 
   const items: SubmissionListItem[] = entries.map((submission) => {
     const recommendations = submission.recommendations ?? [];
+    const aiSummary = (submission as { aiSummary?: string | null }).aiSummary;
 
     return {
       id: submission.id,
@@ -470,6 +488,7 @@ export async function getSubmissionPage(
         avoidContact: submission.avoidContact,
         interestedInCompetition: submission.interestedInCompetition,
       },
+      aiSummary: aiSummary ?? null,
       recommendations: formatRecommendations(recommendations),
     };
   });

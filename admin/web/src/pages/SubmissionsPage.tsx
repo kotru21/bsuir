@@ -13,6 +13,24 @@ import type { SubmissionListItem } from "../types/stats";
 
 const PAGE_SIZE = 20;
 
+/* eslint-disable no-useless-escape */
+function normalizeAiSummary(summary: string): string[] {
+  if (!summary.trim()) {
+    return [];
+  }
+
+  const unescaped = summary.replace(/\\([_\-*\[\]()~`>#\+=|{}.!\\])/g, "$1");
+  const withoutMarkdown = unescaped
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/_(.+?)_/g, "$1");
+
+  return withoutMarkdown
+    .split(/\n+/)
+    .map((line) => line.replace(/^[-•]\s*/, "").trim())
+    .filter(Boolean);
+}
+/* eslint-enable no-useless-escape */
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -84,6 +102,7 @@ export function SubmissionsPage(): ReactElement {
             <th>Профиль</th>
             <th>Предпочтения</th>
             <th>Рекомендации</th>
+            <th>Пояснение AI</th>
           </tr>
         </thead>
         <tbody>
@@ -129,6 +148,17 @@ export function SubmissionsPage(): ReactElement {
                     #{index + 1} {rec.sectionName} ({rec.score.toFixed(1)})
                   </div>
                 ))}
+              </td>
+              <td>
+                {item.aiSummary ? (
+                  <div>
+                    {normalizeAiSummary(item.aiSummary).map((line, idx) => (
+                      <p key={`${item.id}-summary-${idx}`}>{line}</p>
+                    ))}
+                  </div>
+                ) : (
+                  "—"
+                )}
               </td>
             </tr>
           ))}

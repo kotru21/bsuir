@@ -43,68 +43,90 @@ export async function competitionInterestStep(
   }
 
   const profile = assembleUserProfile(ensureProfile(ctx));
-
-  let recommendations: RecommendationResult[] = [];
-  try {
-    recommendations = recommendSections(profile, 3);
-  } catch (err) {
-    console.error("recommendSections error:", err);
-  }
-
   const temp = ensureTemp(ctx);
-  let finalRecommendations = recommendations;
 
-  if (!finalRecommendations.length) {
-    let fallback: RecommendationResult | null = null;
+  if (!temp.processingMessageId) {
     try {
-      fallback = fallbackSection(profile);
-    } catch (err) {
-      console.error("fallbackSection error:", err);
-    }
-
-    if (fallback) {
-      finalRecommendations = [fallback];
-    }
-  }
-
-  temp.recommendations = finalRecommendations;
-
-  if (!finalRecommendations.length) {
-    await ctx.reply(
-      "Не удалось подобрать точное совпадение. Попробуйте изменить ответы командой /start."
-    );
-  } else {
-    const aiSummaryResult = await generateRecommendationSummary(
-      profile,
-      finalRecommendations
-    );
-
-    if (aiSummaryResult.content) {
-      temp.aiSummary = aiSummaryResult.content;
-      const text = [
-        "*Краткое пояснение*",
-        escapeMarkdown(aiSummaryResult.content),
-      ].join("\n");
-      await replyMarkdownV2Safe(ctx, text);
-    } else if (aiSummaryResult.attempted) {
-      await ctx.reply(
-        "⚠️ Не удалось получить пояснение от AI. Показываю результаты стандартного алгоритма."
+      const processingMessage = await ctx.reply(
+        "Подбираем подходящую секцию, пожалуйста, подождите..."
       );
+      temp.processingMessageId = processingMessage.message_id;
+    } catch (err) {
+      console.error("Failed to send processing notice:", err);
     }
-
-    temp.recommendationIndex = 0;
-    await sendWizardRecommendationCard(ctx, 0, finalRecommendations);
   }
 
   try {
-    await recordSubmission({
-      profile,
-      recommendations: temp.recommendations ?? [],
-      telegramUserId: ctx.from?.id,
-      chatId: ctx.chat?.id,
-    });
-  } catch (err) {
-    console.error("Failed to persist survey submission", err);
+    let recommendations: RecommendationResult[] = [];
+    try {
+      recommendations = recommendSections(profile, 3);
+    } catch (err) {
+      console.error("recommendSections error:", err);
+    }
+
+    let finalRecommendations = recommendations;
+
+    if (!finalRecommendations.length) {
+      let fallback: RecommendationResult | null = null;
+      try {
+        fallback = fallbackSection(profile);
+      } catch (err) {
+        console.error("fallbackSection error:", err);
+      }
+
+      if (fallback) {
+        finalRecommendations = [fallback];
+      }
+    }
+
+    temp.recommendations = finalRecommendations;
+
+    if (!finalRecommendations.length) {
+      await ctx.reply(
+        "Не удалось подобрать точное совпадение. Попробуйте изменить ответы командой /start."
+      );
+    } else {
+      const aiSummaryResult = await generateRecommendationSummary(
+        profile,
+        finalRecommendations
+      );
+
+      if (aiSummaryResult.content) {
+        temp.aiSummary = aiSummaryResult.content;
+        const text = [
+          "*Краткое пояснение*",
+          escapeMarkdown(aiSummaryResult.content),
+        ].join("\n");
+        await replyMarkdownV2Safe(ctx, text);
+      } else {
+        temp.aiSummary = undefined;
+        if (aiSummaryResult.attempted) {
+          await ctx.reply(
+            "⚠️ Не удалось получить пояснение от AI. Показываю результаты стандартного алгоритма."
+          );
+        }
+      }
+
+      temp.recommendationIndex = 0;
+      await sendWizardRecommendationCard(ctx, 0, finalRecommendations);
+    }
+
+    try {
+      await recordSubmission({
+        profile,
+        recommendations: temp.recommendations ?? [],
+        telegramUserId: ctx.from?.id,
+        chatId: ctx.chat?.id,
+        aiSummary: temp.aiSummary,
+      });
+    } catch (err) {
+      console.error("Failed to persist survey submission", err);
+    }
+  } finally {
+    if (temp.processingMessageId) {
+      await ctx.deleteMessage(temp.processingMessageId).catch(() => undefined);
+      delete temp.processingMessageId;
+    }
   }
 
   await ctx.reply(

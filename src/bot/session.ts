@@ -16,6 +16,7 @@ export interface TempState {
   promptMessageId?: number;
   promptChatId?: number | string;
   aiSummary?: string;
+  processingMessageId?: number;
 }
 
 export interface RecommendationSession extends Scenes.WizardSessionData {

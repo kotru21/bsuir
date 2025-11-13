@@ -155,6 +155,11 @@ export function DashboardPage(): ReactElement {
           value={`${overview.competitionInterest.interested}`}
           hint={`Без интереса: ${overview.competitionInterest.notInterested}`}
         />
+        <MetricCard
+          title="AI-пояснения"
+          value={`${overview.aiSummaryStats.withSummary}`}
+          hint={`Покрытие: ${overview.aiSummaryStats.coveragePercent}% (без: ${overview.aiSummaryStats.withoutSummary})`}
+        />
       </div>
 
       <div className="charts-grid">

@@ -134,15 +134,17 @@ function buildPromptPayload(
 }
 
 function buildPrompt(payload: PromptPayload): string {
-  return [
+  const instructions = [
     "Ты — AI-ассистент спортивного консультанта БГУИР.",
-    "На основе предоставленных данных сформируй 2–3 предложения на русском языке.",
-    "Поясни, почему подбор релевантен, в дружелюбном и мотивирующем тоне.",
-    "Упомяни максимум два направления, но сделай вывод в целом по подбору.",
-    "Избегай списков, используй только текстовое объяснение.",
-    "Исходные данные:",
-    JSON.stringify(payload, null, 2),
-  ].join("\n");
+    "Сформируй 2–3 предложения на русском языке в дружелюбном и мотивирующем тоне.",
+    "Ответ должен быть совместим с Telegram MarkdownV2: избегай списков, заголовков, ссылок, эмодзи и кодовых блоков.",
+    "Допустимо использовать *жирное выделение* только для названий секций, не применяй другого форматирования.",
+    "Упомяни максимум две секции и объясни, почему подбор в целом подходит пользователю.",
+    "Сосредоточься на пользе и ожидаемом прогрессе, не повторяй дословно исходные данные.",
+    "Исходные данные (JSON):",
+  ];
+
+  return [...instructions, JSON.stringify(payload, null, 2)].join("\n");
 }
 
 export async function generateRecommendationSummary(
@@ -190,7 +192,7 @@ export async function generateRecommendationSummary(
           {
             role: "system",
             content:
-              "You are an assistant that helps explain tailored sport section recommendations for students.",
+              "You explain tailored sport recommendations for students. Reply in Russian using 2-3 sentences that comply with Telegram MarkdownV2. Avoid lists, code blocks, links, emojis, or unsupported markup. Only use *bold* for section names when it improves clarity.",
           },
           {
             role: "user",

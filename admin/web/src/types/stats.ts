@@ -15,6 +15,11 @@ export interface OverviewStats {
   formatLeaders: { format: string; count: number }[];
   goalLeaders: { goal: string; count: number }[];
   lastSubmissionAt: string | null;
+  aiSummaryStats: {
+    withSummary: number;
+    withoutSummary: number;
+    coveragePercent: number;
+  };
 }
 
 export interface DemographicStats {
@@ -40,6 +45,7 @@ export interface SubmissionListItem {
     avoidContact: boolean;
     interestedInCompetition: boolean;
   };
+  aiSummary: string | null;
   recommendations: {
     sectionId: string;
     sectionName: string;

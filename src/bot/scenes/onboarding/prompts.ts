@@ -1,6 +1,6 @@
 import type { RecommendationContext } from "../../session.js";
 import { ensureProfile, ensureTemp } from "../../session.js";
-import type { GoalTag } from "../../types.js";
+import type { GoalTag } from "../../../types.js";
 import {
   buildAgeKeyboard,
   buildFormatKeyboard,

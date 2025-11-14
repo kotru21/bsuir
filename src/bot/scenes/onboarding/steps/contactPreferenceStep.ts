@@ -24,7 +24,9 @@ export async function contactPreferenceStep(
   }
 
   const avoid = data.endsWith("yes");
-  ensureProfile(ctx).avoidContact = avoid;
+  const profile = ensureProfile(ctx);
+  profile.avoidContact = avoid;
+  profile.contactTolerance = avoid ? 0 : 1;
   await ctx.answerCbQuery?.(
     avoid ? "Будем избегать контакта." : "Контакт допустим."
   );

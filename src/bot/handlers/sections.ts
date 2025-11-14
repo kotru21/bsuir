@@ -65,8 +65,6 @@ function buildCatalogRecommendation(
   return {
     section,
     score: 0,
-    matchedFocus: [],
-    formatMatch: false,
     reasons: [{ kind: "catalog-reference", note: "Информация из каталога." }],
   };
 }

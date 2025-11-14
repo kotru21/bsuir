@@ -6,8 +6,10 @@ import {
   ageSelectionStep,
   genderStep,
   fitnessStep,
+  intensityComfortStep,
   formatStep,
   goalStep,
+  goalPriorityStep,
   contactPreferenceStep,
   competitionInterestStep,
 } from "./onboarding/steps/index.js";
@@ -20,8 +22,10 @@ const steps = [
   wrapSceneStep(ageSelectionStep),
   wrapSceneStep(genderStep),
   wrapSceneStep(fitnessStep),
+  wrapSceneStep(intensityComfortStep),
   wrapSceneStep(formatStep),
   wrapSceneStep(goalStep),
+  wrapSceneStep(goalPriorityStep),
   wrapSceneStep(contactPreferenceStep),
   wrapSceneStep(competitionInterestStep),
 ];

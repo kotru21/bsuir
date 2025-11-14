@@ -2,10 +2,9 @@ import type { RecommendationContext } from "../../../session.js";
 import type { GoalTag } from "../../../../types.js";
 import { ensureProfile, ensureTemp } from "../../../session.js";
 import { goalOptions } from "../../../constants.js";
-import { contactKeyboard } from "../../../keyboards.js";
 import {
   sendGoalPrompt,
-  sendPromptMessage,
+  sendGoalPriorityPrompt,
   sendTransientMessage,
 } from "../prompts.js";
 
@@ -44,11 +43,7 @@ export async function goalStep(ctx: RecommendationContext): Promise<void> {
         .deleteMessage(callback.message.message_id)
         .catch(() => undefined);
     }
-    await sendPromptMessage(
-      ctx,
-      "Следует ли избегать контактных видов спорта?",
-      contactKeyboard
-    );
+    await sendGoalPriorityPrompt(ctx, "new");
     await ctx.wizard.next();
     return;
   }

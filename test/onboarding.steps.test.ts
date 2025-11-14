@@ -2,6 +2,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { formatStep } from "../src/bot/scenes/onboarding/steps/formatStep.js";
 import { goalStep } from "../src/bot/scenes/onboarding/steps/goalStep.js";
+import { goalPriorityStep } from "../src/bot/scenes/onboarding/steps/goalPriorityStep.js";
+import { intensityComfortStep } from "../src/bot/scenes/onboarding/steps/intensityComfortStep.js";
 import { contactPreferenceStep } from "../src/bot/scenes/onboarding/steps/contactPreferenceStep.js";
 import { competitionInterestStep } from "../src/bot/scenes/onboarding/steps/competitionInterestStep.js";
 import type { RecommendationContext } from "../src/bot/session.js";
@@ -55,6 +57,29 @@ describe("onboarding step workflows", () => {
     ctx.callbackQuery.data = "goal:done";
     await goalStep(ctx);
     expect(ctx.session.profile?.desiredGoals).toContain("strength");
+  });
+
+  it("goalPriorityStep records priorities and proceeds", async () => {
+    const ctx = createCallbackCtx("goalpr:done");
+    ctx.session.profile = {
+      desiredGoals: ["strength", "endurance"],
+    };
+    ctx.session.temp = {
+      goalPrioritySelection: ["strength"],
+    };
+    await goalPriorityStep(ctx);
+    expect(ctx.session.profile?.goalPriorities?.strength).toBe(1);
+    expect(ctx.session.profile?.goalPriorities?.endurance).toBe(0.5);
+    expect(ctx.wizard.next).toHaveBeenCalled();
+  });
+
+  it("intensityComfortStep saves comfort preference", async () => {
+    const ctx = createCallbackCtx("intensitypref:balanced");
+    ctx.session.profile = {};
+    await intensityComfortStep(ctx);
+    expect(ctx.session.profile?.intensityComfort).toBeGreaterThan(0);
+    expect(ctx.session.profile?.intensityFlexibility).toBeGreaterThan(0);
+    expect(ctx.wizard.next).toHaveBeenCalled();
   });
 
   it("contactPreferenceStep stores avoidContact flag", async () => {

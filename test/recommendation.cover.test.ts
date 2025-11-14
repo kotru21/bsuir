@@ -52,11 +52,13 @@ describe("recommendation engine coverage", () => {
 
     const recs = recommendSections(profile, 5);
     expect(Array.isArray(recs)).toBe(true);
-    // At least one recommended section should have matchedFocus including 'competition'
     const anyCompetition = recs.some(
       (r) =>
-        r.matchedFocus.includes("competition") ||
-        r.section.focus.includes("competition")
+        r.reasons.some(
+          (reason) =>
+            reason.kind === "similarity-goal" &&
+            reason.tags.includes("competition")
+        ) || r.section.focus.includes("competition")
     );
     expect(anyCompetition).toBe(true);
   });
@@ -112,11 +114,13 @@ describe("formatters", () => {
     const first = all[0];
     const fakeRec: import("../src/types.js").RecommendationResult = {
       section: first,
-      score: 5,
-      matchedFocus: first.focus.slice(0, 1),
-      formatMatch: true,
+      score: 0.92,
       reasons: [
-        { kind: "goal-match", tags: first.focus.slice(0, 1) },
+        {
+          kind: "similarity-goal",
+          tags: first.focus.slice(0, 1) as import("../src/types.js").GoalTag[],
+          contribution: 0.9,
+        },
         { kind: "catalog-reference", note: "Причина теста" },
       ],
     };

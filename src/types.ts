@@ -19,6 +19,21 @@ export type TrainingFormat = "individual" | "group" | "mixed";
 
 export type ContactLevel = "nonContact" | "lightContact" | "fullContact";
 
+export type GoalPriorityMap = Partial<Record<GoalTag, number>>;
+export type FormatPreferenceMap = Partial<Record<TrainingFormat, number>>;
+
+export type VectorGoalKey = `goal:${GoalTag}`;
+export type VectorFormatKey = `format:${TrainingFormat}`;
+export type VectorIntensityKey = `intensity:${FitnessLevel}`;
+export type VectorKey =
+  | VectorGoalKey
+  | VectorFormatKey
+  | VectorIntensityKey
+  | "competition"
+  | "contactTolerance";
+
+export type SimilarityVector = Partial<Record<VectorKey, number>>;
+
 export interface SectionTimeline {
   shortTerm: string; // ~1 month
   midTerm: string; // ~3 months
@@ -42,6 +57,7 @@ export interface SportSection {
   prerequisites?: string;
   imagePath?: string;
   locationHint?: string;
+  similarityVector?: SimilarityVector;
 }
 
 export interface UserProfile {
@@ -52,43 +68,46 @@ export interface UserProfile {
   desiredGoals: GoalTag[];
   avoidContact: boolean;
   interestedInCompetition: boolean;
+  goalPriorities?: GoalPriorityMap;
+  formatPriorities?: FormatPreferenceMap;
+  intensityComfort?: number; // 0..1 prefers lower intensity, 1 == high
+  intensityFlexibility?: number; // 0 rigid, 1 flexible
+  contactTolerance?: number; // 0 avoids, 1 accepts
+  competitionDrive?: number; // 0 indifferent, 1 focused
 }
 
 export type RecommendationReason =
-  | { kind: "goal-match"; tags: GoalTag[] }
+  | { kind: "similarity-goal"; tags: GoalTag[]; contribution: number }
   | {
-      kind: "format-aligned";
-      format: TrainingFormat;
-      preferred: TrainingFormat[];
+      kind: "similarity-format";
+      formats: TrainingFormat[];
+      contribution: number;
     }
   | {
-      kind: "format-mismatch";
-      format: TrainingFormat;
-      preferred: TrainingFormat[];
-    }
-  | {
-      kind: "fitness-balanced";
+      kind: "similarity-intensity";
       profileLevel: FitnessLevel;
-      intensity: FitnessLevel;
+      sectionLevel: FitnessLevel;
+      contribution: number;
     }
   | {
-      kind: "fitness-progressive";
-      profileLevel: FitnessLevel;
-      intensity: FitnessLevel;
+      kind: "competition-alignment";
+      contribution: number;
     }
   | {
-      kind: "fitness-gap";
-      profileLevel: FitnessLevel;
-      intensity: FitnessLevel;
+      kind: "contact-compatibility";
+      contribution: number;
     }
-  | { kind: "competition-path" }
+  | {
+      kind: "vector-gap";
+      dimension: VectorKey;
+      contribution: number;
+    }
   | { kind: "extra-benefits"; benefits: string[] }
   | { kind: "catalog-reference"; note: string };
 
 export interface RecommendationResult {
   section: SportSection;
   score: number;
-  matchedFocus: GoalTag[];
-  formatMatch: boolean;
   reasons: RecommendationReason[];
+  vector?: SimilarityVector;
 }

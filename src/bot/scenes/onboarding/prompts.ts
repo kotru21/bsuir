@@ -1,10 +1,13 @@
 import type { RecommendationContext } from "../../session.js";
 import { ensureProfile, ensureTemp } from "../../session.js";
+import type { GoalTag } from "../../types.js";
 import {
   buildAgeKeyboard,
   buildFormatKeyboard,
   buildFitnessKeyboard,
   buildGoalKeyboard,
+  buildGoalPriorityKeyboard,
+  buildIntensityComfortKeyboard,
 } from "../../keyboards.js";
 import {
   buildAgeSliderText,
@@ -16,6 +19,7 @@ import {
   AGE_DEFAULT,
   fitnessLevelLabelsRu,
   fitnessOrder,
+  goalTagLabels,
 } from "../../constants.js";
 
 export type PromptMode = "new" | "edit";
@@ -164,6 +168,83 @@ export async function sendGoalPrompt(
     console.error("sendGoalPrompt error:", err);
     try {
       await ctx.reply("Не удалось показать выбор целей.");
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+function buildGoalPriorityText(
+  selection: GoalTag[],
+  prioritized: GoalTag[]
+): string {
+  if (!selection.length) {
+    return "Нет выбранных целей. Вернитесь назад и отметьте хотя бы одну цель.";
+  }
+  const prioritizedLabels = prioritized.length
+    ? prioritized.map((tag) => goalTagLabels[tag] ?? tag).join(", ")
+    : "не выбрано";
+  return [
+    "Отметьте 1-2 главные цели — они будут иметь больший вес в подборе.",
+    `Ваши цели: ${selection
+      .map((tag) => goalTagLabels[tag] ?? tag)
+      .join(", ")}.`,
+    `Приоритеты: ${prioritizedLabels}.` + " Нажмите 'Готово', когда закончите.",
+  ].join("\n");
+}
+
+export async function sendGoalPriorityPrompt(
+  ctx: RecommendationContext,
+  mode: PromptMode = "new"
+): Promise<void> {
+  const temp = ensureTemp(ctx);
+  const profile = ensureProfile(ctx);
+  const selection = profile.desiredGoals ?? temp.goalSelection ?? [];
+  if (!temp.goalPrioritySelection) {
+    temp.goalPrioritySelection = selection.slice(0, 2);
+  }
+  const text = buildGoalPriorityText(selection, temp.goalPrioritySelection);
+  const keyboard = buildGoalPriorityKeyboard(
+    selection,
+    temp.goalPrioritySelection ?? []
+  );
+  try {
+    if (mode === "edit" && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(text, keyboard);
+    } else {
+      await sendPromptMessage(ctx, text, keyboard);
+    }
+  } catch (err) {
+    console.error("sendGoalPriorityPrompt error:", err);
+    try {
+      await ctx.reply("Не удалось показать выбор приоритетов по целям.");
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export async function sendIntensityComfortPrompt(
+  ctx: RecommendationContext,
+  mode: PromptMode = "new"
+): Promise<void> {
+  const text = [
+    "Какую тренировочную нагрузку предпочитаете сейчас?",
+    "Бережно — мягкий прогресс и контроль восстановления.",
+    "Сбалансировано — комфортные занятия с постепенным усложнением.",
+    "Готов к интенсивности — можно повышать темп и нагрузку быстрее.",
+  ].join("\n");
+  const keyboard = buildIntensityComfortKeyboard();
+  try {
+    if (mode === "edit" && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(text, keyboard);
+    } else {
+      await sendPromptMessage(ctx, text, keyboard);
+    }
+  } catch (err) {
+    console.error("sendIntensityComfortPrompt error:", err);
+    try {
+      await ctx.reply("Не удалось показать выбор предпочтения нагрузки.");
     } catch {
       /* ignore */
     }

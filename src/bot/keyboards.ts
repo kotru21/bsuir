@@ -4,6 +4,7 @@ import {
   fitnessLevelLabelsRu,
   fitnessOrder,
   goalOptions,
+  goalTagLabels,
 } from "./constants.js";
 
 function chunkArray<T>(items: T[], size: number): T[][] {
@@ -110,6 +111,48 @@ export function buildGoalKeyboard(
     Markup.button.callback("Готово", "goal:done"),
   ]);
   return Markup.inlineKeyboard(rows);
+}
+
+export function buildGoalPriorityKeyboard(
+  selection: GoalTag[],
+  prioritized: GoalTag[]
+): ReturnType<typeof Markup.inlineKeyboard> {
+  if (!selection.length) {
+    return Markup.inlineKeyboard([
+      [Markup.button.callback("Пропустить", "goalpr:skip")],
+    ]);
+  }
+  const entries = selection.map((tag) => ({
+    tag,
+    label:
+      goalTagLabels[tag] ??
+      Object.values(goalOptions).find((option) => option.tag === tag)?.label ??
+      tag,
+  }));
+  const rows = chunkArray(entries, 2).map((chunk) =>
+    chunk.map(({ tag, label }) =>
+      Markup.button.callback(
+        `${prioritized.includes(tag) ? "⭐" : "▫️"} ${label}`,
+        `goalpr:${tag}`
+      )
+    )
+  );
+  rows.push([
+    Markup.button.callback("Очистить", "goalpr:clear"),
+    Markup.button.callback("Готово", "goalpr:done"),
+  ]);
+  rows.push([Markup.button.callback("Пропустить", "goalpr:skip")]);
+  return Markup.inlineKeyboard(rows);
+}
+
+export function buildIntensityComfortKeyboard(): ReturnType<
+  typeof Markup.inlineKeyboard
+> {
+  return Markup.inlineKeyboard([
+    [Markup.button.callback("Бережно", "intensitypref:steady")],
+    [Markup.button.callback("Сбалансировано", "intensitypref:balanced")],
+    [Markup.button.callback("Готов к интенсивности", "intensitypref:push")],
+  ]);
 }
 
 export function buildRecommendationKeyboard(

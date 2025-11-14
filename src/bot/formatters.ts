@@ -62,49 +62,37 @@ export function goalSelectionText(selection: GoalTag[]): string {
 
 function describeReason(reason: RecommendationReason): string {
   switch (reason.kind) {
-    case "goal-match": {
+    case "similarity-goal": {
       const focusLabels = reason.tags.map((tag) => goalTagLabels[tag] ?? tag);
-      return `Соответствует целям: ${focusLabels.join(", ")}.`;
+      return `Совпадает с ключевыми целями: ${focusLabels.join(", ")}.`;
     }
-    case "format-aligned": {
-      const preferredLabels = reason.preferred
-        .map((format) => formatLabelsRu[format])
-        .join(", ");
-      return `Формат (${
-        formatLabelsRu[reason.format]
-      }) совпадает с предпочтениями (${preferredLabels}).`;
+    case "similarity-format": {
+      const labels = reason.formats.map((format) => formatLabelsRu[format]);
+      return `Формат (${labels.join(", ")}) соответствует вашему запросу.`;
     }
-    case "format-mismatch": {
-      const preferredLabels = reason.preferred
-        .map((format) => formatLabelsRu[format])
-        .join(", ");
-      return `Формат направления (${
-        formatLabelsRu[reason.format]
-      }) отличается от предпочтений (${preferredLabels}), но может подойти.`;
-    }
-    case "fitness-balanced": {
+    case "similarity-intensity": {
       return `Интенсивность (${
-        intensityLabelsRu[reason.intensity]
-      }) соответствует вашему уровню (${
+        intensityLabelsRu[reason.sectionLevel]
+      }) согласуется с вашим уровнем (${
         fitnessLevelLabelsRu[reason.profileLevel]
       }).`;
     }
-    case "fitness-progressive": {
-      return `Интенсивность (${
-        intensityLabelsRu[reason.intensity]
-      }) немного выше уровня (${
-        fitnessLevelLabelsRu[reason.profileLevel]
-      }) и поможет прогрессировать.`;
+    case "competition-alignment": {
+      return "Есть возможность двигаться к соревнованиям.";
     }
-    case "fitness-gap": {
-      return `Интенсивность (${
-        intensityLabelsRu[reason.intensity]
-      }) значительно выше текущего уровня (${
-        fitnessLevelLabelsRu[reason.profileLevel]
-      }), потребуется адаптация.`;
+    case "contact-compatibility": {
+      return "Контактность секции соответствует вашим предпочтениям.";
     }
-    case "competition-path": {
-      return "Программа включает путь к участию в соревнованиях.";
+    case "vector-gap": {
+      if (reason.dimension.startsWith("goal:")) {
+        const tag = reason.dimension.split(":")[1] as GoalTag;
+        return `Недостающее направление: ${goalTagLabels[tag] ?? tag}.`;
+      }
+      if (reason.dimension.startsWith("format:")) {
+        const format = reason.dimension.split(":")[1] as TrainingFormat;
+        return `Желаемый формат (${formatLabelsRu[format]}) пока не найден.`;
+      }
+      return "По одному из параметров нет точного совпадения.";
     }
     case "extra-benefits": {
       return `Дополнительные плюсы: ${reason.benefits.join(", ")}.`;
@@ -123,19 +111,46 @@ function describeReasons(reasons: RecommendationReason[]): string[] {
     .filter((text): text is string => Boolean(text));
 }
 
+function resolveGoalLabels(
+  recommendation: RecommendationResult,
+  limit: number
+): string[] {
+  const goalReason = recommendation.reasons.find(
+    (
+      reason
+    ): reason is Extract<RecommendationReason, { kind: "similarity-goal" }> =>
+      reason.kind === "similarity-goal"
+  );
+  const tags = goalReason
+    ? goalReason.tags.slice(0, limit)
+    : recommendation.section.focus.slice(0, limit);
+  return tags.map((tag) => goalTagLabels[tag] ?? tag);
+}
+
+function resolveFormatLabels(recommendation: RecommendationResult): string[] {
+  const formatReason = recommendation.reasons.find(
+    (
+      reason
+    ): reason is Extract<RecommendationReason, { kind: "similarity-format" }> =>
+      reason.kind === "similarity-format"
+  );
+  const formats = formatReason?.formats ?? [recommendation.section.format];
+  return formats.map((format) => formatLabelsRu[format]);
+}
+
 export function renderRecommendationSummary(
   position: number,
   recommendation: RecommendationResult
 ): string {
-  const { section, matchedFocus, reasons } = recommendation;
+  const { section, reasons } = recommendation;
   const header = `*${escapeMarkdown(`${position}. ${section.title}`)}*`;
-  const focusLabels = matchedFocus.map((tag) => goalTagLabels[tag] ?? tag);
+  const focusLabels = resolveGoalLabels(recommendation, 2);
   const focusLineRaw = focusLabels.length
     ? `Цели: ${focusLabels.join(", ")}`
     : "Цели: общий профиль";
-  const formatLineRaw = `Формат: ${
-    formatLabelsRu[section.format]
-  }, интенсивность: ${intensityLabelsRu[section.intensity]}`;
+  const formatLineRaw = `Формат: ${resolveFormatLabels(recommendation).join(
+    ", "
+  )}, интенсивность: ${intensityLabelsRu[section.intensity]}`;
   const reasonStrings = describeReasons(reasons);
   const reasonLineRaw = reasonStrings.length
     ? `Почему: ${reasonStrings[0]}`
@@ -155,14 +170,14 @@ export function renderRecommendationDetail(
   position: number,
   recommendation: RecommendationResult
 ): string {
-  const { section, matchedFocus, reasons } = recommendation;
-  const focusLabels = matchedFocus.map((tag) => goalTagLabels[tag] ?? tag);
+  const { section, reasons } = recommendation;
+  const focusLabels = resolveGoalLabels(recommendation, 3);
   const focusLineRaw = focusLabels.length
     ? `Совпадение по целям: ${focusLabels.join(", ")}`
     : "Совпадение по целям: общий профиль";
-  const formatLineRaw = `Формат: ${
-    formatLabelsRu[section.format]
-  } | Интенсивность: ${intensityLabelsRu[section.intensity]}`;
+  const formatLineRaw = `Формат: ${resolveFormatLabels(recommendation).join(
+    ", "
+  )} | Интенсивность: ${intensityLabelsRu[section.intensity]}`;
   const extraRaw = section.extraBenefits?.length
     ? `Дополнительно: ${section.extraBenefits.join(", ")}`
     : "";

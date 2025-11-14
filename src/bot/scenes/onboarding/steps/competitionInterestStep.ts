@@ -31,7 +31,9 @@ export async function competitionInterestStep(
   }
 
   const interested = data.endsWith("yes");
-  ensureProfile(ctx).interestedInCompetition = interested;
+  const profileDraft = ensureProfile(ctx);
+  profileDraft.interestedInCompetition = interested;
+  profileDraft.competitionDrive = interested ? 1 : 0;
   await ctx.answerCbQuery?.(
     interested
       ? "Учтем интерес к соревнованиям."
@@ -42,7 +44,7 @@ export async function competitionInterestStep(
     await ctx.deleteMessage(callback.message.message_id).catch(() => undefined);
   }
 
-  const profile = assembleUserProfile(ensureProfile(ctx));
+  const profile = assembleUserProfile(profileDraft);
   const temp = ensureTemp(ctx);
 
   if (!temp.processingMessageId) {

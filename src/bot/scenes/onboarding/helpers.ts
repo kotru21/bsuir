@@ -28,6 +28,7 @@ export function initializeSession(ctx: RecommendationContext): void {
     fitnessIndex: undefined,
     formatSelection: undefined,
     goalSelection: undefined,
+    goalPrioritySelection: undefined,
     recommendations: undefined,
     promptMessageId: undefined,
     promptChatId: undefined,

@@ -2,7 +2,7 @@ import type { RecommendationContext } from "../../../session.js";
 import { ensureProfile, ensureTemp } from "../../../session.js";
 import {
   sendFitnessSlider,
-  sendFormatPrompt,
+  sendIntensityComfortPrompt,
   sendTransientMessage,
 } from "../prompts.js";
 import { resetPromptState } from "../helpers.js";
@@ -67,7 +67,7 @@ export async function fitnessStep(ctx: RecommendationContext): Promise<void> {
         .catch(() => undefined);
     }
     resetPromptState(ctx);
-    await sendFormatPrompt(ctx, "new");
+    await sendIntensityComfortPrompt(ctx, "new");
     await ctx.wizard.next();
     return;
   }

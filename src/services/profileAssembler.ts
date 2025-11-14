@@ -16,5 +16,15 @@ export function assembleUserProfile(draft: ProfileDraft): UserProfile {
     desiredGoals: [...(draft.desiredGoals ?? [])],
     avoidContact: draft.avoidContact ?? false,
     interestedInCompetition: draft.interestedInCompetition ?? false,
+    goalPriorities: draft.goalPriorities
+      ? { ...draft.goalPriorities }
+      : undefined,
+    formatPriorities: draft.formatPriorities
+      ? { ...draft.formatPriorities }
+      : undefined,
+    intensityComfort: draft.intensityComfort,
+    intensityFlexibility: draft.intensityFlexibility,
+    contactTolerance: draft.contactTolerance,
+    competitionDrive: draft.competitionDrive,
   };
 }

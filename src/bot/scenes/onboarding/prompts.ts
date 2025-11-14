@@ -1,3 +1,4 @@
+import { TelegramError } from "telegraf";
 import type { RecommendationContext } from "../../session.js";
 import { ensureProfile, ensureTemp } from "../../session.js";
 import type { GoalTag } from "../../../types.js";
@@ -37,7 +38,14 @@ export async function cleanupPromptMessage(
   try {
     await ctx.telegram.deleteMessage(promptChatId, promptMessageId);
   } catch (err) {
-    console.error("cleanupPromptMessage delete error:", err);
+    const isMissingMessage =
+      err instanceof TelegramError &&
+      err.code === 400 &&
+      typeof err.description === "string" &&
+      err.description.includes("message to delete not found");
+    if (!isMissingMessage) {
+      console.error("cleanupPromptMessage delete error:", err);
+    }
   }
   temp.promptMessageId = undefined;
   temp.promptChatId = undefined;

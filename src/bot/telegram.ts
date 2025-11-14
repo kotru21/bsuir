@@ -27,7 +27,15 @@ export async function replyMarkdownV2Safe(
         err.description
       );
       try {
-        await ctx.reply(stripMarkdownEscapes(text), extra);
+        let fallbackExtra: MarkdownExtra | undefined;
+        if (extra) {
+          const cloned = { ...(extra as Record<string, unknown>) };
+          if ("parse_mode" in cloned) {
+            delete cloned.parse_mode;
+          }
+          fallbackExtra = cloned as MarkdownExtra;
+        }
+        await ctx.reply(stripMarkdownEscapes(text), fallbackExtra);
       } catch (fallbackErr) {
         console.error("Failed to send plain text fallback:", fallbackErr);
         throw fallbackErr;

@@ -44,12 +44,32 @@ API работает под базовым путём `/admin/api` (параме
 {
   "items": [
     {
-      "id": 123,
-      "profileId": 456,
+      "id": "clp2wjq1n0001z8kcy7p6c8p4",
       "createdAt": "2025-11-10T12:34:56.000Z",
-      "profile": { "gender": "female", "age": 20, "goal": "health" },
+      "profile": {
+        "gender": "female",
+        "age": 20,
+        "fitnessLevel": "medium",
+        "preferredFormats": ["group", "mixed"],
+        "desiredGoals": ["endurance", "teamwork"],
+        "avoidContact": false,
+        "interestedInCompetition": true
+      },
       "recommendations": [
-        { "sectionId": "yoga", "score": 92, "reasons": ["Совпадение цели"] }
+        {
+          "sectionId": "yoga",
+          "sectionName": "Йога",
+          "score": 0.92,
+          "rank": 1,
+          "reasons": [
+            {
+              "kind": "similarity-goal",
+              "tags": ["endurance"],
+              "contribution": 0.62
+            },
+            { "kind": "contact-compatibility", "contribution": 0.31 }
+          ]
+        }
       ]
     }
   ],
@@ -62,7 +82,7 @@ API работает под базовым путём `/admin/api` (параме
 }
 ```
 
-> 💡 **Совет:** значения `page` и `pageSize` автоматически нормализуются (`page ≥ 1`, `5 ≤ pageSize ≤ 100`).
+> 💡 **Совет:** значения `page` и `pageSize` автоматически нормализуются (`page ≥ 1`, `5 ≤ pageSize ≤ 100`). `score` всегда находится в диапазоне `0..1`, потому что берётся напрямую из косинусного сходства.
 
 ## Ошибки
 

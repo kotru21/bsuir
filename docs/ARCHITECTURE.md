@@ -33,7 +33,7 @@ flowchart TB
       end
 
       subgraph BusinessLogic["Бизнес-логика"]
-         RecEngine["Recommendation Engine<br/>scoring алгоритм"]
+         RecEngine["Recommendation Engine<br/>векторное косинусное сходство"]
          ProfileAssembler["Profile Assembler"]
          StatService["Statistics Service"]
       end
@@ -70,7 +70,7 @@ flowchart TB
 **Ключевые связи:**
 
 - Telegram-бот и веб-панель используют общие сервисы и инфраструктуру.
-- Рекомендательный движок обращается к каталогу секций и сохраняет результаты через Prisma.
+- Рекомендательный движок нормализует векторы профиля и секций, считает косинусное сходство и сохраняет лучшие результаты через Prisma.
 - Статистика и список анкет обслуживаются REST API, защищённым cookie-сессиями и CSRF.
 
 </details>
@@ -153,7 +153,7 @@ flowchart TD
    CheckSession -->|Нет| CreateSession[Создать новую сессию\nи показать приветствие]
    CheckSession -->|Да| CreateSession
 
-   CreateSession --> Wizard[Wizard анкеты:\nвозраст → пол → подготовка\n→ формат → цели → контактность]
+   CreateSession --> Wizard[Wizard анкеты:\nприветствие → возраст → пол\n→ подготовка → комфорт по интенсивности\n→ формат → цели → приоритет целей\n→ контактность → интерес к соревнованиям]
 
    Wizard --> AssembleProfile[Собрать профиль\nпользователя]
 
@@ -217,9 +217,16 @@ erDiagram
       int age "Возраст пользователя"
       enum gender "Пол (male/female/other)"
       enum fitnessLevel "Уровень подготовки"
-      enum formatPreference "Предпочтительный формат"
-      enum goal "Основная цель"
-      boolean contactSportsOk "Согласие на контактные виды"
+      string[] preferredFormats "Выбранные форматы тренировок"
+      string[] desiredGoals "Цели (может быть несколько)"
+      json goalPriorities "Вес желаемых целей"
+      json formatPriorities "Вес предпочитаемых форматов"
+      float intensityComfort "Комфортная интенсивность (0..1)"
+      float intensityFlexibility "Гибкость восприятия нагрузки"
+      boolean avoidContact "Отказ от контактных видов"
+      float contactTolerance "Нормализованная толерантность к контактам"
+      boolean interestedInCompetition "Были ли отмечены соревнования"
+      float competitionDrive "Насколько важны соревнования"
       timestamp createdAt
       timestamp updatedAt
    }
@@ -248,7 +255,7 @@ erDiagram
       int id PK
       int profileId FK
       string sectionId FK
-      float score "Оценка соответствия (0-100)"
+      float score "Оценка соответствия (0..1, косинусное сходство)"
       string[] reasons "Причины рекомендации"
       int rank "Позиция в рейтинге"
       timestamp createdAt

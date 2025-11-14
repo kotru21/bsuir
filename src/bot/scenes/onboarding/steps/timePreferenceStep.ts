@@ -34,7 +34,16 @@ export async function timePreferenceStep(
         .deleteMessage(callback.message.message_id)
         .catch(() => undefined);
     }
-    await sendGoalPrompt(ctx, "new");
+    try {
+      await sendGoalPrompt(ctx, "new");
+    } catch (err) {
+      console.error("sendGoalPrompt failed, falling back to reply:", err);
+      // fallback: send a simple reply with the goal keyboard
+      const { buildGoalKeyboard } = await import("../../../keyboards.js");
+      const { goalSelectionText } = await import("../../../formatters.js");
+      const sel = temp.goalSelection ?? [];
+      await ctx.reply(goalSelectionText(sel), buildGoalKeyboard(sel));
+    }
     await ctx.wizard.next();
     return;
   }

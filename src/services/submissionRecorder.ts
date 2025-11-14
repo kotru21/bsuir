@@ -47,7 +47,7 @@ export async function recordSubmission(
       gender: profile.gender,
       fitnessLevel: profile.fitnessLevel,
       preferredFormats: profile.preferredFormats,
-      // @ts-expect-error - preferredTimes was added to Prisma schema in migration; regenerate client to include it
+      // @ts-expect-error - preferredTimes may not exists in generated Prisma client if not regenerated
       preferredTimes: profile.preferredTimes ?? [],
       desiredGoals: profile.desiredGoals,
       avoidContact: profile.avoidContact,
@@ -66,7 +66,7 @@ export async function recordRecommendationEvent(data: {
   telegramUserId?: number;
   chatId?: number | string;
   sectionId: string;
-  eventType: "impression" | "click" | "conversion";
+  eventType: "impression" | "click" | "conversion" | "feedback";
   payload?: unknown;
 }): Promise<void> {
   if (!process.env.DATABASE_URL) {

@@ -10,6 +10,7 @@ import { renderRecommendationDetail, escapeMarkdown } from "../formatters.js";
 import type {
   RecommendationContext,
   RecommendationSession,
+  DataCallbackQuery,
 } from "../session.js";
 import { wrapBotHandler } from "../utils/safeHandler.js";
 import { resolveImagePath } from "../services/imageResolver.js";
@@ -90,10 +91,9 @@ export function registerSectionHandlers(
   bot.action(
     /^sections:(.+)$/i,
     wrapBotHandler(async (ctx) => {
-      const raw =
-        ctx.callbackQuery && "data" in ctx.callbackQuery
-          ? ctx.callbackQuery.data ?? ""
-          : "";
+      // Narrow callback type to callback queries that have `data`
+      const cb = ctx.callbackQuery as DataCallbackQuery | undefined;
+      const raw = cb?.data ?? "";
       if (!raw) {
         await ctx.answerCbQuery?.();
         return;
@@ -112,14 +112,18 @@ export function registerSectionHandlers(
 
       await ctx.answerCbQuery?.();
 
-      const cb = ctx.callbackQuery;
+      const cbQuery = ctx.callbackQuery;
       const message = cb && "message" in cb ? cb.message : undefined;
 
-      if (message) {
+      // For safety: fallback if cbQuery is not available
+      const messageObj =
+        cbQuery && "message" in cbQuery ? cbQuery.message : undefined;
+
+      if (messageObj) {
         try {
           await ctx.telegram.deleteMessage(
-            String(message.chat.id),
-            message.message_id
+            String(messageObj.chat.id),
+            messageObj.message_id
           );
         } catch {
           /* ignore delete errors */
@@ -133,7 +137,8 @@ export function registerSectionHandlers(
   bot.action(
     /^recfb:(.+):(.+)$/i,
     wrapBotHandler(async (ctx) => {
-      const raw = ctx.callbackQuery?.data ?? "";
+      const raw =
+        (ctx.callbackQuery as DataCallbackQuery | undefined)?.data ?? "";
       if (!raw) return await ctx.answerCbQuery?.();
       const [, sectionId, vote] = raw.split(":");
       try {

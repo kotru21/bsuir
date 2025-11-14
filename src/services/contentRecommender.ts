@@ -12,20 +12,24 @@ let stemmer: {
   getCurrent: () => string;
 } | null = null;
 try {
-  /* top-level await: try to import optional dependency */
-  // @ts-expect-error - package may be absent in CI; load dynamically
-  const SnowballModule: unknown = await import("snowball-stemmer.jsx");
-  // SnowballModule default is a constructor
-  type SnowballCtorType = new (lang: string) => {
-    setCurrent: (s: string) => void;
-    stem: () => void;
-    getCurrent: () => string;
-  };
-  const SnowballCtor =
-    ((SnowballModule as unknown as { default?: SnowballCtorType }).default as
-      | SnowballCtorType
-      | undefined) ?? (SnowballModule as unknown as SnowballCtorType);
-  stemmer = new SnowballCtor("russian");
+  // Avoid attempting to import optional dependency during Vitest (bundler/resolve issues)
+  if (!process.env.VITEST) {
+    /* top-level await: try to import optional dependency */
+    // package may be absent in CI; load dynamically
+    const pkgName = "snowball-stemmer.jsx";
+    const SnowballModule: unknown = await import(pkgName);
+    // SnowballModule default is a constructor
+    type SnowballCtorType = new (lang: string) => {
+      setCurrent: (s: string) => void;
+      stem: () => void;
+      getCurrent: () => string;
+    };
+    const SnowballCtor =
+      ((SnowballModule as unknown as { default?: SnowballCtorType }).default as
+        | SnowballCtorType
+        | undefined) ?? (SnowballModule as unknown as SnowballCtorType);
+    stemmer = new SnowballCtor("russian");
+  }
 } catch {
   // no-op: optional dependency not available; continue without stemming
   stemmer = null;

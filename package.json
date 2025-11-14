@@ -21,7 +21,7 @@
     "coverage:ci": "c8 --reporter=lcov --reporter=text npm test"
   },
   "dependencies": {
-    "snowball-stemmer.jsx": "^0.6.1",
+    "snowball-stemmer.jsx": "^0.2.3",
     "@fastify/cookie": "^11.0.2",
     "@fastify/csrf-protection": "^7.1.0",
     "@fastify/helmet": "^13.0.2",

@@ -6,6 +6,8 @@ import {
   buildFitnessKeyboard,
   buildGoalKeyboard,
 } from "../../keyboards.js";
+import { buildTimePreferenceKeyboard } from "../../keyboards.js";
+import { timeSelectionText } from "../../formatters.js";
 import {
   buildAgeSliderText,
   buildFitnessSliderText,
@@ -164,6 +166,32 @@ export async function sendGoalPrompt(
     console.error("sendGoalPrompt error:", err);
     try {
       await ctx.reply("Не удалось показать выбор целей.");
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export async function sendTimePreference(
+  ctx: RecommendationContext,
+  mode: PromptMode = "new"
+): Promise<void> {
+  const temp = ensureTemp(ctx);
+  if (!temp.timeSelection) {
+    temp.timeSelection = ensureProfile(ctx).preferredTimes ?? [];
+  }
+  const text = timeSelectionText(temp.timeSelection);
+  const keyboard = buildTimePreferenceKeyboard(temp.timeSelection);
+  try {
+    if (mode === "edit" && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(text, keyboard);
+    } else {
+      await sendPromptMessage(ctx, text, keyboard);
+    }
+  } catch (err) {
+    console.error("sendTimePreference error:", err);
+    try {
+      await ctx.reply("Не удалось показать выбор времени.");
     } catch {
       /* ignore */
     }

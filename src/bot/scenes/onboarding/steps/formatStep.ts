@@ -5,6 +5,7 @@ import {
   sendFormatPrompt,
   sendGoalPrompt,
   sendTransientMessage,
+  sendTimePreference,
 } from "../prompts.js";
 
 export async function formatStep(ctx: RecommendationContext): Promise<void> {
@@ -44,7 +45,7 @@ export async function formatStep(ctx: RecommendationContext): Promise<void> {
         .deleteMessage(callback.message.message_id)
         .catch(() => undefined);
     }
-    await sendGoalPrompt(ctx, "new");
+    await sendTimePreference(ctx, "new");
     await ctx.wizard.next();
     return;
   }

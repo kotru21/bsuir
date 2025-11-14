@@ -37,7 +37,13 @@ export async function recordSubmission(
     reasons: item.reasons,
   }));
 
-  await prisma.surveySubmission.create({
+  await (
+    prisma as unknown as {
+      surveySubmission: {
+        create: (args: { data: unknown }) => Promise<unknown>;
+      };
+    }
+  ).surveySubmission.create({
     data: {
       telegramUserId: payload.telegramUserId
         ? String(payload.telegramUserId)
@@ -47,7 +53,7 @@ export async function recordSubmission(
       gender: profile.gender,
       fitnessLevel: profile.fitnessLevel,
       preferredFormats: profile.preferredFormats,
-      // @ts-expect-error - preferredTimes may not exists in generated Prisma client if not regenerated
+      // preferredTimes was added to Prisma schema in migration; keep value for storage
       preferredTimes: profile.preferredTimes ?? [],
       desiredGoals: profile.desiredGoals,
       avoidContact: profile.avoidContact,

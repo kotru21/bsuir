@@ -31,6 +31,21 @@ export async function sendWizardRecommendationCard(
       : buildRecommendationKeyboard(recommendation.section.id);
 
   const imagePath = recommendation.section.imagePath;
+  // record impression (useful for ml/clickthrough metrics)
+  try {
+    const { recordRecommendationEvent } = await import(
+      "../../services/submissionRecorder.js"
+    );
+    await recordRecommendationEvent({
+      telegramUserId: (ctx.from && ctx.from.id) ?? undefined,
+      chatId: ctx.chat?.id ?? undefined,
+      sectionId: recommendation.section.id,
+      eventType: "impression",
+      payload: { index, total: recommendations.length },
+    });
+  } catch (_err) {
+    /* ignore */
+  }
   if (!imagePath) {
     await replyMarkdownV2Safe(ctx, summary, keyboard);
     return;

@@ -112,11 +112,45 @@ export function buildGoalKeyboard(
   return Markup.inlineKeyboard(rows);
 }
 
+export function buildTimePreferenceKeyboard(
+  selection: ("morning" | "afternoon" | "evening" | "weekend")[]
+): ReturnType<typeof Markup.inlineKeyboard> {
+  const isSelected = (t: "morning" | "afternoon" | "evening" | "weekend") =>
+    selection.includes(t);
+  return Markup.inlineKeyboard([
+    [
+      Markup.button.callback(
+        `${isSelected("morning") ? "✅" : "▫️"} Утро`,
+        "time:morning"
+      ),
+      Markup.button.callback(
+        `${isSelected("afternoon") ? "✅" : "▫️"} День`,
+        "time:afternoon"
+      ),
+    ],
+    [
+      Markup.button.callback(
+        `${isSelected("evening") ? "✅" : "▫️"} Вечер`,
+        "time:evening"
+      ),
+      Markup.button.callback(
+        `${isSelected("weekend") ? "✅" : "▫️"} Выходные`,
+        "time:weekend"
+      ),
+    ],
+    [Markup.button.callback("Готово", "time:done")],
+  ]);
+}
+
 export function buildRecommendationKeyboard(
   sectionId: string
 ): ReturnType<typeof Markup.inlineKeyboard> {
   return Markup.inlineKeyboard([
     [Markup.button.callback("Подробнее", `rec:${sectionId}`)],
+    [
+      Markup.button.callback("👍 Помогла", `recfb:${sectionId}:up`),
+      Markup.button.callback("👎 Не помогла", `recfb:${sectionId}:down`),
+    ],
   ]);
 }
 

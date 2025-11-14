@@ -15,6 +15,7 @@ model SurveySubmission {
   gender                   String
   fitnessLevel             String
   preferredFormats         String[]
+  preferredTimes           String[]
   desiredGoals             String[]
   avoidContact             Boolean
   interestedInCompetition  Boolean
@@ -40,4 +41,17 @@ model RecommendationSnapshot {
 
   @@index([submissionId, rank])
   @@index([sectionId])
+}
+
+model RecommendationEvent {
+  id             String   @id @default(cuid())
+  telegramUserId String?
+  chatId         String?
+  sectionId      String
+  eventType      String
+  payload        Json?
+  createdAt      DateTime @default(now())
+
+  @@index([sectionId])
+  @@index([createdAt])
 }

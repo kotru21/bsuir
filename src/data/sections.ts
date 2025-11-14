@@ -38,6 +38,9 @@ export const sportSections: SportSection[] = [
     ],
     prerequisites: "Готовность соблюдать технику и рекомендации тренера.",
     imagePath: "./data/images/athleticGymnastics.jpg",
+    scheduleTags: ["morning", "afternoon"],
+    popularity: 0.7,
+    avgAttendance: 25,
   },
   {
     id: "basketball",
@@ -69,6 +72,9 @@ export const sportSections: SportSection[] = [
       "Высокий расход энергии",
     ],
     imagePath: "./data/images/basketball.jpg",
+    scheduleTags: ["afternoon", "weekend"],
+    popularity: 0.85,
+    avgAttendance: 18,
   },
   {
     id: "wrestling",
@@ -207,6 +213,9 @@ export const sportSections: SportSection[] = [
       "Укрепление сердечно-сосудистой системы",
     ],
     imagePath: "./data/images/trackAndField.jpg",
+    scheduleTags: ["morning", "weekend"],
+    popularity: 0.8,
+    avgAttendance: 30,
   },
   {
     id: "futsal",
@@ -256,6 +265,9 @@ export const sportSections: SportSection[] = [
     extraBenefits: ["Коррекция осанки", "Минимальная ударная нагрузка"],
     prerequisites: "Нужна готовность регулярно посещать бассейн.",
     imagePath: "./data/images/swimming.jpg",
+    scheduleTags: ["afternoon"],
+    popularity: 0.55,
+    avgAttendance: 22,
   },
   {
     id: "rhythmic-gymnastics",

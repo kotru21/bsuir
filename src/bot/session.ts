@@ -11,6 +11,7 @@ export interface TempState {
   fitnessIndex?: number;
   formatSelection?: TrainingFormat[];
   goalSelection?: GoalTag[];
+  timeSelection?: ("morning" | "afternoon" | "evening" | "weekend")[];
   recommendations?: RecommendationResult[];
   recommendationIndex?: number;
   promptMessageId?: number;

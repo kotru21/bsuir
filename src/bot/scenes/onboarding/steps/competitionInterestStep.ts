@@ -6,7 +6,6 @@ import {
   fallbackSection,
 } from "../../../../recommendation.js";
 import { buildCompletionKeyboard } from "../../../keyboards.js";
-import { escapeMarkdown } from "../../../formatters.js";
 import { replyMarkdownV2Safe } from "../../../telegram.js";
 import type { RecommendationResult } from "../../../../types.js";
 import { recordSubmission } from "../../../../services/submissionRecorder.js";

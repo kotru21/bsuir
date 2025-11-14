@@ -42,6 +42,10 @@ export interface SportSection {
   prerequisites?: string;
   imagePath?: string;
   locationHint?: string;
+  scheduleTags?: ("morning" | "afternoon" | "evening" | "weekend")[];
+  popularity?: number; // 0..1 relative popularity metric
+  avgAttendance?: number; // average number of attendees per session
+  locations?: string[];
 }
 
 export interface UserProfile {
@@ -52,6 +56,7 @@ export interface UserProfile {
   desiredGoals: GoalTag[];
   avoidContact: boolean;
   interestedInCompetition: boolean;
+  preferredTimes?: ("morning" | "afternoon" | "evening" | "weekend")[];
 }
 
 export type RecommendationReason =

@@ -44,6 +44,13 @@
    npx prisma migrate deploy
    ```
 
+   Если вы изменяли `schema.prisma` (добавляли новые поля или таблицы), выполните локально также:
+
+   ```powershell
+   npx prisma migrate dev --name "add_preferred_times_and_events"
+   npx prisma generate
+   ```
+
 5. Запустите сервер и бота:
 
    ```powershell

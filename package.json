@@ -13,6 +13,7 @@
     "dev": "tsx src/index.ts",
     "dev:admin": "vite dev --config admin/web/vite.config.ts",
     "dev:server": "tsx src/index.ts",
+    "export:training": "node -r tsx src/services/recommenderTrainer.ts --export",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint --ext .ts src test",
@@ -20,6 +21,7 @@
     "coverage:ci": "c8 --reporter=lcov --reporter=text npm test"
   },
   "dependencies": {
+    "snowball-stemmer.jsx": "^0.6.1",
     "@fastify/cookie": "^11.0.2",
     "@fastify/csrf-protection": "^7.1.0",
     "@fastify/helmet": "^13.0.2",

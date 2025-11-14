@@ -131,6 +131,30 @@ export function registerSectionHandlers(
   );
 
   bot.action(
+    /^recfb:(.+):(.+)$/i,
+    wrapBotHandler(async (ctx) => {
+      const raw = ctx.callbackQuery?.data ?? "";
+      if (!raw) return await ctx.answerCbQuery?.();
+      const [, sectionId, vote] = raw.split(":");
+      try {
+        const { recordRecommendationEvent } = await import(
+          "../../services/submissionRecorder.js"
+        );
+        await recordRecommendationEvent({
+          telegramUserId: (ctx.from && ctx.from.id) ?? undefined,
+          chatId: ctx.chat?.id ?? undefined,
+          sectionId,
+          eventType: "feedback",
+          payload: { vote },
+        });
+      } catch {
+        /* ignore */
+      }
+      await ctx.answerCbQuery?.("Спасибо за отзыв.");
+    })
+  );
+
+  bot.action(
     /^rec:(.+)$/i,
     wrapBotHandler(async (ctx) => {
       const callback = ctx.callbackQuery;
@@ -174,6 +198,22 @@ export function registerSectionHandlers(
       }
 
       await ctx.answerCbQuery?.();
+      try {
+        // record click event for analytics / ML training
+        const { recordRecommendationEvent } = await import(
+          "../../services/submissionRecorder.js"
+        );
+        const session = ctx.session as RecommendationSession;
+        await recordRecommendationEvent({
+          telegramUserId: (ctx.from && ctx.from.id) ?? undefined,
+          chatId: ctx.chat?.id ?? undefined,
+          sectionId,
+          eventType: "click",
+          payload: { fromWizard: !!session.temp?.recommendations },
+        });
+      } catch (_err) {
+        /* ignore event logging errors */
+      }
       const detail = renderRecommendationDetail(
         recIndex + 1,
         recommendationToShow

@@ -40,6 +40,20 @@ describe("onboarding step workflows", () => {
     expect(ctx.wizard.next).toHaveBeenCalled();
   });
 
+  it("timePreferenceStep toggles times and persists selection", async () => {
+    const { timePreferenceStep } = await import(
+      "../src/bot/scenes/onboarding/steps/timePreferenceStep.js"
+    );
+    const ctx = createCallbackCtx("time:morning");
+    await timePreferenceStep(ctx);
+    expect(ctx.session.temp.timeSelection).toContain("morning");
+
+    ctx.callbackQuery.data = "time:done";
+    await timePreferenceStep(ctx);
+    expect(ctx.session.profile?.preferredTimes).toContain("morning");
+    expect(ctx.wizard.next).toHaveBeenCalled();
+  });
+
   it("goalStep prevents completion without selections", async () => {
     const ctx = createCallbackCtx("goal:done");
     await goalStep(ctx);

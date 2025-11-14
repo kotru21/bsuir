@@ -1,4 +1,5 @@
 import { sportSections } from "./data/sections.js";
+import * as contentRecommender from "./services/contentRecommender.js";
 import type {
   RecommendationResult,
   SportSection,
@@ -138,6 +139,30 @@ function computeScore(
     score -= 1;
   }
 
+  // schedule-based boosting:
+  // - if user prefers 'evening', give large boost to evening sections (wrestling)
+  // - otherwise give small boost when section schedule intersects user's preferred times
+  const preferredTimes = profile.preferredTimes ?? [];
+  const sectionTimes = section.scheduleTags ?? [];
+  const scheduleMatch = preferredTimes.some((t) => sectionTimes.includes(t));
+
+  if (preferredTimes.includes("evening")) {
+    if (sectionTimes.includes("evening")) {
+      // evening preference intentionally prioritized (in this university only wrestling is evening)
+      score += 4;
+    } else {
+      // if the user requested evening but section is not evening, give small penalty to lower relevance
+      score -= 1;
+    }
+  } else if (scheduleMatch) {
+    score += 2;
+  }
+
+  // popularity boost: small positive from 0..1
+  if (typeof section.popularity === "number" && section.popularity > 0) {
+    score += Math.round(section.popularity * 2); // boost 0..2
+  }
+
   if (score < 0) {
     score = 0;
   }
@@ -170,15 +195,50 @@ export function recommendSections(
   }
 
   try {
-    const scored = sportSections
+    const mode =
+      (process.env.RECOMMENDER_MODE as "rules" | "tfidf" | "hybrid") || "rules";
+
+    if (mode === "tfidf") {
+      return contentRecommender.queryProfile(profile, limit);
+    }
+
+    const ruleResults = sportSections
       .map((section) => computeScore(section, profile))
       .filter(
         (result): result is RecommendationResult =>
           result !== null && result.score > 0
-      )
-      .sort((a, b) => b.score - a.score);
+      );
 
-    return scored.slice(0, limit);
+    if (mode === "rules") {
+      return ruleResults.sort((a, b) => b.score - a.score).slice(0, limit);
+    }
+
+    // hybrid: combine rule score and TF-IDF content match
+    const tfRecs = contentRecommender.queryProfile(
+      profile,
+      sportSections.length
+    );
+    // build map of tf scores
+    const tfMap = new Map(tfRecs.map((r) => [r.section.id, r.score]));
+
+    const maxRule = Math.max(...ruleResults.map((r) => r.score), 1);
+    const maxTf = Math.max(...Array.from(tfMap.values()), 1);
+
+    const alpha = Number(process.env.RECOMMENDER_ALPHA ?? 0.6); // weight for rules
+    const beta = Number(process.env.RECOMMENDER_BETA ?? 0.4); // weight for tfidf
+
+    const hybrid = ruleResults
+      .map((r) => {
+        const tf = tfMap.get(r.section.id) ?? 0;
+        const normRule = r.score / maxRule;
+        const normTf = tf / maxTf;
+        const combined = alpha * normRule + beta * normTf;
+        return { ...r, score: Math.round(combined * 1000) / 1000 };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+
+    return hybrid;
   } catch (err) {
     console.error("recommendSections error:", err);
     return [];
@@ -194,9 +254,25 @@ export function fallbackSection(
   }
 
   try {
+    const mode =
+      (process.env.RECOMMENDER_MODE as "rules" | "tfidf" | "hybrid") || "rules";
+
+    if (mode === "tfidf") {
+      const recs = contentRecommender.queryProfile(profile, 1);
+      return recs[0] ?? null;
+    }
+
     const eligible = sportSections
       .map((section) => computeScore(section, profile))
       .filter((result): result is RecommendationResult => result !== null);
+
+    if (mode === "hybrid") {
+      const rec = eligible.sort((a, b) => b.score - a.score)[0] ?? null;
+      if (rec && rec.score > 0) return rec;
+      // try content-based fallback
+      const recs = contentRecommender.queryProfile(profile, 1);
+      return recs[0] ?? null;
+    }
 
     return eligible.sort((a, b) => b.score - a.score)[0] ?? null;
   } catch (err) {

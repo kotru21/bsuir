@@ -60,6 +60,24 @@ export function goalSelectionText(selection: GoalTag[]): string {
   return `Вы выбрали: ${labels}. Добавьте или снимите отметку и нажмите "Готово".`;
 }
 
+export function timeSelectionText(
+  selection: ("morning" | "afternoon" | "evening" | "weekend")[]
+): string {
+  if (!selection || selection.length === 0) {
+    return "Предпочтительное время: не важно. Выберите удобные слоты.";
+  }
+  const labels = selection
+    .map((t) => {
+      if (t === "morning") return "утро";
+      if (t === "afternoon") return "день";
+      if (t === "evening") return "вечер";
+      if (t === "weekend") return "выходные";
+      return t;
+    })
+    .join(", ");
+  return `Предпочтительное время занятий: ${labels}. Нажмите "Готово", когда закончите.`;
+}
+
 function describeReason(reason: RecommendationReason): string {
   switch (reason.kind) {
     case "goal-match": {

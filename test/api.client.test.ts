@@ -24,9 +24,11 @@ describe("apiFetch", () => {
             | undefined;
           if (!signal) return; // will never resolve
           signal.addEventListener("abort", () => {
-            const err = new Error("The user aborted a request.");
+            const err = new Error("The user aborted a request.") as Error & {
+              name?: string;
+            };
             // match WHATWG fetch's AbortError name
-            (err as any).name = "AbortError";
+            err.name = "AbortError";
             reject(err);
           });
         })

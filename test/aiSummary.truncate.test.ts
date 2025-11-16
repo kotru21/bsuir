@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateRecommendationSummary } from "../src/services/aiSummary.js";
+import type { UserProfile, RecommendationResult } from "../src/types.js";
 
 describe("AI summary truncation", () => {
   it("truncates long content returned from inference API", async () => {
@@ -17,14 +18,22 @@ describe("AI summary truncation", () => {
         json: async () => ({
           choices: [{ message: { content: "x".repeat(2000) } }],
         }),
-      } as any;
-    }) as any;
+      } as unknown as Response;
+    }) as unknown as typeof global.fetch;
 
-    const profile = { age: 20 } as any;
+    const profile: UserProfile = {
+      age: 20,
+      gender: "unspecified",
+      fitnessLevel: "medium",
+      preferredFormats: [],
+      desiredGoals: [],
+      avoidContact: false,
+      interestedInCompetition: false,
+    };
     const result = await generateRecommendationSummary(
       profile,
       [],
-      mockedEnv as any
+      mockedEnv as Record<string, string>
     );
     // requests with no recommendations should not attempt
     expect(result.attempted).toBe(false);
@@ -47,8 +56,8 @@ describe("AI summary truncation", () => {
 
     const r2 = await generateRecommendationSummary(
       profile,
-      recs as any,
-      mockedEnv as any
+      recs as RecommendationResult[],
+      mockedEnv as Record<string, string>
     );
     expect(r2.attempted).toBe(true);
     expect(r2.content).toBeTruthy();

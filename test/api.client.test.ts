@@ -15,7 +15,9 @@ describe("apiFetch", () => {
 
   it("aborts when timeoutMs is reached", async () => {
     // fetch that never resolves
-    global.fetch = vi.fn(() => new Promise(() => undefined)) as any;
+    global.fetch = vi.fn(
+      () => new Promise(() => undefined)
+    ) as unknown as typeof global.fetch;
 
     await expect(apiFetch("/test", { timeoutMs: 1 })).rejects.toMatchObject({
       status: 0,

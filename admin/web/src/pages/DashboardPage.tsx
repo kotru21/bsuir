@@ -196,16 +196,18 @@ export function DashboardPage(): ReactElement {
             <h2>{block.title}</h2>
             <div className="flex flex-col gap-3">
               {block.items.length ? (
-                block.items.map((it: any) => (
-                  <div
-                    key={it.key ?? it.label}
-                    className="flex items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
-                    <span>{it.label ?? it.label}</span>
-                    <strong className="text-base text-slate-900 dark:text-white">
-                      {it.count ?? "—"}
-                    </strong>
-                  </div>
-                ))
+                block.items.map(
+                  (it: { key?: string; label?: string; count?: number }) => (
+                    <div
+                      key={it.key ?? it.label}
+                      className="flex items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
+                      <span>{it.label ?? it.label}</span>
+                      <strong className="text-base text-slate-900 dark:text-white">
+                        {it.count ?? "—"}
+                      </strong>
+                    </div>
+                  )
+                )
               ) : (
                 <div className="flex items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-400 dark:bg-slate-800/50 dark:text-slate-500">
                   <span>Пока нет данных</span>

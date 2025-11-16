@@ -1,10 +1,18 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { replyMarkdownV2Safe } from "../src/bot/telegram.js";
 
 describe("telegram truncation", () => {
   it("truncates long messages before sending", async () => {
     const called: string[] = [];
-    const ctx: any = {
+    type FakeCtx = {
+      replyWithMarkdownV2: (
+        text: string,
+        extra?: Record<string, unknown>
+      ) => Promise<void>;
+      reply: (text: string, extra?: Record<string, unknown>) => Promise<void>;
+    };
+
+    const ctx: FakeCtx = {
       replyWithMarkdownV2: async (text: string) => {
         called.push(text);
       },

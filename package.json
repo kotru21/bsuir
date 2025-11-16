@@ -20,6 +20,7 @@
     "coverage:ci": "c8 --reporter=lcov --reporter=text npm test"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.1.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/csrf-protection": "^7.1.0",
     "@fastify/helmet": "^13.0.2",

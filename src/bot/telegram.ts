@@ -2,6 +2,7 @@ import { TelegramError } from "telegraf";
 import type { RecommendationContext } from "./session.js";
 
 const TELEGRAM_BAD_REQUEST = 400;
+const TELEGRAM_MESSAGE_LIMIT = 4096;
 
 /* eslint-disable no-useless-escape */
 export function stripMarkdownEscapes(text: string): string {
@@ -18,8 +19,12 @@ export async function replyMarkdownV2Safe(
   text: string,
   extra?: MarkdownExtra
 ): Promise<void> {
+  const truncatedText =
+    text.length > TELEGRAM_MESSAGE_LIMIT
+      ? text.slice(0, TELEGRAM_MESSAGE_LIMIT - 1) + "…"
+      : text;
   try {
-    await ctx.replyWithMarkdownV2(text, extra);
+    await ctx.replyWithMarkdownV2(truncatedText, extra);
   } catch (err) {
     if (err instanceof TelegramError && err.code === TELEGRAM_BAD_REQUEST) {
       console.error(
@@ -35,7 +40,7 @@ export async function replyMarkdownV2Safe(
           }
           fallbackExtra = cloned as MarkdownExtra;
         }
-        await ctx.reply(stripMarkdownEscapes(text), fallbackExtra);
+        await ctx.reply(stripMarkdownEscapes(truncatedText), fallbackExtra);
       } catch (fallbackErr) {
         console.error("Failed to send plain text fallback:", fallbackErr);
         throw fallbackErr;
@@ -54,6 +59,16 @@ export async function replyWithPhotoMarkdownV2Safe(
   factory: () => PhotoSource,
   extra?: PhotoExtra
 ): Promise<void> {
+  // Avoid sending captions that exceed Telegram limits
+  if (extra && typeof (extra as Record<string, unknown>).caption === "string") {
+    const cap = (extra as Record<string, unknown>).caption as string;
+    if (cap.length > TELEGRAM_MESSAGE_LIMIT) {
+      (extra as Record<string, unknown>).caption = cap.slice(
+        0,
+        TELEGRAM_MESSAGE_LIMIT - 1
+      );
+    }
+  }
   try {
     await ctx.replyWithPhoto(factory(), extra);
   } catch (err) {
@@ -67,7 +82,11 @@ export async function replyWithPhotoMarkdownV2Safe(
         : {};
       const caption = fallbackExtra.caption;
       if (typeof caption === "string") {
-        fallbackExtra.caption = stripMarkdownEscapes(caption);
+        const truncated =
+          caption.length > TELEGRAM_MESSAGE_LIMIT
+            ? caption.slice(0, TELEGRAM_MESSAGE_LIMIT - 1) + "…"
+            : caption;
+        fallbackExtra.caption = stripMarkdownEscapes(truncated);
       }
       if ("parse_mode" in fallbackExtra) {
         delete fallbackExtra.parse_mode;

@@ -8,6 +8,8 @@ export interface ApiError extends Error {
 interface ApiFetchOptions extends Omit<RequestInit, "body"> {
   csrfToken?: string;
   skipJson?: boolean;
+  /** Optional timeout in milliseconds. When unset, no client-side timeout is applied. */
+  timeoutMs?: number;
   body?: unknown;
   suppressUnauthorizedEvent?: boolean;
 }
@@ -48,15 +50,35 @@ export async function apiFetch<T = unknown>(
     finalHeaders.set("x-csrf-token", csrfToken);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: method ?? "GET",
-    credentials: "include",
-    headers: finalHeaders,
-    body: isJsonBody
-      ? JSON.stringify(body)
-      : (body as BodyInit | null | undefined) ?? null,
-    ...rest,
-  });
+  const controller = new AbortController();
+  const userSignal = (rest as RequestInit).signal as AbortSignal | undefined;
+  const signal = userSignal ?? controller.signal;
+
+  let timeoutId: NodeJS.Timeout | undefined;
+  if (!userSignal && options.timeoutMs && options.timeoutMs > 0) {
+    timeoutId = setTimeout(() => controller.abort(), options.timeoutMs);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      method: method ?? "GET",
+      credentials: "include",
+      headers: finalHeaders,
+      body: isJsonBody
+        ? JSON.stringify(body)
+        : (body as BodyInit | null | undefined) ?? null,
+      signal,
+      ...rest,
+    });
+  } catch (err) {
+    if ((err as Error).name === "AbortError") {
+      throw buildError(0, { message: "Request aborted due to timeout" });
+    }
+    throw err;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     if (

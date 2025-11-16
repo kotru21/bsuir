@@ -219,10 +219,20 @@ export async function generateRecommendationSummary(
       choices?: Array<{ message?: { content?: string } }>;
     };
 
-    const content = data.choices?.[0]?.message?.content?.trim();
+    let content = data.choices?.[0]?.message?.content?.trim();
     if (!content) {
       console.warn("Inference API response did not contain summary content.");
       return { content: null, attempted: true };
+    }
+
+    // Limit output length: AI may occasionally produce longer text. Truncate
+    // to a safe size to prevent downstream overflows and Telegram rejections.
+    const SAFE_LIMIT = 1000;
+    if (content.length > SAFE_LIMIT) {
+      content = content.slice(0, SAFE_LIMIT - 1) + "…";
+      console.warn(
+        `AI summary was truncated to ${SAFE_LIMIT} characters to comply with downstream limits.`
+      );
     }
 
     return { content, attempted: true };

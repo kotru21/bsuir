@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
@@ -19,12 +19,74 @@ export default function Modal({ open, onClose, children }: ModalProps) {
     };
   }, [open]);
 
+  // focus trap and escape handling
+  const portalRef = useRef<HTMLDivElement | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    // Save the previously focused element to restore on close
+    openerRef.current = document.activeElement as HTMLElement | null;
+
+    const root = portalRef.current ?? document.body;
+
+    // find focusable elements
+    const focusableSelector =
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), details, [tabindex]:not([tabindex="-1"])';
+    const focusable = Array.from(
+      root.querySelectorAll(focusableSelector)
+    ) as HTMLElement[];
+
+    // focus the first focusable element, or the modal container
+    if (focusable.length) {
+      focusable[0].focus();
+    } else if (root instanceof HTMLElement) {
+      root.focus();
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab") {
+        // Keep tab focus within the modal
+        const nodes = focusable;
+        if (!nodes.length) return;
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      // restore focus
+      if (openerRef.current) openerRef.current.focus();
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return createPortal(
     <div
       role="dialog"
       aria-modal="true"
+      tabIndex={-1}
+      ref={portalRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
       onClick={onClose}>
       <div

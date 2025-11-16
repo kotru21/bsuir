@@ -1,11 +1,25 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense, lazy } from "react";
 import type { ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDemographics, fetchOverview, fetchTimeline } from "../api/stats";
 import { MetricCard } from "../components/MetricCard";
-import { GenderDistributionChart } from "../components/GenderDistributionChart";
-import { FitnessDistributionChart } from "../components/FitnessDistributionChart";
-import { TimelineChart } from "../components/TimelineChart";
+const GenderDistributionChart = lazy(() =>
+  import("../components/GenderDistributionChart").then((m) => ({
+    default: m.GenderDistributionChart,
+  }))
+);
+
+const FitnessDistributionChart = lazy(() =>
+  import("../components/FitnessDistributionChart").then((m) => ({
+    default: m.FitnessDistributionChart,
+  }))
+);
+
+const TimelineChart = lazy(() =>
+  import("../components/TimelineChart").then((m) => ({
+    default: m.TimelineChart,
+  }))
+);
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
@@ -165,8 +179,14 @@ export function DashboardPage(): ReactElement {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <GenderDistributionChart data={genderDistribution} />
-        <FitnessDistributionChart data={overview.fitnessDistribution} />
+        <Suspense
+          fallback={<FullscreenSpinner message="Загружаем график..." />}>
+          <GenderDistributionChart data={genderDistribution} />
+        </Suspense>
+        <Suspense
+          fallback={<FullscreenSpinner message="Загружаем график..." />}>
+          <FitnessDistributionChart data={overview.fitnessDistribution} />
+        </Suspense>
         {[
           { title: "Популярные форматы", items: topFormats },
           { title: "Популярные цели", items: topGoals },
@@ -217,7 +237,10 @@ export function DashboardPage(): ReactElement {
               ))}
             </div>
           </div>
-          <TimelineChart points={timelinePoints} />
+          <Suspense
+            fallback={<FullscreenSpinner message="Загружаем график..." />}>
+            <TimelineChart points={timelinePoints} />
+          </Suspense>
         </Card>
       </div>
     </div>

@@ -1,4 +1,5 @@
 const API_BASE = "/admin/api";
+const DEFAULT_TIMEOUT_MS = 6000;
 
 export interface ApiError extends Error {
   status: number;
@@ -32,6 +33,7 @@ export async function apiFetch<T = unknown>(
     body,
     method,
     suppressUnauthorizedEvent,
+    timeoutMs,
     ...rest
   } = options;
   const finalHeaders = new Headers(headers);
@@ -55,8 +57,10 @@ export async function apiFetch<T = unknown>(
   const signal = userSignal ?? controller.signal;
 
   let timeoutId: NodeJS.Timeout | undefined;
-  if (!userSignal && options.timeoutMs && options.timeoutMs > 0) {
-    timeoutId = setTimeout(() => controller.abort(), options.timeoutMs);
+  const effectiveTimeout =
+    typeof timeoutMs === "number" ? timeoutMs : DEFAULT_TIMEOUT_MS;
+  if (!userSignal && effectiveTimeout && effectiveTimeout > 0) {
+    timeoutId = setTimeout(() => controller.abort(), effectiveTimeout);
   }
 
   let response: Response;

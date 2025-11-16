@@ -4,7 +4,7 @@ import {
   translateGoal,
   translateTrainingFormat,
 } from "../localization";
-import { useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import Modal from "../components/Modal";
 import { Card } from "../components/Card";
@@ -15,6 +15,12 @@ import { FullscreenSpinner } from "../components/FullscreenSpinner";
 import type { SubmissionListItem } from "../types/stats";
 
 const PAGE_SIZE = 20;
+
+type SubmissionWithSummary = SubmissionListItem & {
+  summaryLines: string[];
+  summaryPreview: string | null;
+  summaryFullText: string | null;
+};
 
 /* eslint-disable no-useless-escape */
 function normalizeAiSummary(summary: string): string[] {
@@ -51,12 +57,31 @@ function getErrorMessage(error: unknown): string {
 export function SubmissionsPage(): ReactElement {
   const [page, setPage] = useState(1);
   const [modalContent, setModalContent] = useState<string | null>(null);
+  const modalTitleId = useId();
+  const modalDescriptionId = useId();
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["submissions", page],
     queryFn: () => fetchSubmissions(page, PAGE_SIZE),
     staleTime: 30_000,
   });
+
+  const processedItems = useMemo<SubmissionWithSummary[]>(() => {
+    if (!data?.items) {
+      return [];
+    }
+    return data.items.map((item) => {
+      const lines = item.aiSummary ? normalizeAiSummary(item.aiSummary) : [];
+      const preview = lines.length ? buildPreview(lines, 12) : null;
+      const fullText = lines.length ? lines.join(" ") : null;
+      return {
+        ...item,
+        summaryLines: lines,
+        summaryPreview: preview,
+        summaryFullText: fullText,
+      };
+    });
+  }, [data?.items]);
 
   if (isLoading && !data) {
     return <FullscreenSpinner message="Загружаем ответы..." />;
@@ -85,7 +110,7 @@ export function SubmissionsPage(): ReactElement {
     return <p>Ответы опросов пока отсутствуют.</p>;
   }
 
-  const { items, pagination } = data;
+  const { pagination } = data;
   const transientError = isError ? getErrorMessage(error) : null;
 
   return (
@@ -111,39 +136,59 @@ export function SubmissionsPage(): ReactElement {
         </div>
       ) : null}
       {isFetching ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p
+          className="text-sm text-slate-500 dark:text-slate-400"
+          role="status"
+          aria-live="polite">
           Обновляем данные...
         </p>
       ) : null}
       <div className="-mx-4 overflow-x-auto lg:-mx-6">
-        <table className="min-w-[720px] w-full border-collapse text-sm">
+        <table
+          className="min-w-[720px] w-full border-collapse text-sm"
+          aria-describedby="submissionsTableCaption">
+          <caption id="submissionsTableCaption" className="sr-only">
+            История анкет с параметрами профиля и пояснениями AI
+          </caption>
           <thead className="text-left uppercase tracking-[0.12em] text-slate-400">
             <tr>
-              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+              <th
+                scope="col"
+                className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
                 Дата
               </th>
-              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+              <th
+                scope="col"
+                className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
                 Профиль
               </th>
-              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+              <th
+                scope="col"
+                className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
                 Предпочтения
               </th>
-              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+              <th
+                scope="col"
+                className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
                 Рекомендации
               </th>
-              <th className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
+              <th
+                scope="col"
+                className="border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
                 Пояснение AI
               </th>
             </tr>
           </thead>
           <tbody className="align-top text-slate-700 dark:text-slate-200">
-            {items.map((item: SubmissionListItem) => (
+            {processedItems.map((item) => (
               <tr
                 key={item.id}
                 className="odd:bg-slate-50/60 dark:odd:bg-slate-900/40">
-                <td className="border-b border-slate-200/60 px-4 py-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                <th
+                  scope="row"
+                  className="border-b border-slate-200/60 px-4 py-4 text-sm font-medium text-slate-600 dark:border-slate-800 dark:text-slate-300">
                   {new Date(item.createdAt).toLocaleString("ru-RU")}
-                </td>
+                </th>
                 <td className="border-b border-slate-200/60 px-4 py-4 dark:border-slate-800">
                   <div className="space-y-1">
                     <div className="font-medium text-slate-900 dark:text-white">
@@ -199,37 +244,36 @@ export function SubmissionsPage(): ReactElement {
                   </div>
                 </td>
                 <td className="border-b border-slate-200/60 px-4 py-4 dark:border-slate-800">
-                  {item.aiSummary
-                    ? (() => {
-                        const lines = normalizeAiSummary(item.aiSummary);
-                        const preview = buildPreview(lines, 12);
-                        return (
-                          <div className="flex max-w-xs flex-col gap-2">
-                            <p
-                              className="text-sm text-slate-600 dark:text-slate-200"
-                              style={{
-                                display: "-webkit-box",
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                              }}>
-                              {preview}
-                            </p>
-                            {preview !== lines.join(" ") ? (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() =>
-                                  setModalContent(lines.join("\n"))
-                                }
-                                aria-label="Показать полностью">
-                                Показать
-                              </Button>
-                            ) : null}
-                          </div>
-                        );
-                      })()
-                    : "—"}
+                  {item.summaryLines.length ? (
+                    <div className="flex max-w-xs flex-col gap-2">
+                      {item.summaryPreview ? (
+                        <p
+                          className="text-sm text-slate-600 dark:text-slate-200"
+                          style={{
+                            display: "-webkit-box",
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}>
+                          {item.summaryPreview}
+                        </p>
+                      ) : null}
+                      {item.summaryFullText &&
+                      item.summaryPreview !== item.summaryFullText ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            setModalContent(item.summaryLines.join("\n"))
+                          }
+                          aria-label={`Показать полное пояснение для анкеты ${item.id}`}>
+                          Показать
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : (
+                    "—"
+                  )}
                 </td>
               </tr>
             ))}
@@ -237,7 +281,7 @@ export function SubmissionsPage(): ReactElement {
         </table>
       </div>
       <div className="flex flex-col gap-3 rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-600 dark:bg-slate-900/40 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
-        <span>
+        <span role="status" aria-live="polite">
           Страница {pagination.page} из {pagination.totalPages} (всего{" "}
           {pagination.total})
         </span>
@@ -262,12 +306,23 @@ export function SubmissionsPage(): ReactElement {
           </Button>
         </div>
       </div>
-      <Modal open={Boolean(modalContent)} onClose={() => setModalContent(null)}>
-        {modalContent ? (
-          <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-            {modalContent}
-          </div>
-        ) : null}
+      <Modal
+        open={Boolean(modalContent)}
+        onClose={() => setModalContent(null)}
+        titleId={modalTitleId}
+        descriptionId={modalDescriptionId}>
+        <div className="flex flex-col gap-4">
+          <h3
+            id={modalTitleId}
+            className="text-lg font-semibold text-slate-900 dark:text-white">
+            Полное пояснение AI
+          </h3>
+          {modalContent ? (
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              {modalContent}
+            </div>
+          ) : null}
+        </div>
       </Modal>
     </Card>
   );

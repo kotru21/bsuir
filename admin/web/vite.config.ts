@@ -14,6 +14,29 @@ export default defineConfig({
     outDir: "../../dist/admin",
     emptyOutDir: true,
     sourcemap: true,
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) {
+            return undefined;
+          }
+          if (id.includes("react-chartjs-2") || id.includes("chart.js")) {
+            return "charts";
+          }
+          if (id.includes("@tanstack/react-query")) {
+            return "react-query";
+          }
+          if (id.includes("react-router-dom")) {
+            return "router";
+          }
+          if (id.includes("react")) {
+            return "react-vendor";
+          }
+          return undefined;
+        },
+      },
+    },
   },
   server: {
     port: 5173,

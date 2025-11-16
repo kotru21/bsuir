@@ -241,7 +241,10 @@ export function DashboardPage(): ReactElement {
           </div>
           <Suspense
             fallback={<FullscreenSpinner message="Загружаем график..." />}>
-            <TimelineChart points={timelinePoints} />
+            <TimelineChart
+              points={timelinePoints}
+              title="Динамика опросов по выбранному диапазону"
+            />
           </Suspense>
         </Card>
       </div>

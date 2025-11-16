@@ -7,9 +7,19 @@ type ModalProps = {
   open: boolean;
   onClose: () => void;
   children?: ReactNode;
+  titleId?: string;
+  descriptionId?: string;
+  ariaLabel?: string;
 };
 
-export default function Modal({ open, onClose, children }: ModalProps) {
+export default function Modal({
+  open,
+  onClose,
+  children,
+  titleId,
+  descriptionId,
+  ariaLabel,
+}: ModalProps) {
   useEffect(() => {
     if (!open) return undefined;
     const prev = document.body.style.overflow;
@@ -21,6 +31,7 @@ export default function Modal({ open, onClose, children }: ModalProps) {
 
   // focus trap and escape handling
   const portalRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -29,7 +40,7 @@ export default function Modal({ open, onClose, children }: ModalProps) {
     // Save the previously focused element to restore on close
     openerRef.current = document.activeElement as HTMLElement | null;
 
-    const root = portalRef.current ?? document.body;
+    const root = dialogRef.current ?? document.body;
 
     // find focusable elements
     const focusableSelector =
@@ -83,16 +94,24 @@ export default function Modal({ open, onClose, children }: ModalProps) {
 
   return createPortal(
     <div
-      role="dialog"
-      aria-modal="true"
+      role="presentation"
       tabIndex={-1}
       ref={portalRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
       onClick={onClose}>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        aria-label={titleId ? undefined : ariaLabel ?? "Диалог"}
+        tabIndex={-1}
         className="relative w-full max-w-2xl rounded-3xl border border-slate-200/60 bg-white/90 p-6 shadow-elevated backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/70"
         onClick={(e) => e.stopPropagation()}>
-        <div className="max-h-[60vh] overflow-y-auto text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+        <div
+          className="max-h-[60vh] overflow-y-auto text-sm leading-relaxed text-slate-700 dark:text-slate-200"
+          id={descriptionId}>
           {children}
         </div>
         <div className="mt-6 flex justify-end">

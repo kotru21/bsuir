@@ -154,9 +154,12 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             <Button
               variant="ghost"
               size="sm"
-              className="hidden! text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white lg:inline-flex!"
+              className={cn(
+                "hidden text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white lg:inline-flex"
+              )}
               onClick={toggleCollapsed}
               aria-expanded={!collapsed}
+              aria-pressed={!collapsed}
               aria-label={collapsed ? "Развернуть меню" : "Свернуть меню"}>
               {collapsed ? "Раскрыть меню" : "Свернуть меню"}
             </Button>
@@ -164,7 +167,9 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
 
           {auth.error ? (
             <div className="flex items-start gap-3 rounded-2xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
-              <span className="flex-1">{auth.error}</span>
+              <span className="flex-1" role="alert">
+                {auth.error}
+              </span>
               <Button
                 variant="secondary"
                 size="sm"

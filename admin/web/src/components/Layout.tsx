@@ -79,6 +79,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 className={({ isActive }) =>
                   cn(
                     "group relative flex items-center rounded-2xl text-sm font-medium transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:hover:bg-slate-800/70 dark:hover:text-white",
+                    "cursor-pointer",
                     isActive
                       ? "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200"
                       : "text-slate-600 dark:text-slate-300",
@@ -118,6 +119,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               aria-label={collapsed ? "Выйти из аккаунта" : undefined}
               className={cn(
                 "group relative flex w-full items-center rounded-2xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
+                "cursor-pointer",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 collapsed
                   ? "gap-3 px-3 py-3 lg:justify-center lg:px-3 lg:py-3"

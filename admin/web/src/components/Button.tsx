@@ -28,7 +28,7 @@ const sizeStyles: Record<Size, string> = {
 };
 
 const baseStyles =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 cursor-pointer disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-60";
 
 export const Button = memo(
   forwardRef<HTMLButtonElement, ButtonProps>(

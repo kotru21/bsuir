@@ -56,7 +56,7 @@ export async function apiFetch<T = unknown>(
   const userSignal = (rest as RequestInit).signal as AbortSignal | undefined;
   const signal = userSignal ?? controller.signal;
 
-  let timeoutId: NodeJS.Timeout | undefined;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const effectiveTimeout =
     typeof timeoutMs === "number" ? timeoutMs : DEFAULT_TIMEOUT_MS;
   if (!userSignal && effectiveTimeout && effectiveTimeout > 0) {

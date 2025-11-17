@@ -97,7 +97,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 ? showMobileLabels
                   ? "flex flex-1 flex-wrap items-center justify-between gap-3"
                   : "flex flex-1 items-center justify-between gap-2 overflow-x-auto"
-                : "mt-6 flex flex-col gap-2"
+                : "mt-6 flex flex-col items-center gap-2"
             )}>
             {NAV_ITEMS.map(({ to, label, icon }) => (
               <SidebarNavItem
@@ -115,7 +115,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           <div
             className={cn(
               "shrink-0",
-              isMobileViewport ? "ml-auto" : "mt-auto"
+              isMobileViewport ? "ml-auto" : "mt-auto flex justify-center"
             )}>
             <button
               onClick={handleLogout}

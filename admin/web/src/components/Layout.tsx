@@ -1,6 +1,5 @@
-import { NavLink } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import type { ReactElement, ReactNode, ComponentType, SVGProps } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import logoUrl from "../assets/logo.png";
 import { StatsIcon } from "./icons/StatsIcon";
@@ -8,6 +7,8 @@ import { ViewRespIcon } from "./icons/ViewRespIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { cn } from "../lib/cn";
 import { Button } from "./Button";
+import { useViewportWidth } from "../hooks/useViewportWidth";
+import { SidebarNavItem } from "./layout/SidebarNavItem";
 
 const NAV_ITEMS = [
   { to: "/", label: "Обзор", icon: StatsIcon },
@@ -15,14 +16,7 @@ const NAV_ITEMS = [
 ];
 
 const MOBILE_BREAKPOINT_PX = 1024;
-const MOBILE_LABEL_BREAKPOINT_PX = 560;
-
-const getViewportWidth = (): number => {
-  if (typeof window === "undefined") {
-    return 0;
-  }
-  return window.innerWidth;
-};
+const MOBILE_LABEL_BREAKPOINT_PX = 400;
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
@@ -33,9 +27,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
       return false;
     }
   });
-  const [viewportWidth, setViewportWidth] = useState<number>(() =>
-    getViewportWidth()
-  );
+  const viewportWidth = useViewportWidth();
 
   useEffect(() => {
     try {
@@ -44,20 +36,6 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
       /* ignore */
     }
   }, [collapsed]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const handleResize = () => {
-      setViewportWidth(window.innerWidth);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
 
   const isMobileViewport =
     viewportWidth > 0 && viewportWidth < MOBILE_BREAKPOINT_PX;
@@ -75,6 +53,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 lg:flex-row lg:items-start">
         <aside
+          aria-label="Боковое меню"
           className={cn(
             "rounded-3xl border border-slate-200/70 bg-white/90 shadow-elevated backdrop-blur transition-all duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
             isMobileViewport
@@ -110,6 +89,8 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
 
           {/* Навигация */}
           <nav
+            role="navigation"
+            aria-label="Основная навигация админ-панели"
             className={cn(
               "shrink-0",
               isMobileViewport
@@ -119,44 +100,14 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 : "mt-6 flex flex-col gap-2"
             )}>
             {NAV_ITEMS.map(({ to, label, icon }) => (
-              <NavLink
+              <SidebarNavItem
                 key={to}
-                end={to === "/"}
                 to={to}
-                aria-label={isIconOnly ? label : undefined}
-                className={({ isActive }) =>
-                  cn(
-                    "group relative flex items-center rounded-2xl text-sm font-medium transition-all hover:bg-slate-100/80 hover:text-slate-900 dark:hover:bg-slate-800/70 dark:hover:text-white",
-                    "cursor-pointer",
-                    isActive
-                      ? "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200"
-                      : "text-slate-600 dark:text-slate-300",
-                    isIconOnly
-                      ? "h-12 w-12 justify-center p-0"
-                      : isMobileViewport
-                      ? "gap-2 px-3 py-2"
-                      : "gap-3 px-4 py-3"
-                  )
-                }>
-                {/* Иконка */}
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors group-hover:bg-sky-100 group-hover:text-sky-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-sky-500/20 dark:group-hover:text-sky-200">
-                  {(() => {
-                    const Icon = icon as unknown as ComponentType<
-                      SVGProps<SVGSVGElement>
-                    >;
-                    return <Icon className="h-4 w-4" aria-hidden />;
-                  })()}
-                </span>
-                {/* Текст */}
-                <span
-                  aria-hidden={isIconOnly}
-                  className={cn(
-                    "whitespace-nowrap text-sm font-medium transition-all duration-300",
-                    isIconOnly ? "hidden" : ""
-                  )}>
-                  {label}
-                </span>
-              </NavLink>
+                label={label}
+                icon={icon}
+                isIconOnly={isIconOnly}
+                isMobileViewport={isMobileViewport}
+              />
             ))}
           </nav>
 
@@ -173,7 +124,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               className={cn(
                 "group relative flex items-center rounded-2xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
                 "cursor-pointer",
-                "disabled:cursor-not-allowed disabled:opacity-50",
+                "disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500",
                 isIconOnly
                   ? "h-12 w-12 justify-center p-0"
                   : isMobileViewport

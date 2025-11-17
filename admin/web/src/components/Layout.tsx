@@ -83,7 +83,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                       ? "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200"
                       : "text-slate-600 dark:text-slate-300",
                     collapsed
-                      ? "px-3 py-3 lg:justify-center lg:px-3 lg:py-3"
+                      ? "gap-3 px-3 py-3 lg:justify-center lg:px-3 lg:py-3"
                       : "gap-3 px-4 py-3"
                   )
                 }>
@@ -120,7 +120,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 "group relative flex w-full items-center rounded-2xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 collapsed
-                  ? "px-3 py-3 lg:justify-center lg:px-3 lg:py-3"
+                  ? "gap-3 px-3 py-3 lg:justify-center lg:px-3 lg:py-3"
                   : "gap-3 px-4 py-3"
               )}>
               {/* Иконка */}

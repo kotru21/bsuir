@@ -4,7 +4,7 @@
 
 ## Обзор
 
-Проект объединяет Telegram-бота и веб-панель администратора, которые работают поверх единого Fastify-приложения и используют общую бизнес-логику и базу данных. Разделы ниже содержат детализированные диаграммы и описания, вынесенные из основного README ради лучшей навигации.
+Проект объединяет Telegram-бота и веб-панель администратора, которые запускаются в одном Node.js процессе: Fastify обслуживает API и статику, а Telegraf работает как отдельный бот-инстанс, разделяющий те же сервисы и базу данных. Разделы ниже содержат детализированные диаграммы и описания, вынесенные из основного README ради лучшей навигации.
 
 > ℹ️ **Совет:** диаграммы свёрнуты по умолчанию. Нажмите «Развернуть диаграмму», чтобы увидеть схему целиком и сопроводительные пояснения.
 
@@ -71,7 +71,7 @@ flowchart TB
 
 - Telegram-бот и веб-панель используют общие сервисы и инфраструктуру.
 - Рекомендательный движок нормализует векторы профиля и секций, считает косинусное сходство и сохраняет лучшие результаты через Prisma.
-- Статистика и список анкет обслуживаются REST API, защищённым cookie-сессиями и CSRF.
+- Статистика и список анкет обслуживаются REST API, защищённым cookie-сессиями; CSRF проверяется только на мутациях (login/logout).
 
 </details>
 
@@ -132,7 +132,7 @@ flowchart TB
 
 **Примечания:**
 
-- SPA общается с API через защищённые cookie-сессии и CSRF-токены.
+- SPA общается с API через защищённые cookie-сессии; CSRF-токен требуется только при входе/выходе.
 - Fastify агрегирует статистику и отдаёт статические файлы Vite-сборки.
 
 </details>
@@ -188,7 +188,7 @@ flowchart TD
    style RecordInterest fill:#9e9e9e,color:#fff,stroke-dasharray: 5 5
 ```
 
-**Алгоритм:** после запуска сцены бот собирает профиль, вычисляет рекомендации, выдаёт карточки и предлагает действия через инлайн-кнопки.
+**Алгоритм:** после запуска сцены бот собирает профиль, вычисляет рекомендации, выдаёт карточки и предлагает действия через инлайн-кнопки. Шаг `RecordInterest` на диаграмме помечен пунктиром, потому что логирование интереса пока не реализовано и рассматривается как будущая доработка.
 
 </details>
 
@@ -201,91 +201,47 @@ flowchart TD
 
 ```mermaid
 erDiagram
-   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ ОТВЕТ : "содержит"
-   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ РЕКОМЕНДАЦИЯ : "получает"
-   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ ||--o{ ИНТЕРЕС_К_СЕКЦИИ : "проявляет"
+   SURVEY_SUBMISSION ||--o{ RECOMMENDATION_SNAPSHOT : "содержит"
+   RECOMMENDATION_SNAPSHOT }o--|| SPORT_SECTION : "указывает_на"
 
-   РЕКОМЕНДАЦИЯ }o--|| СПОРТ_СЕКЦИЯ : "указывает_на"
-   ИНТЕРЕС_К_СЕКЦИИ }o--|| СПОРТ_СЕКЦИЯ : "относится_к"
-
-   СПОРТ_СЕКЦИЯ ||--o{ ПРОГНОЗ_РЕЗУЛЬТАТА : "описывает"
-   СПОРТ_СЕКЦИЯ ||--o{ МЕДИА_АКТИВ : "иллюстрирует"
-
-   ПРОФИЛЬ_ПОЛЬЗОВАТЕЛЯ {
-      int id PK
-      string telegramId UK "Уникальный ID Telegram"
-      int age "Возраст пользователя"
-      enum gender "Пол (male/female/other)"
-      enum fitnessLevel "Уровень подготовки"
-      string[] preferredFormats "Выбранные форматы тренировок"
-      string[] desiredGoals "Цели (может быть несколько)"
-      json goalPriorities "Вес желаемых целей"
-      json formatPriorities "Вес предпочитаемых форматов"
-      float intensityComfort "Комфортная интенсивность (0..1)"
-      float intensityFlexibility "Гибкость восприятия нагрузки"
-      boolean avoidContact "Отказ от контактных видов"
-      float contactTolerance "Нормализованная толерантность к контактам"
-      boolean interestedInCompetition "Были ли отмечены соревнования"
-      float competitionDrive "Насколько важны соревнования"
-      timestamp createdAt
-      timestamp updatedAt
-   }
-
-   ОТВЕТ {
-      int id PK
-      int profileId FK
-      string stepId "Идентификатор шага"
-      string value "Значение ответа"
-      timestamp timestamp "Время ответа"
-   }
-
-   СПОРТ_СЕКЦИЯ {
-      string id PK "Уникальный идентификатор"
-      string title "Название секции"
-      string description "Описание"
-      string location "Место проведения"
-      string scheduleSummary "Расписание (текст)"
-      enum contactType "contact/non-contact"
-      int minAge "Минимальный возраст"
-      int maxAge "Максимальный возраст"
-      string[] suitableFor "Подходящие цели"
-   }
-
-   РЕКОМЕНДАЦИЯ {
-      int id PK
-      int profileId FK
-      string sectionId FK
-      float score "Оценка соответствия (0..1, косинусное сходство)"
-      string[] reasons "Причины рекомендации"
-      int rank "Позиция в рейтинге"
+   SURVEY_SUBMISSION {
+      string id PK
+      string telegramUserId "опциональный ID пользователя"
+      string chatId "опциональный chat id"
+      int age
+      string gender
+      string fitnessLevel
+      string[] preferredFormats
+      string[] desiredGoals
+      boolean avoidContact
+      boolean interestedInCompetition
+      string aiSummary? "опциональное AI-пояснение"
       timestamp createdAt
    }
 
-   ИНТЕРЕС_К_СЕКЦИИ {
-      int id PK
-      int profileId FK
-      string sectionId FK
-      enum actionType "view/contact/register"
-      timestamp timestamp
+   RECOMMENDATION_SNAPSHOT {
+      string id PK
+      string submissionId FK
+      string sectionId
+      string sectionName
+      float score
+      int rank
+      json reasons
+      timestamp createdAt
    }
 
-   ПРОГНОЗ_РЕЗУЛЬТАТА {
-      int id PK
-      string sectionId FK
-      string horizon "1_month/3_months/6_months"
-      string description "Описание ожидаемого результата"
-   }
-
-   МЕДИА_АКТИВ {
-      int id PK
-      string sectionId FK
-      string path "Путь к файлу"
-      string altText "Альтернативный текст"
-      enum type "image/video"
+   SPORT_SECTION {
+      string id PK
+      string title
+      string summary
+      string format
+      string contactLevel
+      string intensity
+      string[] focus
    }
 ```
 
-**Что важно:** модель описывает профили, ответы и рекомендации, а также реакции пользователей на секции. Секции сопровождаются медиа и прогнозами результата.
+**Что важно:** в текущей версии БД сохраняет только агрегированную анкету и снимки рекомендаций, а данные секций подгружаются из статического каталога `src/data/sections.ts`; таблицы с покомпонентными ответами и событиями интереса остаются в дорожной карте.
 
 </details>
 

@@ -2,28 +2,28 @@
 
 ## 1. Аннотация
 
-Репозиторий [kotru21/bsuir](https://github.com/kotru21/bsuir) представляет прототип цифровой платформы маркетинга спортивных услуг БГУИР. Решение объединяет Telegram-бота, реализованного на Node.js 18 и Telegraf, с административной веб-панелью на React 18 (Vite). Оба интерфейса используют единый сервер Fastify, общую доменную модель и базу данных PostgreSQL, управляемую через Prisma ORM. Основная научно-практическая ценность проекта заключается в алгоритме подбора спортивных секций по профилю пользователя и в едином операционном конвейере аналитики откликов.
+Репозиторий [kotru21/bsuir](https://github.com/kotru21/bsuir) представляет прототип цифровой платформы маркетинга спортивных услуг БГУИР. Решение объединяет Telegram-бота, реализованного на Node.js 24.11 и Telegraf, с административной веб-панелью на React 18 (Vite). Оба интерфейса запускаются из одного процесса, но взаимодействуют через общие сервисы Fastify и Prisma, используя общую доменную модель и базу данных PostgreSQL. Основная научно-практическая ценность проекта заключается в алгоритме подбора спортивных секций по профилю пользователя и в едином операционном конвейере аналитики откликов.
 
 ## 2. Общая архитектура
 
-Система построена по принципу единой серверной шины ([src/admin/server.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts)), которая инстанцирует Fastify-приложение, подключает REST-маршруты ([src/admin/routes](https://github.com/kotru21/bsuir/tree/main/src/admin/routes)) и интегрирует Telegraf-бота ([src/bot/app.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/app.ts)). В результате Telegram-клиент и SPA-админка взаимодействуют с общим набором сервисов:
+Система построена по принципу единой серверной шины ([src/admin/server.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts)), которая инстанцирует Fastify-приложение и подключает REST-маршруты ([src/admin/routes](https://github.com/kotru21/bsuir/tree/main/src/admin/routes)). Telegraf-бот конфигурируется отдельно ([src/bot/app.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/app.ts)) и запускается рядом через [src/index.ts](https://github.com/kotru21/bsuir/blob/main/src/index.ts), поэтому обе части разделяют те же сервисы и инфраструктуру:
 
 - слой бот-сцен: [src/bot/scenes/onboarding.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/scenes/onboarding.ts) и подпакет [steps](https://github.com/kotru21/bsuir/tree/main/src/bot/scenes/onboarding/steps);
 - сервисы Fastify: статистика ([src/admin/services/statisticsService.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/services/statisticsService.ts)), регистрация откликов ([src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts)), агрегация профиля ([src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts));
 - бизнес-ядро рекомендаций: [src/recommendation.ts](https://github.com/kotru21/bsuir/blob/main/src/recommendation.ts) и доменные типы [src/types.ts](https://github.com/kotru21/bsuir/blob/main/src/types.ts);
 - инфраструктура доступа к данным: Prisma-клиент ([src/infrastructure/prismaClient.ts](https://github.com/kotru21/bsuir/blob/main/src/infrastructure/prismaClient.ts)) и статический каталог секций ([src/data/sections.ts](https://github.com/kotru21/bsuir/blob/main/src/data/sections.ts)).
 
-Telegram-бот разворачивается как middleware внутри Fastify и использует in-memory сессии ([src/bot/session.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/session.ts)). Админ-панель собирается Vite и обслуживается тем же сервером через статический раздачик. Модель данных описана в [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma) и синхронизируется с PostgreSQL.
+Telegram-бот работает как отдельный Telegraf-инстанс (без Fastify-middleware) и использует in-memory сессии ([src/bot/session.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/session.ts)). Админ-панель собирается Vite и обслуживается тем же Fastify-сервером через статический раздачик. Модель данных описана в [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma) и синхронизируется с PostgreSQL.
 
 ## 3. Доменная модель и структуры данных
 
 Каталог секций формируется из массива объектов `SportSection` ([src/data/sections.ts](https://github.com/kotru21/bsuir/blob/main/src/data/sections.ts)), типизированных через [src/types.ts](https://github.com/kotru21/bsuir/blob/main/src/types.ts). Ключевые сущности:
 
-- `UserProfile`: возраст, пол, базовый уровень подготовки и расширенный вектор предпочтений (массивы `preferredFormats` и `desiredGoals`, карты весов `goalPriorities` и `formatPriorities`, параметры `intensityComfort`, `intensityFlexibility`, `contactTolerance`, `competitionDrive`, флаги `avoidContact` и `interestedInCompetition`).
+- `UserProfile`: возраст, пол, базовый уровень подготовки и расширенный вектор предпочтений (массивы `preferredFormats` и `desiredGoals`, карта весов `goalPriorities`, параметры `intensityComfort`, `intensityFlexibility`, `contactTolerance`, `competitionDrive`, флаги `avoidContact` и `interestedInCompetition`). Поле `formatPriorities` пока не собирается мастер-сценой и зарезервировано для будущих итераций.
 - `SportSection`: идентификатор, формат (`individual`/`group`/`mixed`), уровень контактности, интенсивность, рекомендуемые уровни подготовки, ожидаемые результаты по временным горизонтам и дополнительные преимущества; при необходимости секция расширяется предвычисленным `similarityVector`.
 - `RecommendationResult`: косинусная оценка `score ∈ [0, 1]`, ссылка на секцию, нормализованный вектор и перечень `RecommendationReason`, фиксирующий вклад целей, форматов, интенсивности, соревнований, контактности и дополнительных выгод.
 
-Привязка к БД реализована через Prisma-модель [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma): хранятся профили, ответы шага мастера и снимки рекомендаций. Для анкетирования используется WizardScene Telegraf, где каждый шаг формирует часть `UserProfile` и вектор признаков, пригодный для последующего сопоставления.
+Привязка к БД реализована через Prisma-модель [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma): сейчас сохраняются агрегированные анкеты (`SurveySubmission`) и топ-N рекомендаций (`RecommendationSnapshot`). Поштучные ответы и события интереса планируются на следующих этапах. Для анкетирования используется WizardScene Telegraf, где каждый шаг формирует часть `UserProfile` и вектор признаков, пригодный для последующего сопоставления.
 
 ## 4. Алгоритм рекомендаций
 
@@ -133,9 +133,9 @@ Unit-тесты ([test](https://github.com/kotru21/bsuir/tree/main/test)) охв
 
 ## 11. Поток данных и взаимодействие компонентов
 
-Сценарий обработки запроса начинается в Telegram. Команда `/start` активирует middleware [src/bot/app.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/app.ts), которое регистрирует сцену onboarding и связывает контекст Telegraf с Fastify-сессией. Диалоговые шаги пишут промежуточные значения в `RecommendationSession` ([src/bot/session.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/session.ts)). После получения полного профиля вызывается сервис [src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts), собирающий итоговую структуру `UserProfile`. Далее запускается `recommendSections`, и результирующие рекомендации сериализуются в DTO, пригодное для отправки через MarkdownV2.
+Сценарий обработки запроса начинается в Telegram. Команда `/start` активирует сцену, зарегистрированную в [src/bot/app.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/app.ts); Telegraf работает автономно и не прокидывает контекст в Fastify-сессии. Диалоговые шаги пишут промежуточные значения в `RecommendationSession` ([src/bot/session.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/session.ts)). После получения полного профиля вызывается сервис [src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts), собирающий итоговую структуру `UserProfile`. Далее запускается `recommendSections`, и результирующие рекомендации сериализуются в DTO, пригодное для отправки через MarkdownV2.
 
-Данные о реакциях пользователей (просмотр, интерес, повторный запуск) передаются через [src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts), который сохраняет в PostgreSQL как записи таблиц `Recommendation`, `Submission` и связанных сущностей. Параллельно админ-панель опрашивает API `/admin/api/stats/overview` и `/admin/api/stats/timeline`, получая агрегированные метрики. Таким образом, массив телеметрии постоянно обновляется, обеспечивая цикл обратной связи между фронт- и бэкендом.
+Сейчас [src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts) сохраняет агрегированную анкету и топ-N рекомендаций. Логирование детальных реакций (просмотр, интерес, повторный запуск) запланировано на будущее. Параллельно админ-панель опрашивает API `/admin/api/stats/overview` и `/admin/api/stats/timeline`, получая агрегированные метрики из накопленных `SurveySubmission` записей.
 
 ## 12. Формализация бизнес-метрик
 
@@ -244,10 +244,10 @@ if (!response.ok) {
 
 ## 19. Хранилище данных и Prisma
 
-Приложение использует PostgreSQL и Prisma ORM. Сущности `Profile`, `Submission`, `Recommendation` и `Section` описаны в [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma), что согласуется с документацией [docs/DATABASE.md](https://github.com/kotru21/bsuir/blob/main/docs/DATABASE.md). Операции выполняются через сервисы:
+Приложение использует PostgreSQL и Prisma ORM. Схема [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma) включает `SurveySubmission` (агрегированная анкета) и `RecommendationSnapshot` (сохранённые карточки выдачи). Дополнительные таблицы (`Profile`, `Interaction` и др.) пока не реализованы и описаны как возможное развитие в документации [docs/DATABASE.md](https://github.com/kotru21/bsuir/blob/main/docs/DATABASE.md). Операции выполняются через сервисы:
 
 - [src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts) — формирует DTO для сохранения анкет;
-- [src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts) — записывает рекомендации и ответы мастера;
+- [src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts) — записывает рекомендации и агрегированную анкету;
 - [src/admin/services/statisticsService.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/services/statisticsService.ts) — агрегирует данные для API.
 
 Миграции управляются командами `npx prisma migrate deploy` и `npx prisma migrate dev --name <label>`. Для резервного копирования предлагаются команды `pg_dump` и `pg_restore`, адаптированные к переменной окружения `DATABASE_URL`. В разработке к базе подключается `connectPrisma()` внутри [src/index.ts](https://github.com/kotru21/bsuir/blob/main/src/index.ts); при отсутствии `DATABASE_URL` приложение запускается в режим без аналитики, выводя предупреждение.
@@ -297,7 +297,7 @@ useEffect(() => {
 
 Документ [docs/CONTRIBUTING.md](https://github.com/kotru21/bsuir/blob/main/docs/CONTRIBUTING.md) устанавливает процессы внесения изменений:
 
-- использовать Node.js 18+, настраивать `.env` и выполнять миграции перед разработкой;
+- использовать Node.js 24.11+, настраивать `.env` и выполнять миграции перед разработкой;
 - придерживаться TypeScript-стиля без неявного `any`, сохранять расширения `.js` в импортах;
 - перед Pull Request запускать `npm run lint`, `npm run test`, `npx tsc --noEmit`;
 - оформлять коммиты в стиле Conventional (`feat:`, `fix:`, `docs:` и т.д.).

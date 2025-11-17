@@ -1,6 +1,6 @@
 # Прототип системы цифрового маркетинга образовательно-спортивных услуг БГУИР
 
-![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-brightgreen.svg)
+![Node.js 24.11+](https://img.shields.io/badge/Node.js-24.11%2B-brightgreen.svg)
 ![TypeScript ESM](https://img.shields.io/badge/TypeScript-ESM-blue.svg)
 ![Status Prototype](https://img.shields.io/badge/Status-Prototype-orange.svg)
 
@@ -57,6 +57,8 @@ Add-Content .env "ADMIN_SESSION_SECRET=change_me_please"
 npm run dev
 ```
 
+> ℹ️ Требуется Node.js 24.11+ (см. `package.json` → `engines`).
+
 ✅ Готово! Подключите бота в Telegram и откройте <http://localhost:3000> для проверки живости API.
 
 > ⚠️ **Важно:** замените демонстрационные значения в `.env` перед деплоем и не публикуйте токены в публичных репозиториях.
@@ -73,7 +75,7 @@ npm run dev
 - персонализированные карточки рекомендаций с пояснениями и изображениями;
 - AI-пояснение подбора (при наличии Heroku Inference ключа) в дружелюбном тоне;
 - команда `/sections` для просмотра каталога вне анкеты;
-- логирование интереса и просмотров для последующей аналитики;
+- планируется логирование интереса и просмотров для последующей аналитики;
 - fallback-сценарии, если подходящих секций не найдено.
 
 ![Демонстрация бота](https://via.placeholder.com/960x540.png?text=Telegram+Bot+Demo)
@@ -157,7 +159,7 @@ prisma/             # schema.prisma и миграции
 
 ### Технологии
 
-- **Backend:** Node.js 18, Telegraf, Fastify, Prisma, PostgreSQL.
+- **Backend:** Node.js 24.11+, Telegraf, Fastify, Prisma, PostgreSQL.
 - **Frontend:** React 18, Vite, TanStack Query, Chart.js.
 - **Инфраструктура:** TypeScript (NodeNext/ESM), tsx, dotenv, Jest.
 - **Автоматизация:** npm scripts (`dev`, `dev:admin`, `build`, `start`, `test`).

@@ -14,6 +14,16 @@ const NAV_ITEMS = [
   { to: "/submissions", label: "Опросы", icon: ViewRespIcon },
 ];
 
+const MOBILE_BREAKPOINT_PX = 1024;
+const MOBILE_LABEL_BREAKPOINT_PX = 560;
+
+const getViewportWidth = (): number => {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+  return window.innerWidth;
+};
+
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -23,13 +33,9 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
       return false;
     }
   });
-  // Track viewport width to scope scroll-driven behavior to mobile only.
-  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-    return window.innerWidth < 1024;
-  });
+  const [viewportWidth, setViewportWidth] = useState<number>(() =>
+    getViewportWidth()
+  );
 
   useEffect(() => {
     try {
@@ -44,7 +50,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
       return;
     }
     const handleResize = () => {
-      setIsMobileViewport(window.innerWidth < 1024);
+      setViewportWidth(window.innerWidth);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -52,7 +58,12 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-  const isIconOnly = isMobileViewport || collapsed;
+
+  const isMobileViewport =
+    viewportWidth > 0 && viewportWidth < MOBILE_BREAKPOINT_PX;
+  const showMobileLabels =
+    isMobileViewport && viewportWidth >= MOBILE_LABEL_BREAKPOINT_PX;
+  const isIconOnly = isMobileViewport ? !showMobileLabels : collapsed;
 
   const handleLogout = useCallback(() => {
     void auth.logout();
@@ -67,7 +78,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           className={cn(
             "rounded-3xl border border-slate-200/70 bg-white/90 shadow-elevated backdrop-blur transition-all duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
             isMobileViewport
-              ? "sticky top-0 z-30 flex w-full items-center gap-3 px-3 py-2"
+              ? "sticky top-2 z-30 mt-2 flex w-full items-center gap-3 px-3 py-2"
               : cn(
                   "flex min-h-0 flex-col gap-8 p-6",
                   "lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto",
@@ -102,7 +113,9 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             className={cn(
               "shrink-0",
               isMobileViewport
-                ? "flex flex-1 items-center justify-between gap-2 overflow-x-auto"
+                ? showMobileLabels
+                  ? "flex flex-1 flex-wrap items-center justify-between gap-3"
+                  : "flex flex-1 items-center justify-between gap-2 overflow-x-auto"
                 : "mt-6 flex flex-col gap-2"
             )}>
             {NAV_ITEMS.map(({ to, label, icon }) => (
@@ -120,6 +133,8 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                       : "text-slate-600 dark:text-slate-300",
                     isIconOnly
                       ? "h-12 w-12 justify-center p-0"
+                      : isMobileViewport
+                      ? "gap-2 px-3 py-2"
                       : "gap-3 px-4 py-3"
                   )
                 }>
@@ -159,7 +174,11 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 "group relative flex items-center rounded-2xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
                 "cursor-pointer",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                isIconOnly ? "h-12 w-12 justify-center p-0" : "gap-3 px-4 py-3"
+                isIconOnly
+                  ? "h-12 w-12 justify-center p-0"
+                  : isMobileViewport
+                  ? "gap-2 px-3 py-2"
+                  : "gap-3 px-4 py-3"
               )}>
               {/* Иконка */}
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 transition-colors group-hover:bg-rose-100 group-hover:text-rose-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-rose-500/20 dark:group-hover:text-rose-200">

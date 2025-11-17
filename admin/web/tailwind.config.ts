@@ -7,7 +7,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", ...(defaultTheme.fontFamily?.sans ?? [])],
+        sans: ["Inter var", "Inter", ...(defaultTheme.fontFamily?.sans ?? [])],
       },
       colors: {
         brand: {

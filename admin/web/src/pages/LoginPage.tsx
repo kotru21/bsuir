@@ -170,7 +170,7 @@ export function LoginPage(): React.JSX.Element {
               {submitting ? "Входим..." : "Войти"}
             </Button>
 
-            <p className="text-center text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-center text-xs text-slate-500 dark:text-slate-500">
               Доступ только для сотрудников БГУИР. Обратитесь к администратору,
               если забыли пароль.
             </p>

@@ -40,6 +40,10 @@ export default function Modal({
     // Save the previously focused element to restore on close
     openerRef.current = document.activeElement as HTMLElement | null;
 
+    // mark main content as hidden for screen readers while modal is open
+    const main = document.querySelector("main") as HTMLElement | null;
+    if (main) main.setAttribute("aria-hidden", "true");
+
     const root = dialogRef.current ?? document.body;
 
     // find focusable elements
@@ -87,6 +91,9 @@ export default function Modal({
       window.removeEventListener("keydown", onKeyDown);
       // restore focus
       if (openerRef.current) openerRef.current.focus();
+      // restore aria-hidden to background content
+      const main = document.querySelector("main") as HTMLElement | null;
+      if (main) main.removeAttribute("aria-hidden");
     };
   }, [open, onClose]);
 

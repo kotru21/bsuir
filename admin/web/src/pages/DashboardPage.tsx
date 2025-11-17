@@ -209,7 +209,7 @@ export function DashboardPage(): ReactElement {
                   )
                 )
               ) : (
-                <div className="flex items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-400 dark:bg-slate-800/50 dark:text-slate-500">
+                <div className="flex items-center justify-between rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-500 dark:bg-slate-800/50 dark:text-slate-500">
                   <span>Пока нет данных</span>
                   <strong>—</strong>
                 </div>

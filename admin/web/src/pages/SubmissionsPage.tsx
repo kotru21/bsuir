@@ -150,7 +150,7 @@ export function SubmissionsPage(): ReactElement {
           <caption id="submissionsTableCaption" className="sr-only">
             История анкет с параметрами профиля и пояснениями AI
           </caption>
-          <thead className="text-left uppercase tracking-[0.12em] text-slate-400">
+          <thead className="text-left uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
             <tr>
               <th
                 scope="col"
@@ -236,7 +236,7 @@ export function SubmissionsPage(): ReactElement {
                         key={rec.sectionId}
                         className="rounded-xl bg-slate-100/70 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
                         #{index + 1} {rec.sectionName}
-                        <span className="ml-1 text-xs text-slate-400 dark:text-slate-400">
+                        <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
                           {rec.score.toFixed(1)}
                         </span>
                       </div>

@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, memo } from "react";
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "../lib/cn";
 
@@ -30,23 +30,32 @@ const sizeStyles: Record<Size, string> = {
 const baseStyles =
   "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60";
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    { variant = "primary", size = "md", className, type = "button", ...props },
-    ref
-  ) => (
-    <button
-      ref={ref}
-      type={type}
-      className={cn(
-        baseStyles,
-        variantStyles[variant],
-        sizeStyles[size],
-        className
-      )}
-      {...props}
-    />
+export const Button = memo(
+  forwardRef<HTMLButtonElement, ButtonProps>(
+    (
+      {
+        variant = "primary",
+        size = "md",
+        className,
+        type = "button",
+        ...props
+      },
+      ref
+    ) => (
+      <button
+        ref={ref}
+        type={type}
+        className={cn(
+          baseStyles,
+          variantStyles[variant],
+          sizeStyles[size],
+          className
+        )}
+        {...props}
+      />
+    )
   )
 );
 
 Button.displayName = "Button";
+// memoizing forwardRef: displayName stays same

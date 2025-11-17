@@ -1,7 +1,8 @@
 import type { HTMLAttributes } from "react";
+import { memo } from "react";
 import { cn } from "../lib/cn";
 
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+function CardBase({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
@@ -12,3 +13,4 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
     />
   );
 }
+export const Card = memo(CardBase);

@@ -1,4 +1,4 @@
-import { useMemo, useState, Suspense, lazy } from "react";
+import { useMemo, useState, Suspense, lazy, useCallback } from "react";
 import type { ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDemographics, fetchOverview, fetchTimeline } from "../api/stats";
@@ -47,6 +47,14 @@ function getErrorMessage(error: unknown): string {
 
 export function DashboardPage(): ReactElement {
   const [rangeDays, setRangeDays] = useState(30);
+
+  const handleRangeClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const val = Number(e.currentTarget.getAttribute("data-range") ?? 30);
+      setRangeDays(val);
+    },
+    []
+  );
 
   const overviewQuery = useQuery({
     queryKey: ["overview"],
@@ -233,7 +241,8 @@ export function DashboardPage(): ReactElement {
                   variant={value === rangeDays ? "primary" : "secondary"}
                   size="sm"
                   className="w-full"
-                  onClick={() => setRangeDays(value)}>
+                  onClick={handleRangeClick}
+                  data-range={value}>
                   {value} дн.
                 </Button>
               ))}

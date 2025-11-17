@@ -1,4 +1,11 @@
-@import "@fontsource/inter/variable.css";
+/* Import only specific weights for compatibility with current @fontsource version.
+  If you want to use variable font, upgrade @fontsource/inter to a version that
+  exposes `variable.css` and replace imports with `@fontsource/inter/variable.css`.
+*/
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 @import "tailwindcss";
 

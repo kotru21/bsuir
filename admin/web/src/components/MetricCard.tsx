@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card } from "./Card";
 
 interface MetricCardProps {
@@ -6,7 +7,7 @@ interface MetricCardProps {
   hint?: string;
 }
 
-export function MetricCard({
+export const MetricCard = memo(function MetricCard({
   title,
   value,
   hint,
@@ -22,4 +23,4 @@ export function MetricCard({
       ) : null}
     </Card>
   );
-}
+});

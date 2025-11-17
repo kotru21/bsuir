@@ -1,4 +1,6 @@
-export function FullscreenSpinner({
+import { memo } from "react";
+
+function FullscreenSpinnerBase({
   message,
 }: {
   message?: string;
@@ -21,3 +23,4 @@ export function FullscreenSpinner({
     </div>
   );
 }
+export const FullscreenSpinner = memo(FullscreenSpinnerBase);

@@ -4,7 +4,7 @@ import {
   translateGoal,
   translateTrainingFormat,
 } from "../localization";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, useCallback } from "react";
 import type { ReactElement } from "react";
 import Modal from "../components/Modal";
 import { Card } from "../components/Card";
@@ -57,6 +57,7 @@ function getErrorMessage(error: unknown): string {
 export function SubmissionsPage(): ReactElement {
   const [page, setPage] = useState(1);
   const [modalContent, setModalContent] = useState<string | null>(null);
+  const closeModal = useCallback(() => setModalContent(null), []);
   const modalTitleId = useId();
   const modalDescriptionId = useId();
 
@@ -65,6 +66,17 @@ export function SubmissionsPage(): ReactElement {
     queryFn: () => fetchSubmissions(page, PAGE_SIZE),
     staleTime: 30_000,
   });
+
+  // stable pagination handlers must be declared unconditionally (hook rules)
+  const totalPages = data?.pagination?.totalPages ?? 1;
+  const prevPage = useCallback(
+    () => setPage((prev) => Math.max(1, prev - 1)),
+    []
+  );
+  const nextPage = useCallback(
+    () => setPage((prev) => (prev < totalPages ? prev + 1 : totalPages)),
+    [totalPages]
+  );
 
   const processedItems = useMemo<SubmissionWithSummary[]>(() => {
     if (!data?.items) {
@@ -289,18 +301,14 @@ export function SubmissionsPage(): ReactElement {
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            onClick={prevPage}
             disabled={pagination.page === 1}>
             Назад
           </Button>
           <Button
             variant="secondary"
             size="sm"
-            onClick={() =>
-              setPage((prev) =>
-                prev < pagination.totalPages ? prev + 1 : pagination.totalPages
-              )
-            }
+            onClick={nextPage}
             disabled={pagination.page >= pagination.totalPages}>
             Далее
           </Button>
@@ -308,7 +316,7 @@ export function SubmissionsPage(): ReactElement {
       </div>
       <Modal
         open={Boolean(modalContent)}
-        onClose={() => setModalContent(null)}
+        onClose={closeModal}
         titleId={modalTitleId}
         descriptionId={modalDescriptionId}>
         <div className="flex flex-col gap-4">

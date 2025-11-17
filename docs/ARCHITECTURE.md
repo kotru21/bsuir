@@ -148,31 +148,31 @@ flowchart TB
 flowchart TD
    Start([Пользователь запускает /start])
 
-   Start --> CheckSession{Сессия\nсуществует?}
+   Start --> CheckSession{Сессия существует?}
 
-   CheckSession -->|Нет| CreateSession[Создать новую сессию\nи показать приветствие]
+   CheckSession -->|Нет| CreateSession[Создать новую сессию и показать приветствие]
    CheckSession -->|Да| CreateSession
 
-   CreateSession --> Wizard[Wizard анкеты:\nприветствие → возраст → пол\n→ подготовка → комфорт по интенсивности\n→ формат → цели → приоритет целей\n→ контактность → интерес к соревнованиям]
+   CreateSession --> Wizard[Wizard анкеты: приветствие → возраст → пол → подготовка → комфорт по интенсивности → формат → цели → приоритет целей → контактность → интерес к соревнованиям]
 
-   Wizard --> AssembleProfile[Собрать профиль\nпользователя]
+   Wizard --> AssembleProfile[Собрать профиль пользователя]
 
-   AssembleProfile --> ComputeRecs[Вычислить рекомендации\nrecommendSections]
+   AssembleProfile --> ComputeRecs[Вычислить рекомендации recommendSections]
 
-   ComputeRecs --> CheckResults{Найдены\nрелевантные\nсекции?}
+   ComputeRecs --> CheckResults{Найдены релевантные секции?}
 
-   CheckResults -->|Да| SendTop[Отправить топ-N секций\nс обоснованием и изображениями]
-   CheckResults -->|Нет| SendFallback[Показать запасную секцию\nи подсказку для связи]
+   CheckResults -->|Да| SendTop[Отправить топ-N секций с обоснованием и изображениями]
+   CheckResults -->|Нет| SendFallback[Показать запасную секцию и подсказку для связи]
 
    SendTop --> ShowButtons
    SendFallback --> ShowButtons
 
-   ShowButtons[Инлайн-кнопки:\nЗаписаться / Подробнее\nПерезапустить]
+   ShowButtons[Инлайн-кнопка Подробнее; Перезапустить / Записаться — в будущем]
 
-   ShowButtons --> UserAction{Действие\nпользователя}
+   ShowButtons --> UserAction{Действие пользователя}
 
-   UserAction -.->|Записаться\nбудущий функционал| RecordInterest[Зафиксировать интерес\nв БД]
-   UserAction -->|Подробнее| ShowDetails[Показать детальную\nинформацию о секции]
+   UserAction -.->|Записаться будущий функционал| RecordInterest[Зафиксировать интерес в БД]
+   UserAction -->|Подробнее| ShowDetails[Показать детальную информацию о секции]
    UserAction -->|Перезапустить| CreateSession
 
    RecordInterest -.-> End([Завершение сценария])

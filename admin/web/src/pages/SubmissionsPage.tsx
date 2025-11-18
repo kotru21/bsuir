@@ -93,7 +93,7 @@ export function SubmissionsPage(): ReactElement {
         summaryFullText: fullText,
       };
     });
-  }, [data.items]);
+  }, [data]);
 
   if (isLoading && !data) {
     return <FullscreenSpinner message="Загружаем ответы..." />;

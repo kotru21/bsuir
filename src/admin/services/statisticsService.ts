@@ -1,5 +1,27 @@
 ﻿import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
+interface RecommendationEntity {
+  sectionId: string;
+  sectionName: string;
+  score: number;
+  rank: number;
+  reasons: unknown;
+}
+
+interface SubmissionEntity {
+  id: string;
+  createdAt: Date;
+  age: number;
+  gender: string;
+  fitnessLevel: string;
+  preferredFormats: string[] | null | undefined;
+  desiredGoals: string[] | null | undefined;
+  avoidContact: boolean;
+  interestedInCompetition: boolean;
+  aiSummary?: string | null;
+  recommendations: RecommendationEntity[];
+}
+
 type CountAggregate = { _all: number | bigint };
 
 interface GenderGroupRow {
@@ -454,8 +476,11 @@ export async function getSubmissionPage(
         },
       }),
     ]);
-    const items: SubmissionListItem[] = entries.map((submission) => {
-      const recommendations = submission.recommendations ?? [];
+    const typedEntries = entries as SubmissionEntity[];
+
+    const items: SubmissionListItem[] = typedEntries.map((submission) => {
+      const recommendations: RecommendationEntity[] =
+        submission.recommendations ?? [];
       const aiSummary = (submission as { aiSummary?: string | null }).aiSummary;
 
       return {

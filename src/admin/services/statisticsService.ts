@@ -1,11 +1,4 @@
-﻿import type { RecommendationSnapshot, SurveySubmission } from "@prisma/client";
-import { getPrismaClient } from "../../infrastructure/prismaClient.js";
-
-type SubmissionEntity = SurveySubmission & {
-  recommendations: RecommendationSnapshot[];
-};
-
-type RecommendationEntity = RecommendationSnapshot;
+﻿import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
 type CountAggregate = { _all: number | bigint };
 
@@ -447,10 +440,8 @@ export async function getSubmissionPage(
   const prisma = getPrismaClient();
   const skip = (page - 1) * pageSize;
 
-  let total = 0;
-  let entries: SubmissionEntity[] = [];
   try {
-    const [count, result] = await prisma.$transaction([
+    const [total, entries] = await prisma.$transaction([
       prisma.surveySubmission.count(),
       prisma.surveySubmission.findMany({
         orderBy: { createdAt: "desc" },
@@ -463,47 +454,38 @@ export async function getSubmissionPage(
         },
       }),
     ]);
-    total = count;
-    entries = result;
+    const items: SubmissionListItem[] = entries.map((submission) => {
+      const recommendations = submission.recommendations ?? [];
+      const aiSummary = (submission as { aiSummary?: string | null }).aiSummary;
+
+      return {
+        id: submission.id,
+        createdAt: submission.createdAt.toISOString(),
+        profile: {
+          age: submission.age,
+          gender: submission.gender,
+          fitnessLevel: submission.fitnessLevel,
+          preferredFormats: normalizeFormats(submission.preferredFormats),
+          desiredGoals: normalizeGoals(submission.desiredGoals),
+          avoidContact: submission.avoidContact,
+          interestedInCompetition: submission.interestedInCompetition,
+        },
+        aiSummary: aiSummary ?? null,
+        recommendations: recommendations.map((recommendation) => ({
+          sectionId: recommendation.sectionId,
+          sectionName: recommendation.sectionName,
+          score: recommendation.score,
+          rank: recommendation.rank,
+          reasons: recommendation.reasons,
+        })),
+      };
+    });
+
+    return { items, total };
   } catch (err) {
     if (isRecoverablePrismaError(err)) {
       return logAndReturn(err, { items: [], total: 0 });
     }
     throw err;
   }
-
-  const items: SubmissionListItem[] = entries.map((submission) => {
-    const recommendations = submission.recommendations ?? [];
-    const aiSummary = (submission as { aiSummary?: string | null }).aiSummary;
-
-    return {
-      id: submission.id,
-      createdAt: submission.createdAt.toISOString(),
-      profile: {
-        age: submission.age,
-        gender: submission.gender,
-        fitnessLevel: submission.fitnessLevel,
-        preferredFormats: normalizeFormats(submission.preferredFormats),
-        desiredGoals: normalizeGoals(submission.desiredGoals),
-        avoidContact: submission.avoidContact,
-        interestedInCompetition: submission.interestedInCompetition,
-      },
-      aiSummary: aiSummary ?? null,
-      recommendations: formatRecommendations(recommendations),
-    };
-  });
-
-  return { items, total };
-}
-
-function formatRecommendations(
-  recommendations: RecommendationEntity[]
-): SubmissionListItem["recommendations"] {
-  return recommendations.map((recommendation) => ({
-    sectionId: recommendation.sectionId,
-    sectionName: recommendation.sectionName,
-    score: recommendation.score,
-    rank: recommendation.rank,
-    reasons: recommendation.reasons,
-  }));
 }

@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 ];
 
 const MOBILE_BREAKPOINT_PX = 1024;
-const MOBILE_LABEL_BREAKPOINT_PX = 400;
+const MOBILE_LABEL_BREAKPOINT_PX = 320;
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();

@@ -12,7 +12,7 @@ export function NotFoundPage(): JSX.Element {
     <div className="flex flex-1 flex-col items-center justify-center gap-6">
       <Card className="max-w-xl text-center">
         <h1 className="text-2xl">Страница не найдена</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm pt-16 pb-12 text-slate-600 dark:text-slate-400">
           Страница, которую вы ищете, не существует или была перемещена.
         </p>
         <div className="flex items-center justify-center gap-3">

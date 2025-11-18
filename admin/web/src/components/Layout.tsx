@@ -109,7 +109,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 ? showMobileLabels
                   ? "flex flex-1 flex-wrap items-center justify-between gap-3"
                   : "flex flex-1 items-center justify-between gap-2 overflow-x-auto"
-                : "mt-6 flex flex-col items-center gap-2"
+                : "flex flex-col gap-2"
             )}>
             {NAV_ITEMS.map(({ to, label, icon }) => (
               <SidebarNavItem
@@ -127,7 +127,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           <div
             className={cn(
               "shrink-0",
-              isMobileViewport ? "ml-auto" : "mt-auto flex justify-center"
+              isMobileViewport ? "ml-auto" : "mt-auto"
             )}>
             <button
               onClick={handleLogout}
@@ -140,8 +140,8 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 isIconOnly
                   ? "h-12 w-12 justify-center p-0"
                   : isMobileViewport
-                  ? "gap-2 px-3 py-2"
-                  : "gap-3 px-4 py-3"
+                  ? "gap-3 px-3 py-2"
+                  : "w-full gap-3 px-4 py-3" // w-full для десктопа
               )}>
               {/* Иконка */}
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 transition-colors duration-200 group-hover:bg-rose-100 group-hover:text-rose-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-rose-500/20 dark:group-hover:text-rose-200">
@@ -150,7 +150,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
 
               {/* Текст */}
               {!isIconOnly && (
-                <span className="whitespace-nowrap text-sm font-medium overflow-hidden">
+                <span className="whitespace-nowrap text-sm font-medium overflow-hidden flex-1 text-left">
                   <span
                     className="block transition-all duration-300 ease-in-out"
                     style={{

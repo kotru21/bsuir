@@ -2,9 +2,6 @@ import { NavLink } from "react-router-dom";
 import type { ComponentType, ReactElement, SVGProps } from "react";
 import { cn } from "../../lib/cn";
 
-const ICON_ONLY_CLASSES = "h-12 w-12 justify-center p-0";
-const MOBILE_LABEL_CLASSES = "gap-2 px-3 py-2";
-const DESKTOP_LABEL_CLASSES = "gap-3 px-4 py-3";
 const BASE_LINK_CLASSES =
   "group relative flex items-center rounded-2xl text-sm font-medium hover:bg-slate-100/80 hover:text-slate-900 dark:hover:bg-slate-800/70 dark:hover:text-white";
 const FOCUS_RING_CLASSES =
@@ -16,16 +13,6 @@ export type SidebarNavItemProps = {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   isIconOnly: boolean;
   isMobileViewport: boolean;
-};
-
-const getSpacingClasses = (
-  isIconOnly: boolean,
-  isMobileViewport: boolean
-): string => {
-  if (isIconOnly) {
-    return ICON_ONLY_CLASSES;
-  }
-  return isMobileViewport ? MOBILE_LABEL_CLASSES : DESKTOP_LABEL_CLASSES;
 };
 
 export function SidebarNavItem({
@@ -47,11 +34,16 @@ export function SidebarNavItem({
         cn(
           BASE_LINK_CLASSES,
           FOCUS_RING_CLASSES,
-          "cursor-pointer transition-colors duration-200", // только transition-colors
+          "cursor-pointer transition-colors duration-200",
           isActive
             ? "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200"
             : "text-slate-600 dark:text-slate-300",
-          getSpacingClasses(isIconOnly, isMobileViewport)
+          // Размеры и отступы
+          isIconOnly
+            ? "h-12 w-12 justify-center p-0"
+            : isMobileViewport
+            ? "gap-3 px-3 py-2"
+            : "w-full gap-3 px-4 py-3" // w-full для десктопа
         )
       }>
       {/* Иконка - всегда на месте */}
@@ -61,7 +53,7 @@ export function SidebarNavItem({
 
       {/* Текст - плавное появление */}
       {!isIconOnly && (
-        <span className="whitespace-nowrap text-sm font-medium overflow-hidden">
+        <span className="whitespace-nowrap text-sm font-medium overflow-hidden flex-1 text-left">
           <span
             className="block transition-all duration-300 ease-in-out"
             style={{

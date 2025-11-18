@@ -60,9 +60,12 @@ export function SidebarNavItem({
       <span
         aria-hidden={isIconOnly}
         className={cn(
-          "whitespace-nowrap text-sm font-medium transition-all duration-300",
-          isIconOnly ? "hidden" : ""
-        )}>
+          "whitespace-nowrap text-sm font-medium origin-left transition-all duration-300 ease-in-out",
+          isIconOnly
+            ? "absolute scale-0 opacity-0"
+            : "relative scale-100 opacity-100"
+        )}
+        style={!isIconOnly ? { transitionDelay: "100ms" } : undefined}>
         {label}
       </span>
     </NavLink>

@@ -34,13 +34,13 @@ export function SidebarNavItem({
         cn(
           BASE_LINK_CLASSES,
           FOCUS_RING_CLASSES,
-          "cursor-pointer transition-colors duration-200",
+          "cursor-pointer transition-all duration-300 ease-in-out",
           isActive
             ? "bg-sky-500/15 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:bg-sky-500/20 dark:text-sky-200"
             : "text-slate-600 dark:text-slate-300",
           // Размеры и отступы
           isIconOnly
-            ? "h-12 w-12 justify-center p-0"
+            ? "h-12 w-12 justify-center p-0 mx-auto"
             : isMobileViewport
             ? "gap-3 px-3 py-2"
             : "w-full gap-3 px-4 py-3" // w-full для десктопа

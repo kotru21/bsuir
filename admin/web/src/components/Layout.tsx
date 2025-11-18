@@ -56,6 +56,8 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           aria-label="Боковое меню"
           className={cn(
             "rounded-3xl border border-slate-200/70 bg-white/90 shadow-elevated backdrop-blur transition-all duration-300 dark:border-slate-700/60 dark:bg-slate-900/70",
+
+            "transition-all duration-300 ease-in-out",
             isMobileViewport
               ? "sticky top-2 z-30 mt-2 flex w-full items-center gap-3 px-3 py-2"
               : cn(

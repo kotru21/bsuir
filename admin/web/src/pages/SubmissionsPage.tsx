@@ -4,7 +4,8 @@ import {
   translateGoal,
   translateTrainingFormat,
 } from "../localization";
-import { useId, useMemo, useState, useCallback } from "react";
+import { useId, useMemo, useCallback, useState, useEffect } from "react";
+import { usePagination } from "../hooks/usePagination";
 import type { ReactElement } from "react";
 import Modal from "../components/Modal";
 import { Card } from "../components/Card";
@@ -12,6 +13,7 @@ import { Button } from "../components/Button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSubmissions } from "../api/stats";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
+import { ErrorCard } from "../components/ErrorCard";
 import type { SubmissionListItem } from "../types/stats";
 
 const PAGE_SIZE = 20;
@@ -55,7 +57,14 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function SubmissionsPage(): ReactElement {
-  const [page, setPage] = useState(1);
+  // pagination hook centralizes page state and helpers
+  const {
+    page,
+    setPage: _setPage,
+    nextPage,
+    prevPage,
+    setTotalPages,
+  } = usePagination();
   const [modalContent, setModalContent] = useState<string | null>(null);
   const closeModal = useCallback(() => setModalContent(null), []);
   const modalTitleId = useId();
@@ -68,15 +77,10 @@ export function SubmissionsPage(): ReactElement {
   });
 
   // stable pagination handlers must be declared unconditionally (hook rules)
-  const totalPages = data?.pagination?.totalPages ?? 1;
-  const prevPage = useCallback(
-    () => setPage((prev) => Math.max(1, prev - 1)),
-    []
-  );
-  const nextPage = useCallback(
-    () => setPage((prev) => (prev < totalPages ? prev + 1 : totalPages)),
-    [totalPages]
-  );
+  // keep pagination hook in sync with server-provided total
+  useEffect(() => {
+    setTotalPages(data?.pagination?.totalPages ?? undefined);
+  }, [data?.pagination?.totalPages, setTotalPages]);
 
   const processedItems = useMemo<SubmissionWithSummary[]>(() => {
     if (!data?.items) {
@@ -100,21 +104,14 @@ export function SubmissionsPage(): ReactElement {
   }
 
   if (isError && !data) {
-    const message = getErrorMessage(error);
     return (
-      <Card className="flex flex-col gap-4">
-        <h2>Не удалось загрузить ответы</h2>
-        <div className="flex items-start gap-3 rounded-2xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
-          <span className="flex-1">{message}</span>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              void refetch().catch(() => undefined);
-            }}>
-            Повторить
-          </Button>
-        </div>
-      </Card>
+      <ErrorCard
+        title="Не удалось загрузить ответы"
+        message={getErrorMessage(error)}
+        onRetry={() => {
+          void refetch().catch(() => undefined);
+        }}
+      />
     );
   }
 
@@ -134,17 +131,15 @@ export function SubmissionsPage(): ReactElement {
         </p>
       </div>
       {transientError ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/60 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-200">
-          <span className="flex-1">
-            {transientError} Обновите страницу позже.
-          </span>
-          <Button
-            variant="secondary"
-            onClick={() => {
+        <div>
+          <ErrorCard
+            message={transientError + " Обновите страницу позже."}
+            buttonLabel="Повторить"
+            onRetry={() => {
               void refetch().catch(() => undefined);
-            }}>
-            Повторить
-          </Button>
+            }}
+            variant="warning"
+          />
         </div>
       ) : null}
       {isFetching ? (
@@ -294,22 +289,21 @@ export function SubmissionsPage(): ReactElement {
       </div>
       <div className="flex flex-col gap-3 rounded-2xl bg-slate-100/60 px-4 py-3 text-sm text-slate-600 dark:bg-slate-900/40 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
         <span role="status" aria-live="polite">
-          Страница {pagination.page} из {pagination.totalPages} (всего{" "}
-          {pagination.total})
+          Страница {page} из {pagination.totalPages} (всего {pagination.total})
         </span>
         <div className="flex gap-2">
           <Button
             variant="secondary"
             size="sm"
             onClick={prevPage}
-            disabled={pagination.page === 1}>
+            disabled={page === 1}>
             Назад
           </Button>
           <Button
             variant="secondary"
             size="sm"
             onClick={nextPage}
-            disabled={pagination.page >= pagination.totalPages}>
+            disabled={page >= (pagination.totalPages ?? 1)}>
             Далее
           </Button>
         </div>

@@ -1,7 +1,7 @@
-import { useMemo, useState, Suspense, lazy, useCallback } from "react";
+import { useState, Suspense, lazy, useCallback } from "react";
 import type { ReactElement } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchDemographics, fetchOverview, fetchTimeline } from "../api/stats";
+import { useOverviewStats } from "../hooks/useOverviewStats";
+import { ErrorCard } from "../components/ErrorCard";
 import { MetricCard } from "../components/MetricCard";
 const GenderDistributionChart = lazy(() =>
   import("../components/GenderDistributionChart").then((m) => ({
@@ -23,13 +23,7 @@ const TimelineChart = lazy(() =>
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
-import {
-  GENDER_ORDER,
-  mapRecordWithTranslation,
-  translateGenderPlural,
-  translateGoal,
-  translateTrainingFormat,
-} from "../localization";
+// translation logic moved to hook
 
 function formatAverageAge(value: number | null): string {
   if (value === null || Number.isNaN(value)) {
@@ -56,93 +50,39 @@ export function DashboardPage(): ReactElement {
     []
   );
 
-  const overviewQuery = useQuery({
-    queryKey: ["overview"],
-    queryFn: fetchOverview,
-  });
+  const {
+    overview,
+    demographics,
+    timeline,
+    timelinePoints,
+    genderDistribution,
+    topFormats,
+    topGoals,
+    loading,
+    isError,
+    error,
+    refetchAll,
+  } = useOverviewStats(rangeDays);
 
-  const demographicsQuery = useQuery({
-    queryKey: ["demographics"],
-    queryFn: fetchDemographics,
-  });
+  // genderDistribution, topFormat and topGoals computed in useOverviewStats
 
-  const timelineQuery = useQuery({
-    queryKey: ["timeline", rangeDays],
-    queryFn: () => fetchTimeline(rangeDays),
-  });
+  // topFormats and topGoals computed in useOverviewStats
 
-  const overview = overviewQuery.data;
-  const demographics = demographicsQuery.data;
-  const timeline = timelineQuery.data;
-
-  const timelinePoints = useMemo(() => timeline?.points ?? [], [timeline]);
-
-  const genderDistribution = useMemo(() => {
-    const source = overview?.genderDistribution ?? {};
-    return mapRecordWithTranslation(
-      source,
-      translateGenderPlural,
-      GENDER_ORDER
-    );
-  }, [overview]);
-
-  const topFormats = useMemo(() => {
-    const leaders = overview?.formatLeaders ?? [];
-    return leaders
-      .filter((entry) => Boolean(entry?.format))
-      .map(({ format, count }) => ({
-        key: format,
-        label: translateTrainingFormat(format),
-        count,
-      }));
-  }, [overview]);
-
-  const topGoals = useMemo(() => {
-    const leaders = overview?.goalLeaders ?? [];
-    return leaders
-      .filter((entry) => Boolean(entry?.goal))
-      .map(({ goal, count }) => ({
-        key: goal,
-        label: translateGoal(goal),
-        count,
-      }));
-  }, [overview]);
-
-  const loading =
-    overviewQuery.isLoading ||
-    demographicsQuery.isLoading ||
-    timelineQuery.isLoading;
+  // loading derived in hook
 
   if (loading) {
     return <FullscreenSpinner message="Загружаем статистику..." />;
   }
 
-  const hasError =
-    overviewQuery.isError || demographicsQuery.isError || timelineQuery.isError;
-
-  if (hasError) {
-    const firstError =
-      overviewQuery.error || demographicsQuery.error || timelineQuery.error;
-    const message = getErrorMessage(firstError);
-
+  if (isError) {
     return (
-      <Card className="flex flex-col gap-4">
-        <h2>Не удалось загрузить статистику</h2>
-        <div className="flex items-start gap-3 rounded-2xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
-          <span className="flex-1">{message}</span>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              void Promise.all([
-                overviewQuery.refetch(),
-                demographicsQuery.refetch(),
-                timelineQuery.refetch(),
-              ]).catch(() => undefined);
-            }}>
-            Повторить
-          </Button>
-        </div>
-      </Card>
+      <ErrorCard
+        title="Не удалось загрузить статистику"
+        message={getErrorMessage(error)}
+        onRetry={() => {
+          void refetchAll().catch(() => undefined);
+        }}
+      />
     );
   }
 

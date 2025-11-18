@@ -1,11 +1,11 @@
-﻿import type { Prisma } from "@prisma/client";
+﻿import type { RecommendationSnapshot, SurveySubmission } from "@prisma/client";
 import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
-type SubmissionEntity = Prisma.SurveySubmissionGetPayload<{
-  include: { recommendations: true };
-}>;
+type SubmissionEntity = SurveySubmission & {
+  recommendations: RecommendationSnapshot[];
+};
 
-type RecommendationEntity = SubmissionEntity["recommendations"][number];
+type RecommendationEntity = RecommendationSnapshot;
 
 type CountAggregate = { _all: number | bigint };
 

@@ -7,7 +7,7 @@ import { Layout } from "../../admin/web/src/components/Layout.js";
 import { NotFoundPage } from "../../admin/web/src/pages/NotFoundPage.js";
 
 describe("NotFoundPage", () => {
-  it("renders title and navigation links", () => {
+  it("renders title and navigation links", async () => {
     // Mock network requests used by AuthProvider
     global.fetch = vi.fn(async (url: string) => {
       if ((url as string).endsWith("/csrf")) {
@@ -42,8 +42,8 @@ describe("NotFoundPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("Страница не найдена")).toBeTruthy();
-    expect(screen.getByText(/Страница, которую вы ищете/)).toBeTruthy();
+    expect(await screen.findByText("Страница не найдена")).toBeTruthy();
+    expect(await screen.findByText(/Страница, которую вы ищете/)).toBeTruthy();
 
     // Find button label and ensure it is wrapped in a link
     const goHomeButton = screen.getByText("На главную");

@@ -7,7 +7,6 @@ import { Layout } from "./components/Layout";
 import { FullscreenSpinner } from "./components/FullscreenSpinner";
 import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { PublicNotFoundPage } from "./pages/PublicNotFoundPage";
 
 function ProtectedRoute({
   children,
@@ -52,7 +51,7 @@ export default function App(): React.JSX.Element {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="login" element={<LoginPage />} />
-        <Route path="*" element={<PublicNotFoundPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </AuthProvider>
   );

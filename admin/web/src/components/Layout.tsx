@@ -59,7 +59,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             isMobileViewport
               ? "sticky top-2 z-30 mt-2 flex w-full items-center gap-3 px-3 py-2"
               : cn(
-                  "flex min-h-0 flex-col gap-8 p-6",
+                  "flex min-h-0 flex-col gap-8 p-6 overflow-hidden",
                   "lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto",
                   collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
                 )
@@ -68,29 +68,34 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           {!isMobileViewport ? (
             <div
               className={cn(
-                "flex items-center gap-4 shrink-0 transition-all duration-300 ease-in-out",
-                collapsed ? "lg:justify-center lg:gap-0 lg:w-full" : ""
+                "flex items-center shrink-0",
+                collapsed ? "lg:justify-center" : "lg:gap-4"
               )}>
               <img
                 src={logoUrl}
                 alt="Логотип"
                 className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200/60 bg-white/80 p-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-950"
               />
-              <div
-                className={cn(
-                  "min-w-0 flex-1 overflow-hidden transition-all duration-300 ease-in-out",
-                  collapsed
-                    ? "lg:max-w-0 lg:opacity-0"
-                    : "lg:max-w-full lg:opacity-100"
-                )}
-                style={!collapsed ? { transitionDelay: "150ms" } : undefined}>
-                <span className="block whitespace-nowrap text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                  BSUIR Sports
-                </span>
-                <strong className="block whitespace-nowrap text-lg text-slate-900 dark:text-slate-100">
-                  Админ-панель
-                </strong>
-              </div>
+              {!collapsed && (
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div
+                    className="transition-all duration-300 ease-in-out"
+                    style={{
+                      opacity: collapsed ? 0 : 1,
+                      transform: collapsed
+                        ? "translateX(-10px)"
+                        : "translateX(0)",
+                      transitionDelay: collapsed ? "0ms" : "100ms",
+                    }}>
+                    <span className="block whitespace-nowrap text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                      BSUIR Sports
+                    </span>
+                    <strong className="block whitespace-nowrap text-lg text-slate-900 dark:text-slate-100">
+                      Админ-панель
+                    </strong>
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
 
@@ -129,7 +134,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               disabled={auth.logoutInProgress}
               aria-label={isIconOnly ? "Выйти из аккаунта" : undefined}
               className={cn(
-                "group relative flex items-center rounded-2xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
+                "group relative flex items-center rounded-2xl text-sm font-medium text-slate-600 transition-colors duration-200 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
                 "cursor-pointer",
                 "disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500",
                 isIconOnly
@@ -139,19 +144,26 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                   : "gap-3 px-4 py-3"
               )}>
               {/* Иконка */}
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 transition-colors group-hover:bg-rose-100 group-hover:text-rose-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-rose-500/20 dark:group-hover:text-rose-200">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 transition-colors duration-200 group-hover:bg-rose-100 group-hover:text-rose-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-rose-500/20 dark:group-hover:text-rose-200">
                 <LogoutIcon className="h-4 w-4" aria-hidden />
               </span>
+
               {/* Текст */}
-              <span
-                aria-hidden={isIconOnly}
-                className={cn(
-                  "overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 ease-in-out",
-                  isIconOnly ? "max-w-0 opacity-0" : "max-w-32 opacity-100"
-                )}
-                style={!isIconOnly ? { transitionDelay: "150ms" } : undefined}>
-                {auth.logoutInProgress ? "Выходим..." : "Выйти"}
-              </span>
+              {!isIconOnly && (
+                <span className="whitespace-nowrap text-sm font-medium overflow-hidden">
+                  <span
+                    className="block transition-all duration-300 ease-in-out"
+                    style={{
+                      opacity: isIconOnly ? 0 : 1,
+                      transform: isIconOnly
+                        ? "translateX(-10px)"
+                        : "translateX(0)",
+                      transitionDelay: isIconOnly ? "0ms" : "100ms",
+                    }}>
+                    {auth.logoutInProgress ? "Выходим..." : "Выйти"}
+                  </span>
+                </span>
+              )}
             </button>
           </div>
         </aside>

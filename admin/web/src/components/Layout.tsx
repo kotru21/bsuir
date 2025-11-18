@@ -66,11 +66,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           )}>
           {/* Заголовок с логотипом */}
           {!isMobileViewport ? (
-            <div
-              className={cn(
-                "flex items-center shrink-0",
-                collapsed ? "lg:justify-center" : "lg:gap-4"
-              )}>
+            <div className="flex items-center gap-4 shrink-0">
               <img
                 src={logoUrl}
                 alt="Логотип"
@@ -109,7 +105,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 ? showMobileLabels
                   ? "flex flex-1 flex-wrap items-center justify-between gap-3"
                   : "flex flex-1 items-center justify-between gap-2 overflow-x-auto"
-                : "flex flex-col gap-2"
+                : "flex flex-col gap-2 w-full"
             )}>
             {NAV_ITEMS.map(({ to, label, icon }) => (
               <SidebarNavItem
@@ -126,8 +122,8 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           {/* Кнопка выхода */}
           <div
             className={cn(
-              "shrink-0",
-              isMobileViewport ? "ml-auto" : "mt-auto"
+              "shrink-0 w-full",
+              isMobileViewport ? "ml-auto w-auto" : "mt-auto"
             )}>
             <button
               onClick={handleLogout}
@@ -138,10 +134,10 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
                 "cursor-pointer",
                 "disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500",
                 isIconOnly
-                  ? "h-12 w-12 justify-center p-0"
+                  ? "h-12 w-12 justify-center p-0 mx-auto"
                   : isMobileViewport
                   ? "gap-3 px-3 py-2"
-                  : "w-full gap-3 px-4 py-3" // w-full для десктопа
+                  : "w-full gap-3 px-4 py-3"
               )}>
               {/* Иконка */}
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 transition-colors duration-200 group-hover:bg-rose-100 group-hover:text-rose-600 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-rose-500/20 dark:group-hover:text-rose-200">

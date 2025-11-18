@@ -66,7 +66,12 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           )}>
           {/* Заголовок с логотипом */}
           {!isMobileViewport ? (
-            <div className="flex items-center gap-4 shrink-0">
+            <div
+              className={cn(
+                "flex items-center gap-4 shrink-0",
+
+                collapsed ? "lg:justify-center" : ""
+              )}>
               <img
                 src={logoUrl}
                 alt="Логотип"

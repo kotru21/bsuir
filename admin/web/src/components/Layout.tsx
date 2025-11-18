@@ -68,9 +68,9 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           {!isMobileViewport ? (
             <div
               className={cn(
-                "flex items-center gap-4 shrink-0",
+                "flex items-center gap-4 shrink-0 transition-all duration-300 ease-in-out",
 
-                collapsed ? "lg:justify-center" : ""
+                collapsed ? "lg:justify-center lg:gap-0 lg:w-full" : ""
               )}>
               <img
                 src={logoUrl}
@@ -79,8 +79,11 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               />
               <div
                 className={cn(
-                  "min-w-0 flex-1 overflow-hidden transition-all duration-300",
-                  collapsed ? "lg:w-0 lg:opacity-0" : "lg:w-auto lg:opacity-100"
+                  "min-w-0 flex-1 overflow-hidden transition-all duration-300 ease-in-out",
+
+                  collapsed
+                    ? "lg:max-w-0 lg:opacity-0"
+                    : "lg:max-w-full lg:opacity-100"
                 )}>
                 <span className="block whitespace-nowrap text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                   BSUIR Sports

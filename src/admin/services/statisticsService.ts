@@ -1,11 +1,31 @@
-﻿import type { Prisma } from "@prisma/client";
-import { getPrismaClient } from "../../infrastructure/prismaClient.js";
+﻿import { getPrismaClient } from "../../infrastructure/prismaClient.js";
 
-type SubmissionEntity = Prisma.SurveySubmissionGetPayload<{
-  include: { recommendations: true };
-}>;
+type RecommendationEntity = {
+  id: string;
+  submissionId: string;
+  sectionId: string;
+  sectionName: string;
+  score: number;
+  rank: number;
+  reasons?: unknown | null;
+  createdAt: Date;
+};
 
-type RecommendationEntity = SubmissionEntity["recommendations"][number];
+type SubmissionEntity = {
+  id: string;
+  telegramUserId?: string | null;
+  chatId?: string | null;
+  age: number;
+  gender: string;
+  fitnessLevel: string;
+  preferredFormats: string[];
+  desiredGoals: string[];
+  avoidContact: boolean;
+  interestedInCompetition: boolean;
+  aiSummary?: string | null;
+  createdAt: Date;
+  recommendations?: RecommendationEntity[];
+};
 
 type CountAggregate = { _all: number | bigint };
 

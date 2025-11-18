@@ -37,7 +37,7 @@ export async function registerSubmissionRoutes(
   app.get(
     `${prefix}/submissions`,
     async (request: FastifyRequest, reply: FastifyReply) => {
-      request.requireAdminAuth();
+      await request.requireAdminAuth();
       const parseResult = paginationSchema.safeParse(request.query);
       if (!parseResult.success) {
         reply.status(400);

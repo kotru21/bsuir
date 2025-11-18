@@ -51,7 +51,7 @@ npm install
 Copy-Item .env.example .env
 Add-Content .env "BOT_TOKEN=your_token"
 Add-Content .env "DATABASE_URL=postgresql://user:pass@localhost:5432/bsuir"
-Add-Content .env "ADMIN_SESSION_SECRET=change_me_please"
+Add-Content .env "ADMIN_JWT_SECRET=change_me_please"
 
 # 3. Запустите разработку (бот + Fastify)
 npm run dev
@@ -82,7 +82,7 @@ npm run dev
 
 ### Веб-панель (для администраторов)
 
-- защищённый вход с CSRF и cookie-сессиями;
+- защищённый вход через httpOnly JWT-cookie и double-submit CSRF;
 - дашборд KPI: количество анкет, динамика вовлечённости, распределения;
 - таблица анкет с фильтрами и раскрытием рекомендаций;
 - визуализация статистики через Chart.js (распределения, тренды по времени);

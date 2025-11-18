@@ -9,7 +9,11 @@ export interface AuthenticationPluginOptions {
 }
 
 const CSRF_HEADER = "x-csrf-token";
-const CSRF_SESSION_KEY = "adminCsrfToken";
+
+interface AdminSessionState {
+  username: string;
+  xsrfToken: string;
+}
 
 async function verifyCredentials(
   instance: FastifyInstance,
@@ -34,20 +38,49 @@ async function verifyCredentials(
   }
 }
 
-function destroySession(request: FastifyRequest): void {
-  if (!request.session) {
-    return;
+function getCsrfTokenFromBody(body: unknown): string | undefined {
+  if (typeof body !== "object" || body === null) {
+    return undefined;
+  }
+  const candidate = (body as Record<string, unknown>).csrfToken;
+  return typeof candidate === "string" ? candidate : undefined;
+}
+
+async function resolveAdminSession(
+  app: FastifyInstance,
+  request: FastifyRequest,
+  config: AdminConfig
+): Promise<AdminSessionState | null> {
+  if (request.adminSession !== undefined) {
+    return request.adminSession ?? null;
   }
 
-  request.session.adminAuthenticated = false;
-  request.session.adminUsername = undefined;
-  request.session[CSRF_SESSION_KEY] = undefined;
+  const token = request.cookies?.[config.jwtCookieName];
+  if (!token) {
+    request.adminSession = null;
+    return null;
+  }
 
-  request.session.destroy((err: unknown) => {
-    if (err) {
-      request.log.error({ err }, "Failed to destroy session");
+  try {
+    const payload = await app.jwt.verify<AdminSessionState>(token);
+    if (
+      !payload ||
+      typeof payload.username !== "string" ||
+      typeof payload.xsrfToken !== "string"
+    ) {
+      request.adminSession = null;
+      return null;
     }
-  });
+    request.adminSession = {
+      username: payload.username,
+      xsrfToken: payload.xsrfToken,
+    };
+    return request.adminSession;
+  } catch (err) {
+    request.log.warn({ err }, "Failed to verify admin JWT");
+    request.adminSession = null;
+    return null;
+  }
 }
 
 function decorateAuth(app: FastifyInstance, config: AdminConfig): void {
@@ -58,10 +91,40 @@ function decorateAuth(app: FastifyInstance, config: AdminConfig): void {
   );
 
   app.decorateRequest(
+    "getAdminSession",
+    async function getAdminSession(this: FastifyRequest) {
+      return resolveAdminSession(app, this, config);
+    }
+  );
+
+  app.decorateRequest(
     "requireAdminAuth",
-    function requireAdminAuth(this: FastifyRequest) {
-      if (!this.session?.adminAuthenticated) {
+    async function requireAdminAuth(this: FastifyRequest) {
+      const session = await resolveAdminSession(app, this, config);
+      if (!session) {
         throw app.httpErrors.unauthorized("Authentication required");
+      }
+      return session;
+    }
+  );
+
+  app.decorateReply(
+    "setAdminSession",
+    async function setAdminSession(
+      this: FastifyReply,
+      username: string,
+      xsrfToken: string
+    ) {
+      const token = await app.jwt.sign({ username, xsrfToken });
+      this.setCookie(config.jwtCookieName, token, {
+        secure: config.cookieSecure,
+        httpOnly: true,
+        sameSite: "lax",
+        path: config.basePath,
+        maxAge: config.jwtTtlSeconds,
+      });
+      if (this.request) {
+        this.request.adminSession = { username, xsrfToken };
       }
     }
   );
@@ -69,37 +132,40 @@ function decorateAuth(app: FastifyInstance, config: AdminConfig): void {
   app.decorateReply(
     "clearAdminSession",
     function clearAdminSession(this: FastifyReply) {
-      destroySession(this.request);
+      this.clearCookie(config.jwtCookieName, {
+        path: config.basePath,
+      });
+      if (this.request) {
+        this.request.adminSession = null;
+      }
     }
   );
 
   app.decorateRequest(
     "issueAdminCsrfToken",
     function issueAdminCsrfToken(this: FastifyRequest) {
-      const token = randomBytes(32).toString("hex");
-      if (this.session) {
-        this.session[CSRF_SESSION_KEY] = token;
-      }
-      return token;
+      return randomBytes(32).toString("hex");
     }
   );
 
   app.decorateRequest(
     "verifyAdminCsrfToken",
     function verifyAdminCsrfToken(this: FastifyRequest) {
-      const sessionToken = this.session?.[CSRF_SESSION_KEY];
-      if (!sessionToken) {
-        throw app.httpErrors.forbidden("Missing CSRF token");
+      const cookieToken = this.cookies?.[config.csrfCookieName];
+      const headerToken = this.headers[CSRF_HEADER] as string | undefined;
+      const bodyToken = getCsrfTokenFromBody(this.body);
+      const presented = headerToken ?? bodyToken;
+
+      if (!cookieToken || !presented || cookieToken !== presented) {
+        throw app.httpErrors.forbidden("Invalid CSRF token");
       }
 
-      const headerToken = this.headers[CSRF_HEADER] as string | undefined;
-      const bodyToken =
-        typeof this.body === "object" && this.body !== null
-          ? (this.body as Record<string, unknown>).csrfToken
-          : undefined;
-      const presented = headerToken ?? (bodyToken as string | undefined);
-      if (!presented || presented !== sessionToken) {
-        throw app.httpErrors.forbidden("Invalid CSRF token");
+      if (
+        this.adminSession &&
+        this.adminSession.xsrfToken &&
+        this.adminSession.xsrfToken !== presented
+      ) {
+        throw app.httpErrors.forbidden("Stale CSRF token");
       }
     }
   );

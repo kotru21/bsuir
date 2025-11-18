@@ -16,8 +16,12 @@
 | `ADMIN_USERNAME`               | Имя пользователя для входа в админ-панель                                 |
 | `ADMIN_PASSWORD`               | Пароль администратора (не используется, если задан `ADMIN_PASSWORD_HASH`) |
 | `ADMIN_PASSWORD_HASH`          | Готовый Argon2-хэш пароля                                                 |
-| `ADMIN_SESSION_SECRET`         | Секрет для cookie-сессий (минимум 32 символа)                             |
-| `ADMIN_SESSION_TTL_SECONDS`    | Время жизни админ-сессии в секундах (по умолчанию 86400 = 24 часа)        |
+| `ADMIN_JWT_SECRET`             | Секрет для подписи JWT (минимум 32 символа)                               |
+| `ADMIN_JWT_TTL_SECONDS`        | Время жизни админ-токена в секундах (по умолчанию 86400 = 24 часа)        |
+| `ADMIN_JWT_COOKIE`             | Имя httpOnly cookie с JWT                                                 |
+| `ADMIN_JWT_ISSUER`             | Значение `iss` для токена                                                 |
+| `ADMIN_JWT_AUDIENCE`           | Значение `aud` для токена                                                 |
+| `ADMIN_CSRF_COOKIE`            | Имя читаемой CSRF-cookie (double-submit)                                  |
 | `FASTIFY_PORT` _(опционально)_ | Порт сервера (по умолчанию 3000)                                          |
 | `FASTIFY_HOST` _(опционально)_ | Интерфейс привязки (по умолчанию `0.0.0.0`)                               |
 
@@ -31,7 +35,7 @@
    Copy-Item .env.example .env
    ```
 
-2. Заполните минимум `BOT_TOKEN`, `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`.
+2. Заполните минимум `BOT_TOKEN`, `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_JWT_SECRET`.
 3. Установите зависимости:
 
    ```powershell

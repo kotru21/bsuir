@@ -29,7 +29,8 @@ flowchart TB
       subgraph FastifyApp["Fastify Server"]
          AdminAPI["REST API /admin/api"]
          StaticFiles["Раздача статики"]
-         Sessions["Cookie-сессии"]
+         Sessions["JWT-cookie
+ + CSRF"]
       end
 
       subgraph BusinessLogic["Бизнес-логика"]
@@ -71,7 +72,7 @@ flowchart TB
 
 - Telegram-бот и веб-панель используют общие сервисы и инфраструктуру.
 - Рекомендательный движок нормализует векторы профиля и секций, считает косинусное сходство и сохраняет лучшие результаты через Prisma.
-- Статистика и список анкет обслуживаются REST API, защищённым cookie-сессиями; CSRF проверяется только на мутациях (login/logout).
+- Статистика и список анкет обслуживаются REST API, защищённым httpOnly JWT-cookie и double-submit CSRF (login/logout).
 
 </details>
 
@@ -132,7 +133,7 @@ flowchart TB
 
 **Примечания:**
 
-- SPA общается с API через защищённые cookie-сессии; CSRF-токен требуется только при входе/выходе.
+- SPA общается с API через httpOnly JWT-cookie; double-submit CSRF проверяется на входе/выходе и других мутациях.
 - Fastify агрегирует статистику и отдаёт статические файлы Vite-сборки.
 
 </details>

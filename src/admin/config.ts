@@ -3,9 +3,12 @@ export interface AdminConfig {
   adminUsername: string;
   adminPasswordHash?: string;
   adminPasswordPlain?: string;
-  sessionSecret: string;
-  sessionCookieName: string;
-  sessionTtlSeconds: number;
+  jwtSecret: string;
+  jwtCookieName: string;
+  jwtIssuer: string;
+  jwtAudience: string;
+  jwtTtlSeconds: number;
+  csrfCookieName: string;
   basePath: string;
   cookieSecure: boolean;
 }
@@ -13,20 +16,24 @@ export interface AdminConfig {
 export function loadAdminConfig(
   env: Record<string, string | undefined>
 ): AdminConfig {
-  const defaultSessionTtlSeconds = 60 * 60 * 24;
+  const defaultJwtTtlSeconds = 60 * 60 * 24;
   const adminUsername = env.ADMIN_USERNAME ?? "admin";
   const adminPasswordHash = env.ADMIN_PASSWORD_HASH?.trim() ?? "";
   const adminPasswordPlain = env.ADMIN_PASSWORD?.trim() ?? "";
-  const sessionSecret = env.ADMIN_SESSION_SECRET ?? "";
-  const sessionCookieName = env.ADMIN_SESSION_COOKIE ?? "bsuir_admin_sid";
-  const parsedSessionTtl = Number.parseInt(
-    env.ADMIN_SESSION_TTL_SECONDS ?? "",
+  const jwtSecret = env.ADMIN_JWT_SECRET ?? env.ADMIN_SESSION_SECRET ?? "";
+  const jwtCookieName =
+    env.ADMIN_JWT_COOKIE ?? env.ADMIN_SESSION_COOKIE ?? "bsuir_admin_auth";
+  const parsedJwtTtl = Number.parseInt(
+    env.ADMIN_JWT_TTL_SECONDS ?? env.ADMIN_SESSION_TTL_SECONDS ?? "",
     10
   );
-  const sessionTtlSeconds =
-    Number.isFinite(parsedSessionTtl) && parsedSessionTtl > 0
-      ? parsedSessionTtl
-      : defaultSessionTtlSeconds;
+  const jwtTtlSeconds =
+    Number.isFinite(parsedJwtTtl) && parsedJwtTtl > 0
+      ? parsedJwtTtl
+      : defaultJwtTtlSeconds;
+  const jwtIssuer = env.ADMIN_JWT_ISSUER ?? "bsuir-admin";
+  const jwtAudience = env.ADMIN_JWT_AUDIENCE ?? "bsuir-admin";
+  const csrfCookieName = env.ADMIN_CSRF_COOKIE ?? "admin_csrf";
 
   const cookieSecure = (env.NODE_ENV ?? "development") === "production";
 
@@ -34,13 +41,16 @@ export function loadAdminConfig(
   const hasPassword = Boolean(adminPasswordHash || adminPasswordPlain);
 
   return {
-    enabled: Boolean(hasPassword && sessionSecret && hasDatabase),
+    enabled: Boolean(hasPassword && jwtSecret && hasDatabase),
     adminUsername,
     adminPasswordHash: adminPasswordHash || undefined,
     adminPasswordPlain: adminPasswordPlain || undefined,
-    sessionSecret,
-    sessionCookieName,
-    sessionTtlSeconds,
+    jwtSecret,
+    jwtCookieName,
+    jwtIssuer,
+    jwtAudience,
+    jwtTtlSeconds,
+    csrfCookieName,
     basePath: "/admin",
     cookieSecure,
   };

@@ -2,8 +2,6 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AdminConfig } from "../config.js";
 
-const CSRF_COOKIE = "admin_csrf";
-
 export interface RegisterAuthRoutesOptions {
   config: AdminConfig;
 }
@@ -19,17 +17,17 @@ function setCsrfCookie(
   config: AdminConfig,
   token: string
 ): void {
-  reply.setCookie(CSRF_COOKIE, token, {
+  reply.setCookie(config.csrfCookieName, token, {
     httpOnly: false,
     sameSite: "lax",
     secure: config.cookieSecure,
     path: config.basePath,
-    maxAge: config.sessionTtlSeconds,
+    maxAge: config.jwtTtlSeconds,
   });
 }
 
 function clearCsrfCookie(reply: FastifyReply, config: AdminConfig): void {
-  reply.clearCookie(CSRF_COOKIE, {
+  reply.clearCookie(config.csrfCookieName, {
     path: config.basePath,
   });
 }
@@ -53,13 +51,10 @@ export async function registerAuthRoutes(
   );
 
   app.get(`${prefix}/session`, async (request: FastifyRequest) => {
-    const authenticated = Boolean(request.session?.adminAuthenticated);
-    const username = authenticated
-      ? request.session?.adminUsername ?? null
-      : null;
+    const session = await request.getAdminSession();
     return {
-      authenticated,
-      username,
+      authenticated: Boolean(session),
+      username: session?.username ?? null,
     };
   });
 
@@ -73,8 +68,8 @@ export async function registerAuthRoutes(
       }
 
       const { username, password, csrfToken } = parseResult.data;
-      const sessionToken = request.session?.adminCsrfToken;
-      if (!sessionToken || sessionToken !== csrfToken) {
+      const cookieToken = request.cookies?.[config.csrfCookieName];
+      if (!cookieToken || cookieToken !== csrfToken) {
         reply.status(403);
         return { success: false, error: "Invalid CSRF token" };
       }
@@ -89,12 +84,8 @@ export async function registerAuthRoutes(
         return { success: false, error: "Invalid credentials" };
       }
 
-      if (request.session) {
-        request.session.adminAuthenticated = true;
-        request.session.adminUsername = username;
-      }
-
       const freshToken = request.issueAdminCsrfToken();
+      await reply.setAdminSession(username, freshToken);
       setCsrfCookie(reply, config, freshToken);
 
       return { success: true };
@@ -104,7 +95,7 @@ export async function registerAuthRoutes(
   app.post(
     `${prefix}/logout`,
     async (request: FastifyRequest, reply: FastifyReply) => {
-      request.requireAdminAuth();
+      await request.requireAdminAuth();
       request.verifyAdminCsrfToken();
       reply.clearAdminSession();
       clearCsrfCookie(reply, config);

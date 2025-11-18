@@ -1,12 +1,12 @@
 import path from "node:path";
 import fastify from "fastify";
 import fastifyCookie from "@fastify/cookie";
-import fastifySession from "@fastify/session";
 import fastifyStatic from "@fastify/static";
 import fastifyHelmet from "@fastify/helmet";
+import fastifyJwt from "@fastify/jwt";
 import argon2 from "argon2";
 import fastifySensible from "@fastify/sensible";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import type { AdminConfig } from "./config.js";
 import authenticationPlugin from "./plugins/authentication.js";
 import { registerAdminRoutes } from "./routes/index.js";
@@ -51,9 +51,9 @@ export async function buildAdminServer(
     enabled: Boolean(config.enabled && passwordHash),
   };
 
-  if (resolvedConfig.sessionSecret.length < 32) {
+  if (resolvedConfig.jwtSecret.length < 32) {
     instance.log.warn(
-      "Admin session secret should be at least 32 characters for security."
+      "Admin JWT secret should be at least 32 characters for security."
     );
   }
 
@@ -83,7 +83,7 @@ export async function buildAdminServer(
 
   if (!resolvedConfig.enabled) {
     instance.log.warn(
-      "Admin panel is disabled. Ensure DATABASE_URL, ADMIN_PASSWORD (or ADMIN_PASSWORD_HASH) and ADMIN_SESSION_SECRET are configured."
+      "Admin panel is disabled. Ensure DATABASE_URL, ADMIN_PASSWORD (or ADMIN_PASSWORD_HASH) and ADMIN_JWT_SECRET are configured."
     );
 
     const disabledResponse = {
@@ -124,18 +124,24 @@ export async function buildAdminServer(
     hook: "onRequest",
   });
 
-  await instance.register(fastifySession, {
-    secret: resolvedConfig.sessionSecret,
-    cookieName: resolvedConfig.sessionCookieName,
-    cookie: {
-      secure: resolvedConfig.cookieSecure,
-      httpOnly: true,
-      sameSite: "lax",
-      path: resolvedConfig.basePath,
-      maxAge: resolvedConfig.sessionTtlSeconds,
+  const jwtPlugin =
+    fastifyJwt as unknown as FastifyPluginAsync<fastifyJwt.FastifyJWTOptions>;
+
+  await instance.register(jwtPlugin, {
+    secret: resolvedConfig.jwtSecret,
+    sign: {
+      expiresIn: resolvedConfig.jwtTtlSeconds,
+      iss: resolvedConfig.jwtIssuer,
+      aud: resolvedConfig.jwtAudience,
     },
-    rolling: true,
-    saveUninitialized: false,
+    verify: {
+      allowedIss: resolvedConfig.jwtIssuer,
+      allowedAud: resolvedConfig.jwtAudience,
+    },
+    cookie: {
+      cookieName: resolvedConfig.jwtCookieName,
+      signed: false,
+    },
   });
 
   await instance.register(authenticationPlugin, { config: resolvedConfig });

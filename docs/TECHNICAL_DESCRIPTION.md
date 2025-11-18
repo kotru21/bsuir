@@ -98,7 +98,7 @@ const reasons = buildReasons(
 Клиентская часть ([admin/web](https://github.com/kotru21/bsuir/tree/main/admin/web)) собрана на React 18 с TypeScript и Vite. Основные узлы:
 
 - [admin/web/src/App.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/App.tsx): декларация роутинга (логин, дашборд, таблица анкет) и контекстов;
-- [admin/web/src/auth/AuthProvider.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/auth/AuthProvider.tsx): cookie-сессии, CSRF-поток и хранение токена;
+- [admin/web/src/auth/AuthProvider.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/auth/AuthProvider.tsx): управление JWT-cookie, double-submit CSRF и хранение токена;
 - [admin/web/src/charts](https://github.com/kotru21/bsuir/tree/main/admin/web/src/charts): настройка Chart.js визуализаций через TanStack Query и кастомные хуки;
 - [admin/web/src/pages/DashboardPage.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/pages/DashboardPage.tsx) и [admin/web/src/pages/SubmissionsPage.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/pages/SubmissionsPage.tsx): отображение KPI и детализированных записей;
 - [admin/web/src/components](https://github.com/kotru21/bsuir/tree/main/admin/web/src/components): библиотека UI-элементов (Button, Modal, TimelineChart) с Tailwind-классами;
@@ -108,7 +108,7 @@ const reasons = buildReasons(
 
 ## 7. Серверная инфраструктура Fastify
 
-Файл [src/admin/server.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts) инициализирует Fastify с плагинами cookie-сессий, CSRF и statics, затем регистрирует маршруты:
+Файл [src/admin/server.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts) инициализирует Fastify с плагинами JWT, cookie, helmet и statics, затем регистрирует маршруты:
 
 - [src/admin/routes/auth.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/auth.ts): цикл аутентификации администратора (login/logout, выдача CSRF токена);
 - [src/admin/routes/stats.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/stats.ts): агрегированные метрики (количество анкет, распределения по полу, уровню подготовки, временная динамика);
@@ -125,7 +125,7 @@ Unit-тесты ([test](https://github.com/kotru21/bsuir/tree/main/test)) охв
 
 ## 9. Развёртывание и эксплуатация
 
-Проект поддерживает гибридный режим разработки: `npm run dev` одновременно запускает Telegraf (через `tsx src/index.ts`) и Fastify, `npm run dev:admin` — Vite Dev Server для фронтенда. Продуктивная сборка выполняется через `npm run build` (tsc → `dist/index.js`); запуск — `npm start`. Procfile позволяет развернуть сервис на Heroku-подобных платформах. Настройки окружения конфигурируются в `.env` (BOT_TOKEN, DATABASE_URL, ADMIN_SESSION_SECRET, параметры AI-инференса). Секция [docs/DEPLOYMENT.md](https://github.com/kotru21/bsuir/blob/main/docs/DEPLOYMENT.md) содержит инструкции по миграции Prisma и вариации окружений.
+Проект поддерживает гибридный режим разработки: `npm run dev` одновременно запускает Telegraf (через `tsx src/index.ts`) и Fastify, `npm run dev:admin` — Vite Dev Server для фронтенда. Продуктивная сборка выполняется через `npm run build` (tsc → `dist/index.js`); запуск — `npm start`. Procfile позволяет развернуть сервис на Heroku-подобных платформах. Настройки окружения конфигурируются в `.env` (BOT_TOKEN, DATABASE_URL, ADMIN_JWT_SECRET, параметры AI-инференса). Секция [docs/DEPLOYMENT.md](https://github.com/kotru21/bsuir/blob/main/docs/DEPLOYMENT.md) содержит инструкции по миграции Prisma и вариации окружений.
 
 ## 10. Заключение
 
@@ -194,7 +194,7 @@ if (data === "fitness_done") {
 
 Сервер Fastify применяет несколько уровней защиты:
 
-- cookie-сессии подписываются секретом `ADMIN_SESSION_SECRET`, хранится только идентификатор сеанса;
+- httpOnly JWT-cookie подписываются секретом `ADMIN_JWT_SECRET`, полезная нагрузка хранит имя администратора и `xsrfToken` для сверки;
 - CSRF-модуль генерирует токены, выдаваемые эндпойнтом `/csrf` и проверяемые на POST-запросах;
 - маршруты администратора оборачиваются middleware аутентификации ([src/admin/routes/auth.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/auth.ts)), которое проверяет наличие валидной сессии и блокирует доступ к статистике без авторизации;
 - Telegram-бот фильтрует входящие сообщения, обрабатывая только разрешённые команды, и логирует невалидные callback-данные для аудита.
@@ -215,7 +215,7 @@ if (data === "fitness_done") {
 
 ## 18. API админ-панели
 
-REST-интерфейс расположен под префиксом `/admin/api` и обслуживается маршрутами Fastify ([src/admin/routes](https://github.com/kotru21/bsuir/tree/main/src/admin/routes)). Аутентификация основана на cookie-сессиях, выдаваемых после `POST /admin/api/login`, и защищена CSRF-токенами. Эндпойнты разделяются на три группы:
+REST-интерфейс расположен под префиксом `/admin/api` и обслуживается маршрутами Fastify ([src/admin/routes](https://github.com/kotru21/bsuir/tree/main/src/admin/routes)). Аутентификация построена на httpOnly JWT-cookie (подписываются `@fastify/jwt`) и double-submit CSRF: читаемая cookie `admin_csrf` должна совпадать с заголовком `x-csrf-token` или полем `csrfToken`. Эндпойнты разделяются на три группы:
 
 - мониторинг (`GET /health`, `GET /csrf`, `GET /session`);
 - аналитика (`GET /stats/overview`, `/stats/demographics`, `/stats/timeline?rangeDays=N`);
@@ -254,9 +254,9 @@ if (!response.ok) {
 
 ## 20. Развёртывание и конфигурация
 
-Файл [docs/DEPLOYMENT.md](https://github.com/kotru21/bsuir/blob/main/docs/DEPLOYMENT.md) описывает два режима: локальную разработку и продакшен. Основные переменные окружения включают `BOT_TOKEN`, `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`, параметры Fastify (`FASTIFY_HOST`, `FASTIFY_PORT`).
+Файл [docs/DEPLOYMENT.md](https://github.com/kotru21/bsuir/blob/main/docs/DEPLOYMENT.md) описывает два режима: локальную разработку и продакшен. Основные переменные окружения включают `BOT_TOKEN`, `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ADMIN_JWT_SECRET`, параметры Fastify (`FASTIFY_HOST`, `FASTIFY_PORT`).
 
-Сборка выполняется через `npm run build` (tsc) с последующим `npm start`. Для разработки используется `npm run dev`, комбинирующий запуск Fastify и Telegraf, а клиентской части — `npm run dev:admin`. Конфигурация админки (`loadAdminConfig`) определяет необходимость авторизации, TTL сессии и параметры cookie. procfile упрощает деплой на Heroku-совместимые платформы.
+Сборка выполняется через `npm run build` (tsc) с последующим `npm start`. Для разработки используется `npm run dev`, комбинирующий запуск Fastify и Telegraf, а клиентской части — `npm run dev:admin`. Конфигурация админки (`loadAdminConfig`) определяет необходимость авторизации, TTL JWT, имена cookie для токена/CSRF и параметры безопасности. Procfile упрощает деплой на Heroku-совместимые платформы.
 
 ## 21. Жизненный цикл приложений
 

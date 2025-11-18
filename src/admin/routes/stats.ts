@@ -31,13 +31,13 @@ export async function registerStatsRoutes(
   const prefix = `${config.basePath}/api/stats`;
 
   app.get(`${prefix}/overview`, async (request: FastifyRequest) => {
-    request.requireAdminAuth();
+    await request.requireAdminAuth();
     const data = await getOverviewStats();
     return data;
   });
 
   app.get(`${prefix}/demographics`, async (request: FastifyRequest) => {
-    request.requireAdminAuth();
+    await request.requireAdminAuth();
     const data = await getDemographicStats();
     return data;
   });
@@ -45,7 +45,7 @@ export async function registerStatsRoutes(
   app.get(
     `${prefix}/timeline`,
     async (request: FastifyRequest, reply: FastifyReply) => {
-      request.requireAdminAuth();
+      await request.requireAdminAuth();
       const parseResult = timelineQuerySchema.safeParse(request.query);
       if (!parseResult.success) {
         reply.status(400);

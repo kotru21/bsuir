@@ -69,7 +69,6 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             <div
               className={cn(
                 "flex items-center gap-4 shrink-0 transition-all duration-300 ease-in-out",
-
                 collapsed ? "lg:justify-center lg:gap-0 lg:w-full" : ""
               )}>
               <img
@@ -80,11 +79,11 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               <div
                 className={cn(
                   "min-w-0 flex-1 overflow-hidden transition-all duration-300 ease-in-out",
-
                   collapsed
                     ? "lg:max-w-0 lg:opacity-0"
                     : "lg:max-w-full lg:opacity-100"
-                )}>
+                )}
+                style={!collapsed ? { transitionDelay: "150ms" } : undefined}>
                 <span className="block whitespace-nowrap text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                   BSUIR Sports
                 </span>
@@ -147,9 +146,10 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               <span
                 aria-hidden={isIconOnly}
                 className={cn(
-                  "whitespace-nowrap text-sm font-medium transition-all duration-300",
-                  isIconOnly ? "hidden" : ""
-                )}>
+                  "overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 ease-in-out",
+                  isIconOnly ? "max-w-0 opacity-0" : "max-w-32 opacity-100"
+                )}
+                style={!isIconOnly ? { transitionDelay: "150ms" } : undefined}>
                 {auth.logoutInProgress ? "Выходим..." : "Выйти"}
               </span>
             </button>

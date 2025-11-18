@@ -5,6 +5,9 @@ import { SubmissionsPage } from "./pages/SubmissionsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { Layout } from "./components/Layout";
 import { FullscreenSpinner } from "./components/FullscreenSpinner";
+import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { PublicNotFoundPage } from "./pages/PublicNotFoundPage";
 
 function ProtectedRoute({
   children,
@@ -38,12 +41,18 @@ export default function App(): React.JSX.Element {
   return (
     <AuthProvider>
       <Routes>
-        <Route element={<AuthenticatedLayout />}>
+        <Route
+          element={
+            <GlobalErrorBoundary>
+              <AuthenticatedLayout />
+            </GlobalErrorBoundary>
+          }>
           <Route index element={<DashboardPage />} />
           <Route path="submissions" element={<SubmissionsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="login" element={<LoginPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<PublicNotFoundPage />} />
       </Routes>
     </AuthProvider>
   );

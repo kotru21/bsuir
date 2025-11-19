@@ -16,7 +16,8 @@ const NAV_ITEMS = [
 ];
 
 const MOBILE_BREAKPOINT_PX = 1024;
-const MOBILE_LABEL_BREAKPOINT_PX = 350;
+const MOBILE_LABEL_BREAKPOINT_PX = 480;
+const HIDE_LOGOUT_TEXT_BREAKPOINT_PX = 350;
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
@@ -43,6 +44,8 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
     isMobileViewport && viewportWidth >= MOBILE_LABEL_BREAKPOINT_PX;
   const isIconOnly = isMobileViewport ? !showMobileLabels : collapsed;
 
+  const hideLogoutText =
+    viewportWidth > 0 && viewportWidth <= HIDE_LOGOUT_TEXT_BREAKPOINT_PX;
   const handleLogout = useCallback(() => {
     void auth.logout();
   }, [auth]);
@@ -128,7 +131,9 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             <button
               onClick={handleLogout}
               disabled={auth.logoutInProgress}
-              aria-label={isIconOnly ? "Выйти из аккаунта" : undefined}
+              aria-label={
+                isIconOnly || hideLogoutText ? "Выйти из аккаунта" : undefined
+              }
               className={cn(
                 "group relative flex items-center rounded-2xl text-sm font-medium text-slate-600 transition-colors duration-200 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
                 "cursor-pointer",
@@ -145,7 +150,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
               </span>
 
               {/* Текст */}
-              {!isIconOnly && (
+              {!isIconOnly && !hideLogoutText && (
                 <span className="whitespace-nowrap text-sm font-medium overflow-hidden flex-1 text-left">
                   <span
                     className="block transition-all duration-300 ease-in-out"

@@ -59,7 +59,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
 
             "transition-all duration-300 ease-in-out",
             isMobileViewport
-              ? "sticky top-4 z-30 mt-2 flex w-full items-center gap-3 px-3 py-2"
+              ? "sticky top-4 z-30 mt-2 flex flex-row w-full items-center gap-3 px-3 py-2"
               : cn(
                   "flex min-h-0 flex-col gap-8 p-6 overflow-hidden",
                   "lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto",
@@ -104,9 +104,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
             className={cn(
               "shrink-0",
               isMobileViewport
-                ? showMobileLabels
-                  ? "flex flex-1 flex-wrap items-center justify-between gap-3"
-                  : "flex flex-1 items-center justify-between gap-2 overflow-x-auto"
+                ? "flex items-center gap-2 overflow-x-auto"
                 : "flex flex-col gap-2 w-full"
             )}>
             {NAV_ITEMS.map(({ to, label, icon }) => (
@@ -124,8 +122,8 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           {/* Кнопка выхода */}
           <div
             className={cn(
-              "shrink-0 w-full",
-              isMobileViewport ? "ml-auto w-auto" : "mt-auto"
+              "shrink-0",
+              isMobileViewport ? "ml-auto w-auto" : "mt-auto w-full"
             )}>
             <button
               onClick={handleLogout}

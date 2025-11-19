@@ -1,2 +1,3 @@
 // Setup file for Vitest (jsdom environment). Add global configuration or polyfills here.
-// For example, import '@testing-library/jest-dom' if installed to enable jest-dom matchers.
+// Import jest-dom matchers to get nice assertions like `toBeDisabled` and `toHaveTextContent`.
+import "@testing-library/jest-dom";

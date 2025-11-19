@@ -136,7 +136,9 @@ export function AuthProvider({
       error: null,
     }));
     try {
-      const token = state.csrfToken ?? (await refreshCsrf());
+      // Always refresh CSRF token to avoid stale token errors
+      // (the server will return the existing session token when logged in).
+      const token = (await refreshCsrf()) ?? state.csrfToken;
       await logoutRequest(token);
       setState((prev: AuthState) => ({
         ...prev,

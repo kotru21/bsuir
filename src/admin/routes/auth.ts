@@ -44,7 +44,13 @@ export async function registerAuthRoutes(
   app.get(
     `${prefix}/csrf`,
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const token = request.issueAdminCsrfToken();
+      // If an admin session exists, reuse its XSRF token so it stays
+      // consistent with the JWT payload. Generating a fresh token here
+      // while a session exists would make the token in the cookie differ
+      // from the token stored in the JWT and trigger a stale-token
+      // rejection on stateful operations like logout.
+      const session = await request.getAdminSession();
+      const token = session?.xsrfToken ?? request.issueAdminCsrfToken();
       setCsrfCookie(reply, config, token);
       return { token };
     }

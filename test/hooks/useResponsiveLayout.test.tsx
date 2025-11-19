@@ -51,4 +51,17 @@ describe("useResponsiveLayout", () => {
     render(<TestComponent />);
     expect(screen.getByTestId("hide").textContent).toBe("1");
   });
+
+  it("does not hide logout text on desktop sizes even if above the hide threshold", () => {
+    Object.defineProperty(window, "innerWidth", {
+      value: 1200,
+      writable: true,
+      configurable: true,
+    });
+    window.dispatchEvent(new Event("resize"));
+    render(<TestComponent />);
+    // 1200px is desktop view; logout text should be visible
+    expect(screen.getByTestId("mobile").textContent).toBe("0");
+    expect(screen.getByTestId("hide").textContent).toBe("0");
+  });
 });

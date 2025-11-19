@@ -17,10 +17,12 @@ export function useResponsiveLayout({
 
   const showMobileLabels = isMobileViewport && viewportWidth >= mobileLabelPx;
 
-  // Hide logout text starting at the specified breakpoint.
-  // Tests and UI expect the text to be hidden at the threshold value (>=),
-  // so use `>=` rather than `<=` here.
-  const hideLogoutText = viewportWidth > 0 && viewportWidth >= hideLogoutPx;
+  // Hide logout text starting at the specified breakpoint, but only when
+  // we are on a mobile-like viewport. On desktop (>= mobilePx) the full
+  // sidebar always displays the logout label even if the width exceeds
+  // `hideLogoutPx`.
+  const hideLogoutText =
+    viewportWidth > 0 && isMobileViewport && viewportWidth >= hideLogoutPx;
 
   return useMemo(
     () => ({

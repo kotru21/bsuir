@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import logoUrl from "../assets/logo.png";
@@ -8,6 +8,7 @@ import { LogoutIcon } from "./icons/LogoutIcon";
 import { cn } from "../lib/cn";
 import { Button } from "./Button";
 import { useViewportWidth } from "../hooks/useViewportWidth";
+import useSidebarCollapsed from "../hooks/useSidebarCollapsed.js";
 import { SidebarNavItem } from "./layout/SidebarNavItem";
 
 const NAV_ITEMS = [
@@ -21,22 +22,8 @@ const HIDE_LOGOUT_TEXT_BREAKPOINT_PX = 420;
 
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem("sidebarCollapsed") === "1";
-    } catch (_e) {
-      return false;
-    }
-  });
+  const { collapsed, toggle } = useSidebarCollapsed();
   const viewportWidth = useViewportWidth();
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
-    } catch (_e) {
-      /* ignore */
-    }
-  }, [collapsed]);
 
   const isMobileViewport =
     viewportWidth > 0 && viewportWidth < MOBILE_BREAKPOINT_PX;
@@ -50,7 +37,7 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
     void auth.logout();
   }, [auth]);
 
-  const toggleCollapsed = useCallback(() => setCollapsed((c) => !c), []);
+  const toggleCollapsed = toggle;
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">

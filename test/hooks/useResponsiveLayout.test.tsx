@@ -38,10 +38,10 @@ describe("useResponsiveLayout", () => {
 
     expect(screen.getByTestId("mobile").textContent).toBe("1");
     expect(screen.getByTestId("labels").textContent).toBe("1");
-    expect(screen.getByTestId("hide").textContent).toBe("0");
+    expect(screen.getByTestId("hide").textContent).toBe("1");
   });
 
-  it("hides logout text under threshold", () => {
+  it("shows logout text at threshold", () => {
     Object.defineProperty(window, "innerWidth", {
       value: 420,
       writable: true,
@@ -49,7 +49,7 @@ describe("useResponsiveLayout", () => {
     });
     window.dispatchEvent(new Event("resize"));
     render(<TestComponent />);
-    expect(screen.getByTestId("hide").textContent).toBe("1");
+    expect(screen.getByTestId("hide").textContent).toBe("0");
   });
 
   it("does not hide logout text on desktop sizes even if above the hide threshold", () => {

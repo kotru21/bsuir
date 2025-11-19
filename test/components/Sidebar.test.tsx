@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Sidebar from "../../admin/web/src/components/layout/Sidebar.js";
@@ -17,7 +17,6 @@ describe("Sidebar", () => {
           navItems={navItems}
           collapsed={false}
           isMobileViewport={false}
-          showMobileLabels={true}
           isIconOnly={false}
           hideLogoutText={false}
           onLogout={() => {}}

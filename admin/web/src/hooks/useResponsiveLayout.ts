@@ -17,7 +17,10 @@ export function useResponsiveLayout({
 
   const showMobileLabels = isMobileViewport && viewportWidth >= mobileLabelPx;
 
-  const hideLogoutText = viewportWidth > 0 && viewportWidth <= hideLogoutPx;
+  // Hide logout text starting at the specified breakpoint.
+  // Tests and UI expect the text to be hidden at the threshold value (>=),
+  // so use `>=` rather than `<=` here.
+  const hideLogoutText = viewportWidth > 0 && viewportWidth >= hideLogoutPx;
 
   return useMemo(
     () => ({

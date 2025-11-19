@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import type { ComponentType, ReactElement, SVGProps } from "react";
+import type { ComponentType, ReactElement, SVGProps, ElementType } from "react";
 import { cn } from "../../lib/cn";
 
 const BASE_LINK_CLASSES =
@@ -10,7 +10,8 @@ const FOCUS_RING_CLASSES =
 export type SidebarNavItemProps = {
   to: string;
   label: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  // More permissive element type to allow test stubs and various icons.
+  icon: ElementType;
   isIconOnly: boolean;
   isMobileViewport: boolean;
 };

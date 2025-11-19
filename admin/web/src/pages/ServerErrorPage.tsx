@@ -1,4 +1,4 @@
-import { ErrorCard } from "../components/ErrorCard";
+// ErrorCard isn't used here; `Card` is used for layout. Remove import.
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 

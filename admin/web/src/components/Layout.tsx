@@ -28,7 +28,6 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           navItems={NAV_ITEMS}
           collapsed={collapsed}
           isMobileViewport={isMobileViewport}
-          showMobileLabels={showMobileLabels}
           isIconOnly={isIconOnly}
           hideLogoutText={hideLogoutText}
           onLogout={handleLogout}

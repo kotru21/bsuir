@@ -24,7 +24,6 @@ export class GlobalErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, info: unknown) {
     // Basic logging - keep minimal, optionally integrate with logging service
-    // eslint-disable-next-line no-console
     console.error("Unhandled error in component tree:", error, info);
     this.setState({ error });
   }

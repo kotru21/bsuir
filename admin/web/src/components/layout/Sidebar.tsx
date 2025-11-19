@@ -1,15 +1,21 @@
-import type { ReactElement } from "react";
-import logoUrl from "../../assets/logo.png";
-import { SidebarNavItem } from "./SidebarNavItem.js";
+import type { ReactElement, ElementType } from "react";
+// SidebarNavItem is used by SidebarNav
+import SidebarLogo from "./SidebarLogo.js";
+import SidebarNav from "./SidebarNav.js";
 import { cn } from "../../lib/cn";
 import LogoutButton from "./LogoutButton.js";
 
-export type NavItem = { to: string; label: string; icon: any };
+export type NavItem = {
+  to: string;
+  label: string;
+  icon: ElementType;
+};
 
 export type SidebarProps = {
   collapsed: boolean;
   isMobileViewport: boolean;
-  showMobileLabels: boolean;
+  // showMobileLabels is intentionally not part of Sidebar props. It is used
+  // in the Layout to compute `isIconOnly` and is therefore not forwarded.
   isIconOnly: boolean;
   hideLogoutText: boolean;
   navItems: NavItem[];
@@ -20,7 +26,6 @@ export type SidebarProps = {
 export function Sidebar({
   collapsed,
   isMobileViewport,
-  showMobileLabels,
   isIconOnly,
   hideLogoutText,
   navItems,
@@ -41,54 +46,13 @@ export function Sidebar({
               collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
             )
       )}>
-      {!isMobileViewport ? (
-        <div className="flex items-center gap-4 shrink-0">
-          <img
-            src={logoUrl}
-            alt="Логотип"
-            className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200/60 bg-white/80 p-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-950"
-          />
-          {!collapsed && (
-            <div className="min-w-0 flex-1 overflow-hidden">
-              <div
-                className="transition-all duration-300 ease-in-out"
-                style={{
-                  opacity: collapsed ? 0 : 1,
-                  transform: collapsed ? "translateX(-10px)" : "translateX(0)",
-                  transitionDelay: collapsed ? "0ms" : "100ms",
-                }}>
-                <span className="block whitespace-nowrap text-sm font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                  BSUIR Sports
-                </span>
-                <strong className="block whitespace-nowrap text-lg text-slate-900 dark:text-slate-100">
-                  Админ-панель
-                </strong>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : null}
+      {!isMobileViewport ? <SidebarLogo collapsed={collapsed} /> : null}
 
-      <nav
-        role="navigation"
-        aria-label="Основная навигация админ-панели"
-        className={cn(
-          "shrink-0",
-          isMobileViewport
-            ? "flex items-center gap-2 overflow-x-auto"
-            : "flex flex-col gap-2 w-full"
-        )}>
-        {navItems.map(({ to, label, icon }) => (
-          <SidebarNavItem
-            key={to}
-            to={to}
-            label={label}
-            icon={icon}
-            isIconOnly={isIconOnly}
-            isMobileViewport={isMobileViewport}
-          />
-        ))}
-      </nav>
+      <SidebarNav
+        navItems={navItems}
+        isIconOnly={isIconOnly}
+        isMobileViewport={isMobileViewport}
+      />
 
       <div
         className={cn(

@@ -2,7 +2,7 @@ import React from "react";
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import useSidebarCollapsed from "../admin/web/src/hooks/useSidebarCollapsed.js";
+import useSidebarCollapsed from "../../admin/web/src/hooks/useSidebarCollapsed.js";
 
 function TestComponent({
   initialKey = "sidebarCollapsed",

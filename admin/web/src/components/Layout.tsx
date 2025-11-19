@@ -59,10 +59,10 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
 
             "transition-all duration-300 ease-in-out",
             isMobileViewport
-              ? "sticky top-2 z-30 mt-2 flex w-full items-center gap-3 px-3 py-2"
+              ? "sticky top-4 z-30 mt-2 flex w-full items-center gap-3 px-3 py-2"
               : cn(
                   "flex min-h-0 flex-col gap-8 p-6 overflow-hidden",
-                  "lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto",
+                  "lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto",
                   collapsed ? "lg:w-24 lg:px-4" : "lg:w-72"
                 )
           )}>

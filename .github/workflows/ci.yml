@@ -13,9 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2.0.2
         with:
-          bun-version: stable
+          bun-version: latest
       - name: Install dependencies (bun)
         run: bun install --frozen-lockfile
       - name: Type check (noEmit)

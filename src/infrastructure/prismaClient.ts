@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import sessionExtension from "./prismaExtensions.js";
 
 let prisma: PrismaClient | null = null;
 
@@ -6,7 +7,10 @@ export type PrismaClientInstance = PrismaClient;
 
 function ensurePrisma(): PrismaClientInstance {
   if (!prisma) {
-    prisma = new PrismaClient();
+    const base = new PrismaClient();
+    // Apply Prisma v7 client extensions where available
+    // sessionExtension uses clientExtensions preview feature.
+    prisma = base.$extends(sessionExtension) as unknown as PrismaClient;
   }
   return prisma;
 }

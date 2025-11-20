@@ -1,5 +1,6 @@
 import { Middleware } from "telegraf";
 import { getPrismaClient } from "../infrastructure/prismaClient.js";
+import type { PrismaClientWithSession } from "../infrastructure/prismaExtensions.js";
 import { RecommendationContext, RecommendationSession } from "./session.js";
 
 export function prismaSession(): Middleware<RecommendationContext> {
@@ -7,13 +8,17 @@ export function prismaSession(): Middleware<RecommendationContext> {
     const key = ctx.chat?.id?.toString();
     if (!key) return next();
 
-    const prisma = getPrismaClient();
+    const prisma = getPrismaClient() as PrismaClientWithSession;
     let session: Partial<RecommendationSession> = {};
 
     try {
-      const record = await prisma.session.findUnique({ where: { key } });
-      if (record) {
-        session = JSON.parse(record.value);
+      // Use Prisma client extension if available (Prisma v7 clientExtensions)
+      const parsed = await prisma.session?.getParsed?.({ key });
+      if (parsed !== undefined) {
+        session = parsed ?? {};
+      } else {
+        const record = await prisma.session.findUnique({ where: { key } });
+        if (record) session = JSON.parse(record.value);
       }
     } catch (e) {
       console.error("Failed to load session", e);
@@ -30,12 +35,19 @@ export function prismaSession(): Middleware<RecommendationContext> {
     // Save session after processing
     if (ctx.session) {
       try {
-        const value = JSON.stringify(ctx.session);
-        await prisma.session.upsert({
-          where: { key },
-          update: { value },
-          create: { key, value },
+        // Prefer Prisma extension helper on v7
+        const extensionResult = await prisma.session?.upsertParsed?.({
+          key,
+          value: ctx.session,
         });
+        if (!extensionResult) {
+          const value = JSON.stringify(ctx.session);
+          await prisma.session.upsert({
+            where: { key },
+            update: { value },
+            create: { key, value },
+          });
+        }
       } catch (e) {
         console.error("Failed to save session", e);
       }

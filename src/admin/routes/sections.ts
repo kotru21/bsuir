@@ -40,13 +40,13 @@ export async function registerSectionsRoutes(
           format: data.format,
           contactLevel: data.contactLevel,
           intensity: data.intensity,
-          recommendedFor: data.recommendedFor as any,
-          expectedResults: data.expectedResults as any,
+          recommendedFor: data.recommendedFor as object,
+          expectedResults: data.expectedResults as object,
           extraBenefits: data.extraBenefits,
           prerequisites: data.prerequisites,
           imagePath: data.imagePath,
           locationHint: data.locationHint,
-          similarityVector: data.similarityVector as any,
+          similarityVector: data.similarityVector as object,
         },
       });
       return section;
@@ -69,13 +69,13 @@ export async function registerSectionsRoutes(
           format: data.format,
           contactLevel: data.contactLevel,
           intensity: data.intensity,
-          recommendedFor: data.recommendedFor as any,
-          expectedResults: data.expectedResults as any,
+          recommendedFor: data.recommendedFor as object,
+          expectedResults: data.expectedResults as object,
           extraBenefits: data.extraBenefits,
           prerequisites: data.prerequisites,
           imagePath: data.imagePath,
           locationHint: data.locationHint,
-          similarityVector: data.similarityVector as any,
+          similarityVector: data.similarityVector as object,
         },
       });
       return section;

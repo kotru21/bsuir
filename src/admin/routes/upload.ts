@@ -6,7 +6,7 @@ import type { AdminConfig } from "../config.js";
 
 export async function registerUploadRoutes(
   app: FastifyInstance,
-  options: { config: AdminConfig }
+  _options: { config: AdminConfig }
 ): Promise<void> {
   app.post("/api/upload", async (req, reply) => {
     const data = await req.file();

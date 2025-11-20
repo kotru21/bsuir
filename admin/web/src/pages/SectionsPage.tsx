@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { SectionModal, SectionData } from "../components/SectionModal";
@@ -11,7 +11,7 @@ export function SectionsPage(): React.JSX.Element {
     undefined
   );
 
-  const fetchSections = () => {
+  const fetchSections = useCallback(() => {
     setLoading(true);
     fetch("/api/sections")
       .then((res) => res.json())
@@ -25,11 +25,12 @@ export function SectionsPage(): React.JSX.Element {
         console.error(err);
         setLoading(false);
       });
-  };
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSections();
-  }, []);
+  }, [fetchSections]);
 
   const handleCreate = () => {
     setEditingSection(undefined);

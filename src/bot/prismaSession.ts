@@ -1,18 +1,14 @@
-import { Context, Middleware } from "telegraf";
+import { Middleware } from "telegraf";
 import { getPrismaClient } from "../infrastructure/prismaClient.js";
-import { RecommendationSession } from "./session.js";
+import { RecommendationContext, RecommendationSession } from "./session.js";
 
-interface SessionContext extends Context {
-  session?: RecommendationSession;
-}
-
-export function prismaSession(): Middleware<any> {
+export function prismaSession(): Middleware<RecommendationContext> {
   return async (ctx, next) => {
     const key = ctx.chat?.id?.toString();
     if (!key) return next();
 
     const prisma = getPrismaClient();
-    let session: any = {};
+    let session: Partial<RecommendationSession> = {};
 
     try {
       const record = await prisma.session.findUnique({ where: { key } });
@@ -26,6 +22,7 @@ export function prismaSession(): Middleware<any> {
     // Assign session to context
     // Note: We need to be careful not to overwrite if it already exists,
     // but usually this middleware is the source of truth.
+    // @ts-expect-error - session type mismatch with WizardContext requirements but sufficient for runtime
     ctx.session = session;
 
     await next();

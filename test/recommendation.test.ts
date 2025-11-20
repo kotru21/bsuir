@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "bun:test";
 import { recommendSections } from "../src/recommendation.js";
 import type { UserProfile } from "../src/types.js";
 import { sportSections } from "../prisma/data/sections.js";

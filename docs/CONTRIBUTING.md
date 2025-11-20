@@ -3,8 +3,8 @@
 ## Как начать
 
 1. Форкните репозиторий и создайте новую ветку от `main`.
-2. Убедитесь, что установлены Node.js 24+ LTS, PostgreSQL и зависимости (`npm install`).
-3. Настройте `.env` и примените миграции (`npx prisma migrate deploy`).
+2. Убедитесь, что установлены Bun 1+, PostgreSQL и зависимости (`bun install`).
+3. Настройте `.env` и примените миграции (`bunx prisma migrate deploy`).
 
 ## Стиль кода
 
@@ -18,9 +18,9 @@
 Перед отправкой PR запустите:
 
 ```powershell
-npm run lint
-npm run test
-npx tsc --noEmit
+bun run lint
+bun run test
+bunx tsc --noEmit
 ```
 
 > ⚠️ **Важно:** PR с падающими тестами или ошибками типизации не принимаются.

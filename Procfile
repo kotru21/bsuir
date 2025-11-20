@@ -1,2 +1,2 @@
-release: npm run migrate:deploy
-web: npm start
+release: bunx prisma db push && bunx prisma db seed
+web: bun dist/index.js

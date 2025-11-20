@@ -2,314 +2,497 @@
 
 ## 1. Аннотация
 
-Репозиторий [kotru21/bsuir](https://github.com/kotru21/bsuir) представляет прототип цифровой платформы маркетинга спортивных услуг БГУИР. Решение объединяет Telegram-бота, реализованного на Node.js 24.11 и Telegraf, с административной веб-панелью на React 18 (Vite). Оба интерфейса запускаются из одного процесса, но взаимодействуют через общие сервисы Fastify и Prisma, используя общую доменную модель и базу данных PostgreSQL. Основная научно-практическая ценность проекта заключается в алгоритме подбора спортивных секций по профилю пользователя и в едином операционном конвейере аналитики откликов.
+Репозиторий [kotru21/bsuir](https://github.com/kotru21/bsuir) представляет собой прототип цифровой платформы маркетинга спортивных услуг БГУИР. Решение объединяет Telegram-бота (Bun 1+, Telegraf) и административную веб-панель (React 19.2, Vite), работающих в едином контуре.
 
-## 2. Общая архитектура
+Ключевая особенность системы — гибридная архитектура, где один Node.js процесс обслуживает и long-polling бота, и REST API для админки через Fastify. Это упрощает деплой и обеспечивает общую область памяти для кэширования, при этом данные персистируются в PostgreSQL через Prisma ORM.
 
-Система построена по принципу единой серверной шины ([src/admin/server.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts)), которая инстанцирует Fastify-приложение и подключает REST-маршруты ([src/admin/routes](https://github.com/kotru21/bsuir/tree/main/src/admin/routes)). Telegraf-бот конфигурируется отдельно ([src/bot/app.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/app.ts)) и запускается рядом через [src/index.ts](https://github.com/kotru21/bsuir/blob/main/src/index.ts), поэтому обе части разделяют те же сервисы и инфраструктуру:
+## 2. Структура проекта
 
-- слой бот-сцен: [src/bot/scenes/onboarding.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/scenes/onboarding.ts) и подпакет [steps](https://github.com/kotru21/bsuir/tree/main/src/bot/scenes/onboarding/steps);
-- сервисы Fastify: статистика ([src/admin/services/statisticsService.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/services/statisticsService.ts)), регистрация откликов ([src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts)), агрегация профиля ([src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts));
-- бизнес-ядро рекомендаций: [src/recommendation.ts](https://github.com/kotru21/bsuir/blob/main/src/recommendation.ts) и доменные типы [src/types.ts](https://github.com/kotru21/bsuir/blob/main/src/types.ts);
-- инфраструктура доступа к данным: Prisma-клиент ([src/infrastructure/prismaClient.ts](https://github.com/kotru21/bsuir/blob/main/src/infrastructure/prismaClient.ts)) и статический каталог секций ([src/data/sections.ts](https://github.com/kotru21/bsuir/blob/main/src/data/sections.ts)).
+Проект организован как монорепозиторий с четким разделением на домены.
 
-Telegram-бот работает как отдельный Telegraf-инстанс (без Fastify-middleware) и использует in-memory сессии ([src/bot/session.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/session.ts)). Админ-панель собирается Vite и обслуживается тем же Fastify-сервером через статический раздачик. Модель данных описана в [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma) и синхронизируется с PostgreSQL.
-
-## 3. Доменная модель и структуры данных
-
-Каталог секций формируется из массива объектов `SportSection` ([src/data/sections.ts](https://github.com/kotru21/bsuir/blob/main/src/data/sections.ts)), типизированных через [src/types.ts](https://github.com/kotru21/bsuir/blob/main/src/types.ts). Ключевые сущности:
-
-- `UserProfile`: возраст, пол, базовый уровень подготовки и расширенный вектор предпочтений (массивы `preferredFormats` и `desiredGoals`, карта весов `goalPriorities`, параметры `intensityComfort`, `intensityFlexibility`, `contactTolerance`, `competitionDrive`, флаги `avoidContact` и `interestedInCompetition`). Поле `formatPriorities` пока не собирается мастер-сценой и зарезервировано для будущих итераций.
-- `SportSection`: идентификатор, формат (`individual`/`group`/`mixed`), уровень контактности, интенсивность, рекомендуемые уровни подготовки, ожидаемые результаты по временным горизонтам и дополнительные преимущества; при необходимости секция расширяется предвычисленным `similarityVector`.
-- `RecommendationResult`: косинусная оценка `score ∈ [0, 1]`, ссылка на секцию, нормализованный вектор и перечень `RecommendationReason`, фиксирующий вклад целей, форматов, интенсивности, соревнований, контактности и дополнительных выгод.
-
-Привязка к БД реализована через Prisma-модель [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma): сейчас сохраняются агрегированные анкеты (`SurveySubmission`) и топ-N рекомендаций (`RecommendationSnapshot`). Поштучные ответы и события интереса планируются на следующих этапах. Для анкетирования используется WizardScene Telegraf, где каждый шаг формирует часть `UserProfile` и вектор признаков, пригодный для последующего сопоставления.
-
-## 4. Алгоритм рекомендаций
-
-Алгоритм реализован в [src/recommendation.ts](https://github.com/kotru21/bsuir/blob/main/src/recommendation.ts) и основан на сравнении нормализованных векторов признаков профиля и каждой секции. Формально профиль `p` и секция `s` описываются вектором `v_p, v_s ∈ ℝ^n`, включающим цели (`goal:*`), форматы (`format:*`), интенсивность (`intensity:*`), соревнования (`competition`) и толерантность к контактам (`contactTolerance`). После нормализации функция сходства сводится к косинусной метрике:
-
-$$
-score(s, p) = \cos(\theta) = \frac{v_p \cdot v_s}{\lVert v_p \rVert_2\, \lVert v_s \rVert_2}, \quad score \in [0, 1].
-$$
-
-Векторы строятся функциями `buildUserVector` и `buildSectionVector`. Например, вклад интенсивности вычисляется по гибкости пользователя (`intensityFlexibility`) и его комфортному уровню (`intensityComfort`):
-
-```typescript
-const comfortTarget = clamp01(
-  profile.intensityComfort ?? fitnessScalar[profile.fitnessLevel] ?? 0.5
-);
-const flexibility = clamp01(profile.intensityFlexibility ?? 0.4);
-const tolerance = 0.35 + flexibility * 0.5;
-
-INTENSITY_LEVELS.forEach((level) => {
-  const levelValue = fitnessScalar[level];
-  const distance = Math.abs(comfortTarget - levelValue);
-  const weight = Math.max(0, 1 - distance / tolerance);
-  if (weight > 0) {
-    vector[`intensity:${level}` as VectorKey] = round(weight);
-  }
-});
+```text
+.
+├── admin/                  # Подсистема административной панели
+│   ├── web/                # Frontend (React SPA)
+│   │   ├── src/
+│   │   │   ├── api/        # Клиент REST API (fetch wrapper)
+│   │   │   ├── auth/       # Контекст авторизации (JWT, CSRF)
+│   │   │   ├── charts/     # Визуализация (Chart.js + TanStack Query)
+│   │   │   ├── components/ # UI-кит (Tailwind)
+│   │   │   └── pages/      # Страницы (Dashboard, Submissions)
+│   │   └── vite.config.ts  # Конфигурация сборки Vite
+│   ├── config.ts           # Конфигурация бэкенда админки
+│   ├── server.ts           # Инициализация Fastify
+│   └── routes/             # REST API эндпоинты
+│       ├── auth.ts         # Логин/логаут, CSRF
+│       ├── sections.ts     # CRUD секций
+│       ├── stats.ts        # Аналитика
+│       └── submissions.ts  # Просмотр анкет
+├── src/
+│   ├── bot/                # Подсистема Telegram-бота
+│   │   ├── handlers/       # Обработчики команд и действий
+│   │   ├── scenes/         # Wizard-сцены (onboarding)
+│   │   ├── services/       # Презентеры и хелперы бота
+│   │   ├── app.ts          # Конфигурация Telegraf
+│   │   └── prismaSession.ts# Middleware сессий (PostgreSQL)
+│   ├── data/               # Данные
+│   │   ├── images/         # Загруженные изображения
+│   │   └── sections.ts     # Seed-данные каталога
+│   ├── domain/             # Бизнес-правила и константы
+│   ├── infrastructure/     # Инфраструктурный слой (Prisma)
+│   ├── services/           # Общие сервисы
+│   │   ├── aiSummary.ts    # Интеграция с LLM
+│   │   ├── profileAssembler.ts # Сборка профиля пользователя
+│   │   └── submissionRecorder.ts # Сохранение результатов
+│   ├── index.ts            # Точка входа (Bootstrapping)
+│   ├── recommendation.ts   # Движок рекомендаций
+│   └── types.ts            # Общие TypeScript типы
+├── prisma/                 # Схема БД и миграции
+└── docs/                   # Документация
 ```
 
-После фильтрации несовместимых по контактности секций (`isContactCompatible`) оба вектора нормализуются, и косинусная близость превращается в итоговый балл. Ключевой фрагмент вычислений:
+## 3. Архитектура системы
 
-```typescript
-const { similarity, contributions } = computeCosineSimilarity(
-  normalizedUser,
-  normalizedSection
-);
+### 3.1. Высокоуровневая схема
 
-const reasons = buildReasons(
-  contributions,
-  profile,
-  section,
-  userVector,
-  sectionVector
-);
+Система работает как единый сервис, объединяющий два интерфейса доступа к общим данным.
+
+```mermaid
+graph TD
+    subgraph "External Clients"
+        TG[Telegram Client]
+        Web[Admin Browser]
+    end
+
+    subgraph "Node.js Process"
+        subgraph "Telegraf Bot"
+            Polling[Long Polling]
+            Scenes[Wizard Scenes]
+            SessionMW[Prisma Session]
+        end
+
+        subgraph "Fastify Server"
+            API[REST API]
+            Static[Static File Server]
+            Auth[JWT & CSRF Guard]
+        end
+
+        subgraph "Core Logic"
+            RecEngine[Recommendation Engine]
+            Stats[Statistics Service]
+        end
+    end
+
+    subgraph "Persistence"
+        DB[(PostgreSQL)]
+        Prisma[Prisma Client]
+    end
+
+    TG <--> Polling
+    Polling --> SessionMW
+    SessionMW <--> Prisma
+    Polling --> Scenes
+    Scenes --> RecEngine
+    RecEngine --> Prisma
+
+    Web <--> Auth
+    Auth --> API
+    API --> Stats
+    API --> Prisma
+    Web -.-> Static
+
+    Prisma <--> DB
 ```
 
-`contributions` сохраняет вклад каждой размерности и позже преобразуется в массив `RecommendationReason` (совпадение целей, форматов, интенсивности, соревнований или контактности). Результирующий список сортируется по `score` и усечён до `limit` в `recommendSections`, а `fallbackSection` возвращает лучший из доступных вариантов, даже если все значения нулевые. Такое представление открывает путь к дальнейшему расширению (например, добавлению новых измерений без переписывания логики весов).
+### 3.2. Поток данных (Data Flow)
 
-### 4.1. Планы по миграции на модели машинного обучения
+1. **Сбор данных (Bot):** Пользователь проходит шаги сцены `onboarding`. Промежуточные ответы сохраняются в таблице `Session` через `prismaSession` middleware.
+2. **Обработка:** По завершении анкеты `profileAssembler` формирует `UserProfile`.
+3. **Рекомендация:** `recommendation.ts` запрашивает секции из БД (с кэшированием), строит векторы и вычисляет косинусное сходство.
+4. **Сохранение:** Результат (анкета + топ рекомендаций) сохраняется в `SurveySubmission` и `RecommendationSnapshot`.
+5. **Аналитика (Admin):** Админ-панель запрашивает агрегированные данные через REST API. Fastify выполняет сложные SQL-запросы (GROUP BY, COUNT) через Prisma.
 
-Текущий векторный подход обеспечивает интерпретируемую и детерминированную выдачу рекомендаций, однако он ограничен жёсткими эвристиками. Для повышения качества персонализации и адаптивности к историческим паттернам взаимодействий предлагается постепенная миграция к гибридной ML-архитектуре, включающей retrieval + reranking. Основные шаги и мотивы:
+## 4. Детальный анализ компонентов
 
-- Сбор событий: логирование показов (`exposure`), кликов (`click`), переходов на карточки (`visit`) и конверсий (`enroll`), с метаданными (user_id, timestamp, source, campaign). Собранные записи станут основой для обучения модели ранжирования и моделей коллаборативной фильтрации.
-- Candidate generation: использовать существующие content-векторы в сочетании с ANN (Faiss/Annoy) для быстрого отбора кандидатов; этот слой даёт устойчивый старт и совместим с текущими векторами.
-- Reranker: обучаемый ранжировщик (LightGBM/DeepFM/NN — в зависимости от объёма данных) для предсказания вероятности конверсии; фичи — content-features, user-features, context-features и агрегированные сигналы времённой активности.
-- Гибридизация: объединять content-based и collaborative approaches (NCF/ALS/LightGCN) в единый пайплайн; использовать ensemble-методы для устойчивости.
-- Мониторинг и A/B-тесты: валидация offline метриками (Recall@K, NDCG@K, AUC) и последующее A/B тестирование online (CTR, conversion-to-enroll) для оценки реального эффекта.
+### 4.1. Telegram Бот
 
-Такой путь минимизирует риски (сохранение content-based слоя), даёт контролируемую эволюцию и позволяет сохранить объяснимость через SHAP/разложение вкладов в ранжировщике.
+Бот построен на библиотеке `Telegraf` и использует концепцию сцен (Scenes) для линейных диалогов.
 
-## 5. Телеграм-бот и диалоговый движок
+#### Конфигурация и Middleware
 
-Главная сцена ([src/bot/scenes/onboarding.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/scenes/onboarding.ts)) формирует Wizard посредством последовательности `intro → age → gender → fitness → intensityComfort → format → goals → goalPriority → contactPreference → competitionInterest`. Каждый шаг реализуется как модуль из каталога [src/bot/scenes/onboarding/steps](https://github.com/kotru21/bsuir/tree/main/src/bot/scenes/onboarding/steps) и использует:
-
-- клавиатуры `Markup` из [src/bot/keyboards.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/keyboards.ts) с callback-данными вида `prefix:payload`;
-- форматирование сообщений с MarkdownV2 через [src/bot/formatters.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/formatters.ts) и защитные обёртки `replyMarkdownV2Safe` / `replyWithPhotoMarkdownV2Safe` ([src/bot/telegram.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/telegram.ts));
-- сессионные хелперы `ensureProfile` / `ensureTemp` из [src/bot/session.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/session.ts), гарантирующие консистентность данных.
-
-После прохождения последнего шага профиль передаётся в `recommendSections`, а полученный список оформляется карточками с изображениями из [src/bot/services/imageResolver.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/services/imageResolver.ts) и пояснениями из [src/bot/services/recommendationPresenter.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/services/recommendationPresenter.ts). Отдельный обработчик `/sections` ([src/bot/handlers/sections.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/handlers/sections.ts)) публикует полный каталог в обход Wizard.
-
-## 6. Административная веб-панель
-
-Клиентская часть ([admin/web](https://github.com/kotru21/bsuir/tree/main/admin/web)) собрана на React 18 с TypeScript и Vite. Основные узлы:
-
-- [admin/web/src/App.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/App.tsx): декларация роутинга (логин, дашборд, таблица анкет) и контекстов;
-- [admin/web/src/auth/AuthProvider.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/auth/AuthProvider.tsx): управление JWT-cookie, double-submit CSRF и хранение токена;
-- [admin/web/src/charts](https://github.com/kotru21/bsuir/tree/main/admin/web/src/charts): настройка Chart.js визуализаций через TanStack Query и кастомные хуки;
-- [admin/web/src/pages/DashboardPage.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/pages/DashboardPage.tsx) и [admin/web/src/pages/SubmissionsPage.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/pages/SubmissionsPage.tsx): отображение KPI и детализированных записей;
-- [admin/web/src/components](https://github.com/kotru21/bsuir/tree/main/admin/web/src/components): библиотека UI-элементов (Button, Modal, TimelineChart) с Tailwind-классами;
-- [admin/web/src/api](https://github.com/kotru21/bsuir/tree/main/admin/web/src/api): клиент REST-эндпойнтов `/admin/api`.
-
-Конфигурация сборки (Vite + SWC + PostCSS) задаётся в [admin/web/vite.config.ts](https://github.com/kotru21/bsuir/blob/main/admin/web/vite.config.ts) и [admin/web/tailwind.config.ts](https://github.com/kotru21/bsuir/blob/main/admin/web/tailwind.config.ts). Статика админки поставляется через Fastify-маршрут [src/admin/routes/ui.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/ui.ts).
-
-## 7. Серверная инфраструктура Fastify
-
-Файл [src/admin/server.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts) инициализирует Fastify с плагинами JWT, cookie, helmet и statics, затем регистрирует маршруты:
-
-- [src/admin/routes/auth.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/auth.ts): цикл аутентификации администратора (login/logout, выдача CSRF токена);
-- [src/admin/routes/stats.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/stats.ts): агрегированные метрики (количество анкет, распределения по полу, уровню подготовки, временная динамика);
-- [src/admin/routes/submissions.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/submissions.ts): пагинированный список анкет с рекомендациями и причинами;
-- [src/admin/routes/index.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/index.ts): объединяющий модуль для подключения к серверу.
-
-Сервисы [src/admin/services/statisticsService.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/services/statisticsService.ts) и [src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts) взаимодействуют с Prisma-клиентом ([src/infrastructure/prismaClient.ts](https://github.com/kotru21/bsuir/blob/main/src/infrastructure/prismaClient.ts)) и предоставляют данные в виде DTO, совместимых с фронтендом. Поддержка админских страниц обеспечивается маршрутом [src/admin/routes/ui.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/ui.ts), который сервирует Vite-бандл и proxy-запросы к SPA.
-
-## 8. Тестирование и верификация
-
-Unit-тесты ([test](https://github.com/kotru21/bsuir/tree/main/test)) охватывают диалоговые сцены ([test/onboarding.steps.test.ts](https://github.com/kotru21/bsuir/blob/main/test/onboarding.steps.test.ts), [test/onboarding.test.ts](https://github.com/kotru21/bsuir/blob/main/test/onboarding.test.ts)) и рекомендационный движок ([test/recommendation.test.ts](https://github.com/kotru21/bsuir/blob/main/test/recommendation.test.ts), [test/recommendation.cover.test.ts](https://github.com/kotru21/bsuir/blob/main/test/recommendation.cover.test.ts)). Для них используется Vitest с конфигурацией TypeScript (tsx). Дополнительно реализованы проверки AI-сводок ([test/aiSummary.test.ts](https://github.com/kotru21/bsuir/blob/main/test/aiSummary.test.ts)) и контекста сцены ([test/onboarding.context.test.ts](https://github.com/kotru21/bsuir/blob/main/test/onboarding.context.test.ts)).
-
-Контроль качества обеспечивается скриптами `npm run test`, `npm run lint` и `npx tsc --noEmit`. Для визуальной проверки предусмотрен ручной сценарий: запуск `npm run dev`, прохождение анкеты через `/start`, просмотр каталога и сверка аналитики в SPA (см. README).
-
-## 9. Развёртывание и эксплуатация
-
-Проект поддерживает гибридный режим разработки: `npm run dev` одновременно запускает Telegraf (через `tsx src/index.ts`) и Fastify, `npm run dev:admin` — Vite Dev Server для фронтенда. Продуктивная сборка выполняется через `npm run build` (tsc → `dist/index.js`); запуск — `npm start`. Procfile позволяет развернуть сервис на Heroku-подобных платформах. Настройки окружения конфигурируются в `.env` (BOT_TOKEN, DATABASE_URL, ADMIN_JWT_SECRET, параметры AI-инференса). Секция [docs/DEPLOYMENT.md](https://github.com/kotru21/bsuir/blob/main/docs/DEPLOYMENT.md) содержит инструкции по миграции Prisma и вариации окружений.
-
-## 10. Заключение
-
-Репозиторий демонстрирует комплексное решение для автоматизации рекомендаций спортивных секций, объединяющее диалоговый интерфейс и административную аналитику. Чёткое разделение ответственности в модульной структуре, формализованный алгоритм оценки секций и расширяемая инфраструктура Fastify делают проект подходящим кейсом для исследований в областях интеллектуальных рекомендательных систем, цифрового маркетинга и интеграции чат-ботов с аналитическими панелями.
-
-## 11. Поток данных и взаимодействие компонентов
-
-Сценарий обработки запроса начинается в Telegram. Команда `/start` активирует сцену, зарегистрированную в [src/bot/app.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/app.ts); Telegraf работает автономно и не прокидывает контекст в Fastify-сессии. Диалоговые шаги пишут промежуточные значения в `RecommendationSession` ([src/bot/session.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/session.ts)). После получения полного профиля вызывается сервис [src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts), собирающий итоговую структуру `UserProfile`. Далее запускается `recommendSections`, и результирующие рекомендации сериализуются в DTO, пригодное для отправки через MarkdownV2.
-
-Сейчас [src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts) сохраняет агрегированную анкету и топ-N рекомендаций. Логирование детальных реакций (просмотр, интерес, повторный запуск) запланировано на будущее. Параллельно админ-панель опрашивает API `/admin/api/stats/overview` и `/admin/api/stats/timeline`, получая агрегированные метрики из накопленных `SurveySubmission` записей.
-
-## 12. Формализация бизнес-метрик
-
-Статистический модуль формирует сводную карту показателей. Например, ежедневная воронка конверсии рассчитывается как
-
-$$
-  ext{ConversionRate}(d) = \frac{N_{\text{completed}}(d)}{N_{\text{started}}(d)},
-$$
-
-где $N_{\text{started}}(d)$ — количество сессий, начавших сценарий в день $d$, а $N_{\text{completed}}(d)$ — завершивших его и получивших рекомендации. Источник данных — таблица submissions, читаемая Prisma-запросом в `statisticsService.ts`. Дополнительно вычисляется распределение по полу и фитнес-уровням:
-
-$$
-P_{\text{fitness}}(l) = \frac{N_l}{\sum_{k \in \{low,\ medium,\ high\}} N_k},
-$$
-
-что позволяет выявлять смещения в аудитории и адаптировать рекомендации.
-
-## 13. Примеры реализации fitnessStep
-
-Ниже иллюстрирован фрагмент шага выбора уровня подготовки ([src/bot/scenes/onboarding/steps/fitnessStep.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/scenes/onboarding/steps/fitnessStep.ts)), демонстрирующий работу интерактивного «слайдера» и переход к уточнению комфортной интенсивности:
+Файл [`src/bot/app.ts`](https://github.com/kotru21/bsuir/blob/main/src/bot/app.ts) отвечает за сборку бота: подключение сессий, сцен и регистрацию обработчиков.
 
 ```typescript
-if (data === "fitness_prev") {
-  temp.fitnessIndex = Math.max(0, temp.fitnessIndex - 1);
-  await ctx.answerCbQuery?.();
-  await sendFitnessSlider(ctx, "edit");
-  return;
-}
+// src/bot/app.ts
+export function configureBot(bot: Telegraf<RecommendationContext>): void {
+  const stage = new Scenes.Stage<RecommendationContext>([onboardingScene]);
+  bot.use(prismaSession()); // Подключение БД-сессий
+  bot.use(stage.middleware()); // Подключение сцен
 
-if (data === "fitness_next") {
-  temp.fitnessIndex = Math.min(fitnessOrder.length - 1, temp.fitnessIndex + 1);
-  await ctx.answerCbQuery?.();
-  await sendFitnessSlider(ctx, "edit");
-  return;
-}
-
-if (data === "fitness_done") {
-  const profile = ensureProfile(ctx);
-  const level = fitnessOrder[temp.fitnessIndex] ?? "medium";
-  profile.fitnessLevel = level;
-  await ctx.answerCbQuery?.("Уровень сохранен.");
-  resetPromptState(ctx);
-  await sendIntensityComfortPrompt(ctx, "new");
-  await ctx.wizard.next();
-  return;
+  registerCoreCommands(bot); // /start, /restart
+  registerSectionHandlers(bot); // Обработка кнопок секций
+  registerRecommendationCarouselHandlers(bot); // Листание рекомендаций
+  // ...
 }
 ```
 
-Диалоговые шаги опираются на `ensureProfile`/`ensureTemp`, чтобы гарантировать присутствие mutable-объекта профиля и временного состояния, а `sendFitnessSlider`/`sendIntensityComfortPrompt` централизуют форматирование и удаление устаревших сообщений. Такой паттерн упрощает тестирование ([test/onboarding.steps.test.ts](https://github.com/kotru21/bsuir/blob/main/test/onboarding.steps.test.ts)) и делает сценарий устойчивым к повторным нажатиям.
+#### Обработчики команд
 
-## 14. Сервис AI-сводок
-
-Модуль [src/services/aiSummary.ts](https://github.com/kotru21/bsuir/blob/main/src/services/aiSummary.ts) подключает внешний API (Heroku Inference) для генерации текстовых пояснений. Он принимает `RecommendationResult[]`, агрегирует причины и отправляет запрос в модель. Для избежания перегрева внешнего сервиса реализован rate limiting и таймаут, а fallback возвращает шаблонные пояснения. При наличии API-ключа админ-панель отображает AI-обзор в карточках рекомендаций; при отсутствии — использует статическое описание из [src/bot/services/recommendationPresenter.ts](https://github.com/kotru21/bsuir/blob/main/src/bot/services/recommendationPresenter.ts).
-
-## 15. Обеспечение безопасности
-
-Сервер Fastify применяет несколько уровней защиты:
-
-- httpOnly JWT-cookie подписываются секретом `ADMIN_JWT_SECRET`, полезная нагрузка хранит имя администратора и `xsrfToken` для сверки;
-- CSRF-модуль генерирует токены, выдаваемые эндпойнтом `/csrf` и проверяемые на POST-запросах;
-- маршруты администратора оборачиваются middleware аутентификации ([src/admin/routes/auth.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/auth.ts)), которое проверяет наличие валидной сессии и блокирует доступ к статистике без авторизации;
-- Telegram-бот фильтрует входящие сообщения, обрабатывая только разрешённые команды, и логирует невалидные callback-данные для аудита.
-
-## 16. Производительность и масштабирование
-
-При росте трафика архитектура предусматривает горизонтальную масштабируемость. Fastify и Telegraf могут быть разделены на отдельные процессы с использованием очередей сообщений (например, Redis) для передачи событий. Prisma поддерживает пул подключений к PostgreSQL, а статический каталог секций кэшируется в памяти процесса и обновляется при деплое. Для админ-панели предусмотрена сборка CDN-friendly артефактов Vite; gzip/бротли-настройки могут быть добавлены на уровне reverse proxy.
-
-## 17. Перспективы исследований
-
-Представленный прототип служит основой для дальнейших научных экспериментов:
-
-- внедрение гибридного рекомендательного алгоритма, который поверх текущего векторного косинусного движка добавляет модели машинного обучения (например, факторизацию матриц по собранным отзывам);
-- анализ пользовательских траекторий с применением методов когортного анализа и доверительных интервалов для ConversionRate;
-- интеграция A/B-тестов в процесс выдачи рекомендаций, что позволит количественно оценивать влияние новых правил построения векторов и параметров `computeCosineSimilarity` на ключевые метрики.
-
-Эти направления могут быть описаны в дальнейших главах научной работы, используя полученный код как экспериментальную платформу.
-
-## 18. API админ-панели
-
-REST-интерфейс расположен под префиксом `/admin/api` и обслуживается маршрутами Fastify ([src/admin/routes](https://github.com/kotru21/bsuir/tree/main/src/admin/routes)). Аутентификация построена на httpOnly JWT-cookie (подписываются `@fastify/jwt`) и double-submit CSRF: читаемая cookie `admin_csrf` должна совпадать с заголовком `x-csrf-token` или полем `csrfToken`. Эндпойнты разделяются на три группы:
-
-- мониторинг (`GET /health`, `GET /csrf`, `GET /session`);
-- аналитика (`GET /stats/overview`, `/stats/demographics`, `/stats/timeline?rangeDays=N`);
-- анкеты (`GET /submissions?page=1&pageSize=25`).
-
-Запросы валидируются через `zod` (см. пример в [src/admin/routes/stats.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/routes/stats.ts)). Клиентская сторона использует универсальный `apiFetch` ([admin/web/src/api/client.ts](https://github.com/kotru21/bsuir/blob/main/admin/web/src/api/client.ts)), который автоматически сериализует тело, прикрепляет cookie и маршрутизирует ошибки:
+Основные команды (`/start`, `/restart`) регистрируются в [`src/bot/handlers/commands.ts`](https://github.com/kotru21/bsuir/blob/main/src/bot/handlers/commands.ts). Они отвечают за вход в сцену анкетирования.
 
 ```typescript
-const response = await fetch(`${API_BASE}${path}`, {
-  method: method ?? "GET",
-  credentials: "include",
-  headers: finalHeaders,
-  body: isJsonBody ? JSON.stringify(body) : null,
-  ...rest,
-});
-
-if (!response.ok) {
-  if (response.status === 401 && !suppressUnauthorizedEvent) {
-    window.dispatchEvent(new CustomEvent("admin:unauthorized"));
-  }
-  throw buildError(response.status, await response.json().catch(() => null));
+// src/bot/handlers/commands.ts
+export function registerCoreCommands(
+  bot: Telegraf<RecommendationContext>
+): void {
+  bot.start(
+    wrapBotHandler(async (ctx) => {
+      await ctx.scene.enter("onboarding");
+    })
+  );
+  // ...
 }
 ```
 
-Таким образом, фронтенд реагирует на истекшие сессии, инициируя повторный вход. Fastify-плагин [src/admin/plugins/authentication.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/plugins/authentication.ts) дополняет запросы методами `requireAdminAuth`, `issueAdminCsrfToken`, `verifyAdminCsrfToken`, формируя строгий контур безопасности.
+#### Сцены (Scenes)
 
-## 19. Хранилище данных и Prisma
+Основная логика взаимодействия сосредоточена в [`src/bot/scenes/onboarding.ts`](https://github.com/kotru21/bsuir/blob/main/src/bot/scenes/onboarding.ts). Используется `WizardScene` для пошагового сбора данных.
 
-Приложение использует PostgreSQL и Prisma ORM. Схема [prisma/schema.prisma](https://github.com/kotru21/bsuir/blob/main/prisma/schema.prisma) включает `SurveySubmission` (агрегированная анкета) и `RecommendationSnapshot` (сохранённые карточки выдачи). Дополнительные таблицы (`Profile`, `Interaction` и др.) пока не реализованы и описаны как возможное развитие в документации [docs/DATABASE.md](https://github.com/kotru21/bsuir/blob/main/docs/DATABASE.md). Операции выполняются через сервисы:
+**Шаги сцены:**
 
-- [src/services/profileAssembler.ts](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts) — формирует DTO для сохранения анкет;
-- [src/services/submissionRecorder.ts](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts) — записывает рекомендации и агрегированную анкету;
-- [src/admin/services/statisticsService.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/services/statisticsService.ts) — агрегирует данные для API.
+1. **introStep:** Приветствие.
+2. **ageSelectionStep:** Выбор возраста (клавиатура с инкрементом/декрементом).
+3. **genderStep:** Выбор пола.
+4. **fitnessStep:** Оценка уровня подготовки.
+5. **intensityComfortStep:** Предпочтительная интенсивность.
+6. **formatStep:** Формат тренировок (группа/индивидуально).
+7. **goalStep:** Выбор целей (похудение, сила, гибкость и т.д.).
+8. **goalPriorityStep:** Приоритизация выбранных целей.
+9. **contactPreferenceStep:** Отношение к контактным видам спорта.
+10. **competitionInterestStep:** Интерес к соревнованиям.
 
-Миграции управляются командами `npx prisma migrate deploy` и `npx prisma migrate dev --name <label>`. Для резервного копирования предлагаются команды `pg_dump` и `pg_restore`, адаптированные к переменной окружения `DATABASE_URL`. В разработке к базе подключается `connectPrisma()` внутри [src/index.ts](https://github.com/kotru21/bsuir/blob/main/src/index.ts); при отсутствии `DATABASE_URL` приложение запускается в режим без аналитики, выводя предупреждение.
+Каждый шаг обернут в `wrapSceneStep` для безопасной обработки ошибок.
 
-## 20. Развёртывание и конфигурация
+#### Клавиатуры и Callback Data
 
-Файл [docs/DEPLOYMENT.md](https://github.com/kotru21/bsuir/blob/main/docs/DEPLOYMENT.md) описывает два режима: локальную разработку и продакшен. Основные переменные окружения включают `BOT_TOKEN`, `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ADMIN_JWT_SECRET`, параметры Fastify (`FASTIFY_HOST`, `FASTIFY_PORT`).
+Все клавиатуры генерируются в [`src/bot/keyboards.ts`](https://github.com/kotru21/bsuir/blob/main/src/bot/keyboards.ts). Используется строгий формат `callback_data`: `prefix:payload`.
 
-Сборка выполняется через `npm run build` (tsc) с последующим `npm start`. Для разработки используется `npm run dev`, комбинирующий запуск Fastify и Telegraf, а клиентской части — `npm run dev:admin`. Конфигурация админки (`loadAdminConfig`) определяет необходимость авторизации, TTL JWT, имена cookie для токена/CSRF и параметры безопасности. Procfile упрощает деплой на Heroku-совместимые платформы.
+Примеры:
 
-## 21. Жизненный цикл приложений
+- **age:+1** — увеличить возраст на 1.
+- **gender:male** — выбрать мужской пол.
+- **rec:section_id** — показать детали рекомендации.
 
-[src/index.ts](https://github.com/kotru21/bsuir/blob/main/src/index.ts) координирует запуск системных компонентов:
+#### Управление сессиями (Session Management)
 
-1. загрузка `.env` и сбор конфигурации;
-2. инициализация Prisma-подключения (если задана база);
-3. построение Fastify-сервера (`buildAdminServer`), регистрация маршрутов и запуск на порту `PORT || 3000`;
-4. настройка Telegraf-бота (`configureBot`) и запуск `bot.launch()`;
-5. обработка сигналов `SIGINT`, `SIGTERM` с корректным выключением сервера, бота и базы.
+Для персистентности данных между перезапусками сервера используется кастомный middleware `prismaSession` ([`src/bot/prismaSession.ts`](https://github.com/kotru21/bsuir/blob/main/src/bot/prismaSession.ts)).
 
-Обработчики ошибок регистрируются через `process.on("unhandledRejection", ...)`, что обеспечивает журналирование неожиданных промис-ошибок.
+**Алгоритм работы middleware:**
 
-## 22. Конфиденциальность и обеспечение доступа
+1. **Load:** При каждом обновлении (update) извлекает сессию из таблицы `Session` по ключу `chatId`.
+2. **Inject:** Десериализует JSON и помещает в `ctx.session`.
+3. **Next:** Передает управление дальше по цепочке middleware.
+4. **Save:** После обработки обновления сериализует `ctx.session` и выполняет `upsert` в БД.
 
-Fastify-плагин аутентификации (см. раздел 15) реализован в [src/admin/plugins/authentication.ts](https://github.com/kotru21/bsuir/blob/main/src/admin/plugins/authentication.ts): он проверяет пароль с помощью Argon2 и генерирует уникальные CSRF-токены. При завершении сессии (`POST /logout`) используется `request.reply.clearAdminSession()` для уничтожения cookie. В SPA за отлов истекших сессий отвечает контекст `AuthProvider` ([admin/web/src/auth/AuthProvider.tsx](https://github.com/kotru21/bsuir/blob/main/admin/web/src/auth/AuthProvider.tsx)):
+```typescript
+// src/bot/prismaSession.ts (упрощено)
+export function prismaSession(): Middleware<RecommendationContext> {
+  return async (ctx, next) => {
+    const key = ctx.chat?.id?.toString();
+    // Загрузка сессии из БД
+    const record = await prisma.session.findUnique({ where: { key } });
+    ctx.session = record ? JSON.parse(record.value) : {};
+
+    await next();
+
+    // Сохранение сессии после обработки
+    await prisma.session.upsert({
+      where: { key },
+      update: { value: JSON.stringify(ctx.session) },
+      create: { key, value: JSON.stringify(ctx.session) },
+    });
+  };
+}
+```
+
+### 4.2. Админ-бэкенд (Fastify)
+
+Используется `Fastify` из-за его производительности и богатой экосистемы плагинов.
+
+#### Инициализация сервера
+
+Файл [`src/admin/server.ts`](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts) настраивает Fastify инстанс, подключает плагины безопасности (Helmet, JWT) и регистрирует маршруты.
+
+```typescript
+// src/admin/server.ts
+export async function buildAdminServer(
+  options: BuildAdminServerOptions
+): Promise<FastifyInstance> {
+  const instance = fastify({ trustProxy: true });
+  // ...
+  await registerHelmet(instance);
+  await registerCorePlugins(instance);
+  await registerAdminRoutes(instance, { config: resolvedConfig });
+  return instance;
+}
+```
+
+#### Аутентификация и Безопасность
+
+Реализована схема на основе JWT и Double Submit Cookie для защиты от CSRF.
+
+- **JWT:** Хранится в `httpOnly` cookie. Подписывается с использованием `@fastify/jwt`.
+- **CSRF:** Токен генерируется сервером и отправляется в `httpOnly: false` cookie. Клиент (React) должен прочитать этот cookie и передать его значение в заголовке `x-csrf-token` при каждом мутирующем запросе (POST, PUT, DELETE).
+- **Валидация:** Все входные данные валидируются с помощью библиотеки `zod`.
+
+#### API Эндпоинты
+
+Все маршруты находятся в [`src/admin/routes/`](https://github.com/kotru21/bsuir/tree/main/src/admin/routes).
+
+- `GET /api/stats/overview`: Общая статистика (всего анкет, топ секций).
+- `GET /api/stats/demographics`: Распределение по полу, возрасту и уровню подготовки.
+- `GET /api/stats/timeline`: Динамика заполнения анкет по дням.
+- `GET /api/sections`: CRUD для спортивных секций.
+- `POST /api/upload`: Загрузка изображений (multipart/form-data).
+
+### 4.3. Админ-фронтенд (React)
+
+Frontend реализован как Single Page Application (SPA) на базе React 19.2 и Vite.
+
+#### Технологический стек
+
+- **Core:** React 19.2, TypeScript.
+- **Build:** Vite.
+- **Routing:** `react-router-dom`.
+- **Styling:** Tailwind CSS.
+- **Visualization:** Chart.js (через `react-chartjs-2`).
+- **State Management:** React Context (для авторизации), локальный стейт компонентов.
+
+#### Архитектура приложения
+
+Приложение обернуто в несколько провайдеров:
+
+1. **GlobalErrorBoundary:** Перехват критических ошибок рендеринга.
+2. **AuthProvider:** Управление состоянием сессии и CSRF-токенами.
+3. **Router:** Маршрутизация.
+
+**Маршрутизация:**
+Используется компонент `ProtectedRoute` для защиты приватных маршрутов. Если пользователь не авторизован, происходит редирект на `/login`.
+
+#### Взаимодействие с API
+
+Для запросов к бэкенду используется утилита `apiFetch` ([`src/api/client.ts`](https://github.com/kotru21/bsuir/blob/main/admin/web/src/api/client.ts)), которая:
+
+- **Headers:** Автоматически добавляет заголовок `Content-Type: application/json`.
+- **Security:** Внедряет CSRF-токен в заголовки мутирующих запросов.
+- **Errors:** Обрабатывает ошибки HTTP (выбрасывает типизированный `ApiError`).
+- **Timeout:** Управляет таймаутами запросов.
+
+#### Оптимизация производительности
+
+Используется Code Splitting для тяжелых компонентов (графики). Они загружаются лениво через `React.lazy` и `Suspense`.
 
 ```tsx
-useEffect(() => {
-  const handleUnauthorized = () => {
-    setState((prev) => ({
-      ...prev,
-      authenticated: false,
-      username: null,
-      csrfToken: null,
-      error: "Сессия истекла. Войдите снова.",
-    }));
-  };
-  window.addEventListener("admin:unauthorized", handleUnauthorized);
-  return () =>
-    window.removeEventListener("admin:unauthorized", handleUnauthorized);
-}, []);
+// Пример ленивой загрузки графика
+const GenderDistributionChart = lazy(() =>
+  import("../components/GenderDistributionChart").then((m) => ({
+    default: m.GenderDistributionChart,
+  }))
+);
 ```
 
-Так достигается непротиворечивость между серверной и клиентской сессиями.
+### 4.4. Движок рекомендаций
 
-## 23. Руководство для контрибьюторов
+Ядро системы — векторное сравнение профиля пользователя и характеристик секции. Логика находится в [`src/recommendation.ts`](https://github.com/kotru21/bsuir/blob/main/src/recommendation.ts).
 
-Документ [docs/CONTRIBUTING.md](https://github.com/kotru21/bsuir/blob/main/docs/CONTRIBUTING.md) устанавливает процессы внесения изменений:
+#### Кэширование
 
-- использовать Node.js 24.11+, настраивать `.env` и выполнять миграции перед разработкой;
-- придерживаться TypeScript-стиля без неявного `any`, сохранять расширения `.js` в импортах;
-- перед Pull Request запускать `npm run lint`, `npm run test`, `npx tsc --noEmit`;
-- оформлять коммиты в стиле Conventional (`feat:`, `fix:`, `docs:` и т.д.).
+Секции загружаются из БД и кэшируются в памяти на 5 минут (`CACHE_TTL_MS = 300000`). Это снижает нагрузку на БД при массовых запросах.
 
-Для UI-изменений ожидаются скриншоты, а для функциональных — описание шагов тестирования. Такой регламент облегчает ревью и поддерживает консистентность кодовой базы.
+#### Векторизация
 
-## 24. Роадмап и развитие
+Профиль пользователя и каждая секция преобразуются в многомерные векторы `SimilarityVector`.
 
-README содержит план развития, классифицированный по горизонту времени:
+**Измерения вектора:**
 
-- Q4 2025: интеграция с CRM, многоязычность, расширенная аналитика;
-- Q1–Q2 2026: динамический каталог, запись на занятия, система уведомлений;
-- 2026+: AI-ассистент по тренировкам, мобильные приложения, геймификация.
+1. **Goals (Цели):** Вес каждой цели (например, `goal:weight_loss`) определяется приоритетом пользователя.
+2. **Formats (Форматы):** Предпочтения по формату тренировок (группа/соло).
+3. **Intensity (Интенсивность):** Числовое значение (0 - low, 0.5 - medium, 1 - high).
+4. **Contact (Контактность):** Уровень физического контакта.
 
-Эти направления задают траекторию эволюции платформы и могут быть использованы для построения научных гипотез о масштабировании рекомендательных сервисов.
+#### Алгоритм расчета
+
+1. **Построение векторов:** Формируются векторы пользователя $V_u$ и секции $V_s$.
+2. **Нормализация:** Векторы приводятся к единичной длине.
+3. **Косинусное сходство:** Вычисляется скалярное произведение:
+   $$ Similarity = \frac{V_u \cdot V_s}{||V_u|| \times ||V_s||} $$
+4. **Фильтрация:** Исключаются секции, не подходящие по жестким критериям (например, возрастные ограничения).
+
+```typescript
+// Пример весов интенсивности
+const fitnessScalar: Record<FitnessLevel, number> = {
+  low: 0,
+  medium: 0.5,
+  high: 1,
+};
+```
+
+### 4.5. Сервисный слой
+
+#### Сборка профиля (Profile Assembler)
+
+[`src/services/profileAssembler.ts`](https://github.com/kotru21/bsuir/blob/main/src/services/profileAssembler.ts) преобразует "сырые" данные из сессии (Draft) в валидный `UserProfile`.
+
+```typescript
+// src/services/profileAssembler.ts
+export function assembleUserProfile(draft: ProfileDraft): UserProfile {
+  return {
+    age: draft.age ?? AGE_DEFAULT,
+    gender: draft.gender ?? "unspecified",
+    // ... маппинг остальных полей
+  };
+}
+```
+
+#### Сохранение результатов (Submission Recorder)
+
+[`src/services/submissionRecorder.ts`](https://github.com/kotru21/bsuir/blob/main/src/services/submissionRecorder.ts) отвечает за сохранение результатов анкетирования в базу данных. Он создает запись `SurveySubmission` и связанные `RecommendationSnapshot`.
+
+```typescript
+// src/services/submissionRecorder.ts
+export async function recordSubmission(
+  payload: SubmissionRecordPayload
+): Promise<void> {
+  // ...
+  await prisma.surveySubmission.create({
+    data: {
+      // ... данные профиля
+      recommendations: {
+        create: recommendationData, // ... топ-5 рекомендаций
+      },
+    },
+  });
+}
+```
+
+## 5. Модель данных (Prisma Schema)
+
+Схема БД спроектирована для поддержки как операционных данных (сессии, секции), так и аналитических (анкеты).
+
+### Основные модели
+
+#### SurveySubmission
+
+Хранит результаты заполненной анкеты. Используется для аналитики.
+
+```prisma
+model SurveySubmission {
+  id                       String                     @id @default(cuid())
+  telegramUserId           String?
+  chatId                   String?
+  age                      Int
+  gender                   String
+  fitnessLevel             String
+  preferredFormats         String[]
+  desiredGoals             String[]
+  avoidContact             Boolean
+  interestedInCompetition  Boolean
+  aiSummary                String?
+  createdAt                DateTime                   @default(now())
+  recommendations          RecommendationSnapshot[]
+
+  @@index([createdAt])
+  @@index([gender])
+  @@index([fitnessLevel])
+}
+```
+
+#### RecommendationSnapshot
+
+Хранит "снимок" выданных рекомендаций для каждой анкеты. Позволяет анализировать качество работы алгоритма.
+
+```prisma
+model RecommendationSnapshot {
+  id            String           @id @default(cuid())
+  submission    SurveySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId  String
+  sectionId     String
+  sectionName   String
+  score         Float
+  rank          Int
+  reasons       Json?            // Объяснение, почему секция была рекомендована
+  createdAt     DateTime         @default(now())
+
+  @@index([submissionId, rank])
+  @@index([sectionId])
+}
+```
+
+#### SportSection
+
+Каталог секций. Поле `similarityVector` хранит прекалькулированный вектор характеристик для ускорения поиска.
+
+```prisma
+model SportSection {
+  id               String   @id @default(cuid())
+  title            String
+  description      String
+  // ... другие поля ...
+  similarityVector Json     // Векторное представление для алгоритма
+}
+```
+
+## 6. Разработка и эксплуатация
+
+### 6.1. Конфигурация
+
+Система настраивается через переменные окружения (файл `.env`).
+
+| Переменная         | Описание                           | Обязательно | Значение по умолчанию |
+| :----------------- | :--------------------------------- | :---------- | :-------------------- |
+| `BOT_TOKEN`        | Токен Telegram бота                | Да          | -                     |
+| `DATABASE_URL`     | Строка подключения к PostgreSQL    | Да          | -                     |
+| `ADMIN_USERNAME`   | Логин администратора               | Нет         | `admin`               |
+| `ADMIN_PASSWORD`   | Пароль администратора (plain text) | Да\*        | -                     |
+| `ADMIN_JWT_SECRET` | Секрет для подписи JWT             | Да          | -                     |
+| `OPENAI_API_KEY`   | Ключ API OpenAI (для саммари)      | Нет         | -                     |
+
+_\* Требуется либо `ADMIN_PASSWORD`, либо `ADMIN_PASSWORD_HASH`._
+
+### 6.2. Запуск
+
+Точка входа [`src/index.ts`](https://github.com/kotru21/bsuir/blob/main/src/index.ts) оркестрирует запуск всех подсистем.
+
+1. **Init:** Загрузка переменных окружения.
+2. **DB:** Подключение Prisma Client.
+3. **Admin:** Запуск Fastify сервера на порту 3000.
+4. **Bot:** Запуск Telegraf в режиме Long Polling.
+
+### 6.3. Тестирование
+
+Проект использует встроенный раннер `bun test` для модульного и интеграционного тестирования.
+
+**Запуск тестов:**
+
+```bash
+bun run test
+```
+
+**Покрытие:**
+
+- **Unit:** Логика рекомендаций (`src/recommendation.test.ts`), утилиты.
+- **Integration:** Сценарии бота (`test/onboarding.test.ts`), API админки.
+- **Snapshot:** Рендеринг React-компонентов.
+
+**Обработка ошибок:**
+
+Глобальные перехватчики `unhandledRejection` и `uncaughtException` предотвращают падение процесса при некритичных ошибках.
+
+## 7. Перспективы развития
+
+Текущая архитектура закладывает фундамент для масштабирования:
+
+1. **Очереди:** Вынос тяжелых задач (генерация AI-ответов, рассылка уведомлений) в фоновые воркеры (например, BullMQ + Redis).
+2. **ML:** Замена эвристического векторного движка на обучаемую модель ранжирования (Learning to Rank) на основе накопленных данных в `RecommendationSnapshot`.
+3. **CDN:** Вынос статики и изображений в S3-совместимое хранилище (MinIO, AWS S3).
+4. **Web App:** Интеграция Telegram Mini Apps для замены текстового Wizard-интерфейса на полноценный Web UI внутри бота.

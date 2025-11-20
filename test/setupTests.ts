@@ -1,6 +1,12 @@
-// Setup file for Vitest (jsdom environment). Add global configuration or polyfills here.
-// Import jest-dom matchers to get nice assertions like `toBeDisabled` and `toHaveTextContent`.
+// Global setup file executed by Bun's test runner to emulate a browser environment.
+import { afterEach } from "bun:test";
+import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
+
+// Ensure React Testing Library does not leak DOM between tests.
+afterEach(() => {
+  cleanup();
+});
 
 // Polyfill `localStorage` in case the test environment doesn't provide one.
 // This makes tests that set/get items resilient across environments.

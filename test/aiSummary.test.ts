@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { resolveAiConfig } from "../src/services/aiSummary.js";
 
 describe("resolveAiConfig", () => {

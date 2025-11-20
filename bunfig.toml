@@ -1,0 +1,15 @@
+[install]
+# Link workspace packages into node_modules
+linkWorkspacePackages = true
+
+[serve]
+# Customize the dev server
+port = 3000
+
+[build]
+# Set default options for bun build
+minify = true
+sourcemap = true
+
+[test]
+preload = ["./test/happydom.ts", "./test/setupTests.ts"]

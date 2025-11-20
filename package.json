@@ -4,20 +4,23 @@
   "description": "Telegram bot prototype for recommending educational sports sections based on user preferences and physical data.",
   "type": "module",
   "scripts": {
-    "build": "npm run build:admin && npm run build:bot",
-    "build:admin": "vite build --config admin/web/vite.config.ts",
-    "build:bot": "tsc",
-    "heroku-postbuild": "npm run build",
-    "migrate:deploy": "npx prisma db push && npx prisma db seed",
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts",
-    "dev:admin": "vite dev --config admin/web/vite.config.ts",
-    "dev:server": "tsx src/index.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint --ext .ts,.tsx src admin/web/src test",
-    "coverage": "c8 --reporter=text --reporter=lcov npm test",
-    "coverage:ci": "c8 --reporter=lcov --reporter=text npm test"
+    "build": "bun run build:admin && bun run build:bot",
+    "build:admin": "bunx vite build --config admin/web/vite.config.ts",
+    "build:bot": "bunx tsc",
+    "heroku-postbuild": "bun run build",
+    "migrate:deploy": "bunx prisma db push && bunx prisma db seed",
+    "start": "bun dist/index.js",
+    "dev": "bunx tsx src/index.ts",
+    "dev:admin": "bunx vite dev --config admin/web/vite.config.ts",
+    "dev:server": "bunx tsx src/index.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "lint": "bunx eslint --ext .ts,.tsx src admin/web/src test",
+    "coverage": "bun test --coverage",
+    "coverage:ci": "bun test --coverage",
+    "lock:migrate": "bun pm migrate",
+    "start:node": "node dist/index.js",
+    "build:admin:bun": "bun build admin/web/src/main.tsx --outdir admin/web/dist --minify --target=es2022"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
@@ -46,6 +49,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@happy-dom/global-registrator": "^20.0.10",
     "@tailwindcss/postcss": "^4.1.17",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
@@ -56,6 +60,7 @@
     "@typescript-eslint/eslint-plugin": "^8.47.0",
     "@typescript-eslint/parser": "^8.47.0",
     "@vitejs/plugin-react": "^5.1.1",
+    "bun-types": "^1.3.2",
     "c8": "^10.1.3",
     "eslint": "^9.39.1",
     "eslint-plugin-jsx-a11y": "^6.9.0",
@@ -68,10 +73,7 @@
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.47.0",
-    "vite": "^7.2.2",
-    "vitest": "^4.0.10"
+    "vite": "^7.2.2"
   },
-  "engines": {
-    "node": ">=24.11.1 <26"
-  }
+  "packageManager": "bun@1.0.0"
 }

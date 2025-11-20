@@ -43,7 +43,7 @@ flowchart TB
    subgraph Data["Слой данных"]
       Prisma["Prisma ORM"]
       DB[(PostgreSQL)]
-      Catalog[("Каталог секций<br/>sections.ts + images")]
+      Catalog[("Каталог секций (в БД)")]
    end
 
    User <-->|Telegram Bot API| BotHandlers
@@ -73,6 +73,7 @@ flowchart TB
 - Telegram-бот и веб-панель используют общие сервисы и инфраструктуру.
 - Рекомендательный движок нормализует векторы профиля и секций, считает косинусное сходство и сохраняет лучшие результаты через Prisma.
 - Статистика и список анкет обслуживаются REST API, защищённым httpOnly JWT-cookie и double-submit CSRF (login/logout).
+- Каталог секций и сессии пользователей хранятся в PostgreSQL и доступны через Prisma ORM.
 
 </details>
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "bun:test";
 import { introStep } from "../src/bot/scenes/onboarding/steps/introStep.js";
 import { ageSelectionStep } from "../src/bot/scenes/onboarding/steps/ageSelectionStep.js";
 import { RecommendationContext } from "../src/bot/session.js";

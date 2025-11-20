@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { generateRecommendationSummary } from "../src/services/aiSummary.js";
 import type { UserProfile, RecommendationResult } from "../src/types.js";
 

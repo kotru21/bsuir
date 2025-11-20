@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { replyWithPhotoMarkdownV2Safe } from "../src/bot/telegram.js";
 
 describe("replyWithPhotoMarkdownV2Safe", () => {

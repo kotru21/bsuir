@@ -31,7 +31,7 @@ export async function registerUiRoutes(
     }
     if (!cachedIndex) {
       reply.code(503).type("application/json").send({
-        error: "Admin UI is not built yet. Run npm run build:admin.",
+        error: "Admin UI is not built yet. Run bun run build:admin.",
       });
       return;
     }

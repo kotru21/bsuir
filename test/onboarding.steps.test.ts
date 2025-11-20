@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "bun:test";
 import { sportSections } from "../prisma/data/sections.js";
 
 vi.mock("../src/infrastructure/prismaClient.js", () => ({
@@ -8,6 +8,10 @@ vi.mock("../src/infrastructure/prismaClient.js", () => ({
       findMany: vi.fn().mockResolvedValue(sportSections),
     },
   }),
+}));
+
+vi.mock("../src/services/submissionRecorder.js", () => ({
+  recordSubmission: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { formatStep } from "../src/bot/scenes/onboarding/steps/formatStep.js";

@@ -102,13 +102,13 @@ export function SectionsPage(): React.JSX.Element {
                     variant="secondary"
                     size="sm"
                     onClick={() => handleEdit(section)}>
-                    Edit
+                    Редактировать
                   </Button>
                   <Button
                     variant="danger"
                     size="sm"
                     onClick={() => handleDelete(section.id)}>
-                    Delete
+                    Удалить
                   </Button>
                 </div>
               </div>

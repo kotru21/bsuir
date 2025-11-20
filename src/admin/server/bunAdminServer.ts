@@ -1,16 +1,18 @@
-import path from "node:path";
 import { password as bunPassword } from "bun";
 import { registerAdminRoutes } from "../routes/index.js";
 import type { RouteHandler, HttpMethod } from "../http/types.js";
 import { RouteRegistry } from "../http/router.js";
-import { AdminRequestContext, HttpError, stripBody } from "../http/context.js";
 import {
-  createStaticAssetService,
-  type StaticAssetService,
-} from "../http/staticAssets.js";
+  HttpError,
+  stripBody,
+  type AdminRequestContext,
+} from "../http/context.js";
 import { createJwtManager, type JwtManager } from "../http/jwt.js";
 import { buildSecurityHeaders } from "../http/security.js";
 import { normalizeBasePath } from "../http/pathUtils.js";
+import type { StaticAssetService } from "../http/staticAssets.js";
+import { createContextFactory, type CreateContext } from "./contextFactory.js";
+import { createStaticResources } from "./staticResources.js";
 import type { AdminServer } from "./types.js";
 import type { ResolvedAdminConfig } from "../config.js";
 
@@ -20,28 +22,30 @@ export class BunAdminServer implements AdminServer {
   private readonly config: ResolvedAdminConfig;
   private readonly rootDir: string;
   private readonly staticRoot: string;
-  private readonly imageRoots: string[];
   private readonly basePath: string;
   private readonly securityHeaders: Record<string, string>;
   private readonly jwtManager: JwtManager;
   private readonly staticService: StaticAssetService;
+  private readonly contextFactory: CreateContext;
 
   constructor(params: { config: ResolvedAdminConfig; rootDir: string }) {
     this.config = params.config;
     this.rootDir = params.rootDir;
-    this.staticRoot = path.resolve(this.rootDir, "dist", "admin");
-    this.imageRoots = [
-      path.resolve(this.rootDir, "data", "images"),
-      path.resolve(this.rootDir, "src", "data", "images"),
-    ];
     this.basePath = normalizeBasePath(this.config.basePath);
     this.securityHeaders = buildSecurityHeaders(this.config);
     this.jwtManager = createJwtManager(this.config);
-    this.staticService = createStaticAssetService({
+    const staticResources = createStaticResources({
+      rootDir: this.rootDir,
       basePath: this.basePath,
-      staticRoot: this.staticRoot,
-      imageRoots: this.imageRoots,
       securityHeaders: this.securityHeaders,
+    });
+    this.staticRoot = staticResources.staticRoot;
+    this.staticService = staticResources.staticService;
+    this.contextFactory = createContextFactory({
+      config: this.config,
+      securityHeaders: this.securityHeaders,
+      jwtManager: this.jwtManager,
+      credentialVerifier: this.verifyAdminCredentials.bind(this),
     });
   }
 
@@ -119,7 +123,7 @@ export class BunAdminServer implements AdminServer {
     const match = this.router.match(normalizedMethod, url.pathname);
 
     if (match) {
-      const ctx = this.createContext(
+      const ctx = this.contextFactory(
         request,
         url,
         normalizedMethod,
@@ -135,7 +139,7 @@ export class BunAdminServer implements AdminServer {
       }
     }
 
-    const fallbackCtx = this.createContext(request, url, normalizedMethod, {});
+    const fallbackCtx = this.contextFactory(request, url, normalizedMethod, {});
     return fallbackCtx.json(
       {
         status: "not-found",
@@ -143,24 +147,6 @@ export class BunAdminServer implements AdminServer {
       },
       404
     );
-  }
-
-  private createContext(
-    request: Request,
-    url: URL,
-    method: HttpMethod,
-    params: Record<string, string>
-  ): AdminRequestContext {
-    return new AdminRequestContext({
-      request,
-      url,
-      method,
-      params,
-      config: this.config,
-      securityHeaders: this.securityHeaders,
-      credentialVerifier: this.verifyAdminCredentials.bind(this),
-      jwtManager: this.jwtManager,
-    });
   }
 
   private handleRouteError(error: unknown, ctx: AdminRequestContext): Response {

@@ -23,7 +23,6 @@ export class GlobalErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: unknown) {
-    // Basic logging - keep minimal, optionally integrate with logging service
     console.error("Unhandled error in component tree:", error, info);
     this.setState({ error });
   }
@@ -39,6 +38,12 @@ export class GlobalErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return <ServerErrorPage onReset={this.reset} />;
     }
-    return this.props.children ?? null;
+
+    try {
+      return this.props.children ?? null;
+    } catch (err) {
+      console.error("Unhandled error in component tree (render):", err);
+      return <ServerErrorPage onReset={this.reset} />;
+    }
   }
 }

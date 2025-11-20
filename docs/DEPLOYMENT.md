@@ -104,6 +104,25 @@ bun pm migrate
 - Если требуется устойчивость сессий бота, рассмотрите подключение Redis и замену in-memory хранилища.
   bun start
 
+### Деплой на Heroku (Bun)
+
+Heroku по умолчанию ставит только Node.js, поэтому перед запуском `bun run build` или `bun dist/server.js` необходимо добавить buildpack с бинарём Bun.
+
+1. Убедитесь, что приложение использует buildpack [`https://github.com/jakeg/heroku-buildpack-bun`](https://github.com/jakeg/heroku-buildpack-bun). Самый простой способ — оставить файл `app.json` из репозитория или настроить вручную:
+
+   ```powershell
+   heroku buildpacks:clear
+   heroku buildpacks:add https://github.com/jakeg/heroku-buildpack-bun
+   ```
+
+2. По желанию зафиксируйте версию Bun (совпадает с `packageManager`) через переменную `BUN_VERSION`:
+
+   ```powershell
+   heroku config:set BUN_VERSION=1.0.0
+   ```
+
+3. Задеплойте код как обычно (`git push heroku main`). Buildpack автоматически выполнит `bun install`, `bun run build` и скрипт `Procfile` (release/web). Ошибка `sh: 1: bun: not found` исчезнет, потому что бинарь устанавливается ещё на этапе сборки.
+
 ### SPA fallback при хостинге админки
 
 Админ-панель — SPA. Если вы разворачиваете `admin/web` как статический сайт (Netlify, Vercel и т.п.), добавьте правила переписывания путей, чтобы клиентский роутер React мог обрабатывать 404/404-пути (в противном случае запросы на произвольные пути будут возвращать 404 от сервера).

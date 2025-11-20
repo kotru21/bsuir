@@ -1,0 +1,15 @@
+{
+  "name": "bsuir-sport-marketing-bot",
+  "description": "Telegram bot for BSUIR sport section recommendations",
+  "buildpacks": [
+    {
+      "url": "https://github.com/jakeg/heroku-buildpack-bun"
+    }
+  ],
+  "env": {
+    "BUN_VERSION": {
+      "description": "Pin Bun runtime version used during Heroku builds",
+      "value": "1.3.2"
+    }
+  }
+}

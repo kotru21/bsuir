@@ -162,6 +162,29 @@ export async function buildAdminServer(
     index: false,
   });
 
+  // Serve images from data/images
+  const imagesRoot = path.resolve(process.cwd(), "data", "images");
+  // Fallback for dev environment if data/images is in src
+  const srcImagesRoot = path.resolve(process.cwd(), "src", "data", "images");
+
+  // We try to serve from the root data/images first (production/seed location)
+  // If not found, we might want to try src (dev).
+  // However, fastify-static takes one root.
+  // Let's assume images are in `data/images` in the CWD (which is what seed.ts uses).
+  // If running from dist, we might need to copy them or rely on them being in root.
+
+  // Actually, let's just register a route that tries to serve the file.
+  // Or register fastifyStatic for the likely location.
+
+  await instance.register(fastifyStatic, {
+    root: [imagesRoot, srcImagesRoot],
+    prefix: "/data/images/",
+    decorateReply: false,
+    index: false,
+    list: false,
+    wildcard: true,
+  });
+
   await registerAdminRoutes(instance, {
     config: resolvedConfig,
     staticRoot,

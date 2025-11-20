@@ -14,10 +14,9 @@ export type NavItem = {
 export type SidebarProps = {
   collapsed: boolean;
   isMobileViewport: boolean;
-  // showMobileLabels is intentionally not part of Sidebar props. It is used
-  // in the Layout to compute `isIconOnly` and is therefore not forwarded.
+
   isIconOnly: boolean;
-  hideLogoutText: boolean;
+
   navItems: NavItem[];
   onLogout: () => void;
   logoutInProgress?: boolean;
@@ -27,7 +26,7 @@ export function Sidebar({
   collapsed,
   isMobileViewport,
   isIconOnly,
-  hideLogoutText,
+
   navItems,
   onLogout,
   logoutInProgress,
@@ -64,7 +63,6 @@ export function Sidebar({
           logoutInProgress={logoutInProgress}
           isIconOnly={isIconOnly}
           isMobileViewport={isMobileViewport}
-          hideLogoutText={hideLogoutText}
         />
       </div>
     </aside>

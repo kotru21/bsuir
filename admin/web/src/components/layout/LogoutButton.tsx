@@ -7,7 +7,6 @@ export type LogoutButtonProps = {
   logoutInProgress?: boolean;
   isIconOnly?: boolean;
   isMobileViewport?: boolean;
-  hideLogoutText?: boolean;
 };
 
 export function LogoutButton({
@@ -15,15 +14,12 @@ export function LogoutButton({
   logoutInProgress = false,
   isIconOnly = false,
   isMobileViewport = false,
-  hideLogoutText = false,
 }: LogoutButtonProps): ReactElement {
   return (
     <button
       onClick={onLogout}
       disabled={logoutInProgress}
-      aria-label={
-        isIconOnly || hideLogoutText ? "Выйти из аккаунта" : undefined
-      }
+      aria-label={isIconOnly ? "Выйти из аккаунта" : undefined}
       className={cn(
         "group relative flex items-center rounded-2xl text-sm font-medium text-slate-600 transition-colors duration-200 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/70",
         "cursor-pointer",
@@ -38,7 +34,7 @@ export function LogoutButton({
         <LogoutIcon className="h-4 w-4" aria-hidden />
       </span>
 
-      {!isIconOnly && !hideLogoutText && (
+      {!isIconOnly && (
         <span className="whitespace-nowrap text-sm font-medium overflow-hidden flex-1 text-left">
           <span
             className="block transition-all duration-300 ease-in-out"

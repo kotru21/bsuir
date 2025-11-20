@@ -11,8 +11,7 @@ import Topbar from "./layout/Topbar.js";
 export function Layout({ children }: { children: ReactNode }): ReactElement {
   const auth = useAuth();
   const { collapsed, toggle } = useSidebarCollapsed();
-  const { isMobileViewport, showMobileLabels, hideLogoutText } =
-    useResponsiveLayout();
+  const { isMobileViewport, showMobileLabels } = useResponsiveLayout();
   const isIconOnly = isMobileViewport ? !showMobileLabels : collapsed;
 
   const handleLogout = useCallback(() => {
@@ -29,7 +28,6 @@ export function Layout({ children }: { children: ReactNode }): ReactElement {
           collapsed={collapsed}
           isMobileViewport={isMobileViewport}
           isIconOnly={isIconOnly}
-          hideLogoutText={hideLogoutText}
           onLogout={handleLogout}
           logoutInProgress={auth.logoutInProgress}
         />

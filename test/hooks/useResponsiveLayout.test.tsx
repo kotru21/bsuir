@@ -4,14 +4,16 @@ import { render, screen } from "@testing-library/react";
 import useResponsiveLayout from "../../admin/web/src/hooks/useResponsiveLayout.js";
 
 function TestComponent() {
-  const { viewportWidth, isMobileViewport, showMobileLabels, hideLogoutText } =
+  const { viewportWidth, isMobileViewport, showMobileLabels } =
     useResponsiveLayout();
   return (
     <div>
       <div data-testid="width">{viewportWidth}</div>
       <div data-testid="mobile">{isMobileViewport ? "1" : "0"}</div>
       <div data-testid="labels">{showMobileLabels ? "1" : "0"}</div>
-      <div data-testid="hide">{hideLogoutText ? "1" : "0"}</div>
+      <div data-testid="hide">
+        {isMobileViewport && !showMobileLabels ? "1" : "0"}
+      </div>
     </div>
   );
 }
@@ -37,7 +39,9 @@ describe("useResponsiveLayout", () => {
     render(<TestComponent />);
 
     expect(screen.getByTestId("mobile").textContent).toBe("1");
-    expect(screen.getByTestId("labels").textContent).toBe("1");
+    // At 400px we are below the new mobile label threshold of 420px — labels
+    // should be hidden and hide==1.
+    expect(screen.getByTestId("labels").textContent).toBe("0");
     expect(screen.getByTestId("hide").textContent).toBe("1");
   });
 
@@ -49,6 +53,8 @@ describe("useResponsiveLayout", () => {
     });
     window.dispatchEvent(new Event("resize"));
     render(<TestComponent />);
+    // On desktop (1200px) we are not in mobile view — labels should be
+    // visible and hide==0.
     expect(screen.getByTestId("hide").textContent).toBe("0");
   });
 

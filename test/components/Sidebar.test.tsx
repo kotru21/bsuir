@@ -18,7 +18,6 @@ describe("Sidebar", () => {
           collapsed={false}
           isMobileViewport={false}
           isIconOnly={false}
-          hideLogoutText={false}
           onLogout={() => {}}
           logoutInProgress={false}
         />

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+admin/web/dist/
+coverage/
+**/*.js.map
+**/*.map
+**/*.js

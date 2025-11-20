@@ -10,7 +10,15 @@ const jsxA11yRecommended = jsxA11yPlugin.configs["flat/recommended"];
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "**/*.js.map",
+      "**/*.map",
+      "**/*.js", // optional: exclude generated JS files that live in src
+      "admin/web/dist/**",
+      "coverage/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

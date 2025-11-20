@@ -75,7 +75,7 @@ export function registerSectionHandlers(
   bot.command(
     "sections",
     wrapBotHandler(async (ctx) => {
-      const sections = listAllSections();
+      const sections = await listAllSections();
       if (!sections.length) {
         await ctx.reply("Секции не найдены.");
         return;

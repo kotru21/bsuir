@@ -6,13 +6,13 @@ interface SessionContext extends Context {
   session?: RecommendationSession;
 }
 
-export function prismaSession(): Middleware<SessionContext> {
+export function prismaSession(): Middleware<any> {
   return async (ctx, next) => {
     const key = ctx.chat?.id?.toString();
     if (!key) return next();
 
     const prisma = getPrismaClient();
-    let session = {};
+    let session: any = {};
 
     try {
       const record = await prisma.session.findUnique({ where: { key } });

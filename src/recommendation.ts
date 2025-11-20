@@ -34,12 +34,12 @@ async function getAllSections(): Promise<SportSection[]> {
       format: s.format as TrainingFormat,
       contactLevel: s.contactLevel as ContactLevel,
       intensity: s.intensity as FitnessLevel,
-      recommendedFor: s.recommendedFor as unknown as Array<{
-        fitnessLevel?: FitnessLevel;
-        note: string;
-      }>,
-      expectedResults: s.expectedResults as unknown as SectionTimeline,
-      similarityVector: s.similarityVector as unknown as SimilarityVector,
+      recommendedFor: s.recommendedFor as any,
+      expectedResults: s.expectedResults as any,
+      similarityVector: s.similarityVector as any,
+      prerequisites: s.prerequisites ?? undefined,
+      imagePath: s.imagePath ?? undefined,
+      locationHint: s.locationHint ?? undefined,
     }));
 
     sectionsCache = mapped;

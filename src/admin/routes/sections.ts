@@ -9,11 +9,16 @@ export async function registerSectionsRoutes(
 ): Promise<void> {
   const prisma = getPrismaClient();
 
-  app.get("/api/sections", async (_req, _reply) => {
-    const sections = await prisma.sportSection.findMany({
-      orderBy: { title: "asc" },
-    });
-    return sections;
+  app.get("/api/sections", async (req, reply) => {
+    try {
+      const sections = await prisma.sportSection.findMany({
+        orderBy: { title: "asc" },
+      });
+      return sections;
+    } catch (e) {
+      req.log.error(e);
+      return reply.status(500).send({ error: "Internal Server Error" });
+    }
   });
 
   app.get("/api/sections/:id", async (req, reply) => {

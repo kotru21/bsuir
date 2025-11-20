@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "./Button";
+import { goalOptions } from "../constants/goals";
 
 interface SectionModalProps {
   isOpen: boolean;
@@ -161,24 +162,34 @@ export function SectionModal({
 
           {/* Simplified JSON fields for MVP */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Цели (через запятую)
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Цели
             </label>
-            <input
-              name="focus"
-              value={
-                Array.isArray(formData.focus)
-                  ? formData.focus.join(", ")
-                  : formData.focus
-              }
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  focus: e.target.value.split(",").map((s: string) => s.trim()),
-                })
-              }
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-slate-700 dark:border-slate-600"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto rounded-md border border-gray-300 p-2 dark:bg-slate-700 dark:border-slate-600">
+              {Object.values(goalOptions).map(({ tag, label }) => (
+                <label
+                  key={tag}
+                  className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.focus.includes(tag)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setFormData((prev) => ({
+                        ...prev,
+                        focus: checked
+                          ? [...prev.focus, tag]
+                          : prev.focus.filter((t) => t !== tag),
+                      }));
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-slate-500 dark:bg-slate-600"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {label}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div>

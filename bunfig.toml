@@ -7,9 +7,13 @@ linkWorkspacePackages = true
 port = 3000
 
 [build]
-# Set default options for bun build
+# Default options for bun build (server bundle)
+entrypoints = ["src/index.ts"]
+outdir = "dist"
+target = "bun"
+external = ["@prisma/client", "argon2"]
 minify = true
-sourcemap = true
+sourcemap = "external"
 
 [test]
 preload = ["./test/happydom.ts", "./test/setupTests.ts"]

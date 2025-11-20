@@ -6,10 +6,10 @@
   "scripts": {
     "build": "bun run build:admin && bun run build:bot",
     "build:admin": "bunx vite build --config admin/web/vite.config.ts",
-    "build:bot": "bunx tsc",
+    "build:bot": "bun build src/index.ts --target bun --outfile dist/server.js",
     "heroku-postbuild": "bun run build",
     "migrate:deploy": "bunx prisma db push && bunx prisma db seed",
-    "start": "bun dist/index.js",
+    "start": "bun dist/server.js",
     "dev": "bunx tsx src/index.ts",
     "dev:admin": "bunx vite dev --config admin/web/vite.config.ts",
     "dev:server": "bunx tsx src/index.ts",
@@ -19,7 +19,7 @@
     "coverage": "bun test --coverage",
     "coverage:ci": "bun test --coverage",
     "lock:migrate": "bun pm migrate",
-    "start:node": "node dist/index.js",
+    "start:node": "node dist/server.js",
     "build:admin:bun": "bun build admin/web/src/main.tsx --outdir admin/web/dist --minify --target=es2022"
   },
   "dependencies": {

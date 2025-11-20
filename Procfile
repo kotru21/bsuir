@@ -1,2 +1,2 @@
 release: bunx prisma db push && bunx prisma db seed
-web: bun dist/index.js
+web: bun dist/server.js

@@ -33,7 +33,7 @@ Telegram-бот на TypeScript (ES modules / Bun 1+) для выдачи рек
 - Разработка (без сборки): `bun run dev` (скрипт использует `tsx src/index.ts`).
 - Admin front-end: `bun run dev:admin` (Vite); build: `bun run build:admin`.
 - Dev server (bot + api): `bun run dev` or `bun run dev:server`.
-- Сборка и прод: `bun run build` -> `bun start` (tsc -> dist/index.js).
+- Сборка и прод: `bun run build` -> `bun start` (bun build -> `dist/server.js`).
 - Быстрая проверка типов: `bunx tsc --noEmit`.
 - Юнит-тесты: `bun run test` (Bun test). В тестах используется `vi.mock` (совместимый с Bun alias) для мока Prisma — см. `test/recommendation.test.ts`.
 

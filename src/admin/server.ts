@@ -1,13 +1,9 @@
-import path from "node:path";
 import fastify from "fastify";
-import fastifyCookie from "@fastify/cookie";
-import fastifyStatic from "@fastify/static";
-import fastifyHelmet from "@fastify/helmet";
-import fastifyJwt from "@fastify/jwt";
-import argon2 from "argon2";
-import fastifySensible from "@fastify/sensible";
-import fastifyMultipart from "@fastify/multipart";
-import type { FastifyInstance, FastifyPluginAsync } from "fastify";
+import { resolveAdminConfig } from "./config.js";
+import { registerCorePlugins, registerCookiePlugin } from "./plugins/core.js";
+import { registerHelmet, registerJwt } from "./plugins/security.js";
+import { registerStaticFiles } from "./plugins/static.js";
+import type { FastifyInstance } from "fastify";
 import type { AdminConfig } from "./config.js";
 import authenticationPlugin from "./plugins/authentication.js";
 import { registerAdminRoutes } from "./routes/index.js";
@@ -15,6 +11,7 @@ import { registerAdminRoutes } from "./routes/index.js";
 export interface BuildAdminServerOptions {
   config: AdminConfig;
   trustProxy?: boolean;
+  rootDir?: string;
 }
 
 export async function buildAdminServer(
@@ -27,65 +24,29 @@ export async function buildAdminServer(
     logger: { level: process.env.LOG_LEVEL ?? "info" },
   });
 
-  let passwordHash = config.adminPasswordHash;
-  if (!passwordHash && config.adminPasswordPlain) {
-    try {
-      passwordHash = await argon2.hash(config.adminPasswordPlain);
-      instance.log.info(
-        "Generated admin password hash from plain password env variable."
-      );
-    } catch (err) {
-      instance.log.error({ err }, "Failed to derive admin password hash");
-    }
+  const resolvedConfig = await resolveAdminConfig(config);
+
+  // Inform about password hash derivation (preserve previous behaviour)
+  if (!config.adminPasswordHash && config.adminPasswordPlain) {
+    instance.log.info(
+      "Generated admin password hash from plain password env variable."
+    );
   }
 
-  if (passwordHash && config.adminPasswordHash && config.adminPasswordPlain) {
+  if (config.adminPasswordHash && config.adminPasswordPlain) {
     instance.log.warn(
       "Both ADMIN_PASSWORD_HASH and ADMIN_PASSWORD provided; using the precomputed hash."
     );
   }
-
-  const resolvedConfig: AdminConfig = {
-    ...config,
-    adminPasswordHash: passwordHash,
-    adminPasswordPlain: undefined,
-    enabled: Boolean(config.enabled && passwordHash),
-  };
 
   if (resolvedConfig.jwtSecret.length < 32) {
     instance.log.warn(
       "Admin JWT secret should be at least 32 characters for security."
     );
   }
+  await registerHelmet(instance);
 
-  await instance.register(fastifyHelmet, {
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc:
-          (process.env.NODE_ENV ?? "development") === "production"
-            ? ["'self'"]
-            : ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:"],
-        connectSrc: ["'self'"],
-        fontSrc: ["'self'", "data:"],
-        frameAncestors: ["'none'"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-      },
-    },
-  });
-
-  await instance.register(fastifySensible);
-  await instance.register(fastifyMultipart, {
-    limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB
-    },
-  });
+  await registerCorePlugins(instance);
 
   if (!resolvedConfig.enabled) {
     instance.log.warn(
@@ -126,64 +87,19 @@ export async function buildAdminServer(
     return instance;
   }
 
-  await instance.register(fastifyCookie, {
-    hook: "onRequest",
-  });
+  await registerCookiePlugin(instance);
 
-  const jwtPlugin =
-    fastifyJwt as unknown as FastifyPluginAsync<fastifyJwt.FastifyJWTOptions>;
+  await registerJwt(instance, resolvedConfig);
 
-  await instance.register(jwtPlugin, {
-    secret: resolvedConfig.jwtSecret,
-    sign: {
-      expiresIn: resolvedConfig.jwtTtlSeconds,
-      iss: resolvedConfig.jwtIssuer,
-      aud: resolvedConfig.jwtAudience,
-    },
-    verify: {
-      allowedIss: resolvedConfig.jwtIssuer,
-      allowedAud: resolvedConfig.jwtAudience,
-    },
-    cookie: {
-      cookieName: resolvedConfig.jwtCookieName,
-      signed: false,
-    },
-  });
+  // Security (JWT / Helmet) already registered by `registerSecurity`
 
   await instance.register(authenticationPlugin, { config: resolvedConfig });
 
-  const staticRoot = path.resolve(process.cwd(), "dist", "admin");
-  const assetsRoot = path.join(staticRoot, "assets");
-
-  await instance.register(fastifyStatic, {
-    root: assetsRoot,
-    prefix: `${resolvedConfig.basePath}/assets/`,
-    decorateReply: false,
-    index: false,
-  });
-
-  // Serve images from data/images
-  const imagesRoot = path.resolve(process.cwd(), "data", "images");
-  // Fallback for dev environment if data/images is in src
-  const srcImagesRoot = path.resolve(process.cwd(), "src", "data", "images");
-
-  // We try to serve from the root data/images first (production/seed location)
-  // If not found, we might want to try src (dev).
-  // However, fastify-static takes one root.
-  // Let's assume images are in `data/images` in the CWD (which is what seed.ts uses).
-  // If running from dist, we might need to copy them or rely on them being in root.
-
-  // Actually, let's just register a route that tries to serve the file.
-  // Or register fastifyStatic for the likely location.
-
-  await instance.register(fastifyStatic, {
-    root: [imagesRoot, srcImagesRoot],
-    prefix: "/data/images/",
-    decorateReply: false,
-    index: false,
-    list: false,
-    wildcard: true,
-  });
+  const { staticRoot } = await registerStaticFiles(
+    instance,
+    resolvedConfig.basePath,
+    options.rootDir
+  );
 
   await registerAdminRoutes(instance, {
     config: resolvedConfig,

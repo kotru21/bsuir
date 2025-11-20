@@ -1,3 +1,41 @@
+import argon2 from "argon2";
+// AdminConfig is declared in this module
+
+export type ResolvedAdminConfig = AdminConfig & {
+  adminPasswordHash?: string;
+  adminPasswordPlain?: undefined;
+  enabled: boolean;
+  basePath: string;
+};
+
+export async function resolveAdminConfig(
+  cfg: AdminConfig
+): Promise<ResolvedAdminConfig> {
+  let adminPasswordHash = cfg.adminPasswordHash;
+
+  if (!adminPasswordHash && cfg.adminPasswordPlain) {
+    try {
+      adminPasswordHash = await argon2.hash(cfg.adminPasswordPlain);
+    } catch (err) {
+      // Rethrow - caller (server) will log the error with a context
+      throw err;
+    }
+  }
+
+  const basePath = cfg.basePath?.endsWith("/")
+    ? cfg.basePath.slice(0, -1)
+    : cfg.basePath ?? "";
+
+  const resolved: ResolvedAdminConfig = {
+    ...cfg,
+    adminPasswordHash,
+    adminPasswordPlain: undefined,
+    enabled: Boolean(cfg.enabled && adminPasswordHash),
+    basePath,
+  };
+
+  return resolved;
+}
 export interface AdminConfig {
   enabled: boolean;
   adminUsername: string;

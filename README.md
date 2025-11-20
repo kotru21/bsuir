@@ -79,7 +79,7 @@ bun run dev
 - планируется логирование интереса и просмотров для последующей аналитики;
 - fallback-сценарии, если подходящих секций не найдено.
 
-![Демонстрация бота](https://via.placeholder.com/960x540.png?text=Telegram+Bot+Demo)
+<img width="800" height="774" alt="image" src="https://github.com/user-attachments/assets/906f10d1-bb71-4214-9ebf-014454d369b9" />
 
 ### Веб-панель (для администраторов)
 
@@ -89,7 +89,7 @@ bun run dev
 - визуализация статистики через Chart.js (распределения, тренды по времени);
 - live-обновление данных напрямую из Fastify API.
 
-![Демо админ-панели](https://via.placeholder.com/960x540.png?text=Admin+Dashboard+Preview)
+<img width="3120" height="2196" alt="bsuir-bot-65f221ed6fd6 herokuapp com_admin_sections" src="https://github.com/user-attachments/assets/0826a658-042d-488d-bf16-952f8cf68e7a" />
 
 [Вернуться к содержанию ↑](#содержание)
 

@@ -14,12 +14,7 @@ export async function resolveAdminConfig(
   let adminPasswordHash = cfg.adminPasswordHash;
 
   if (!adminPasswordHash && cfg.adminPasswordPlain) {
-    try {
-      adminPasswordHash = await argon2.hash(cfg.adminPasswordPlain);
-    } catch (err) {
-      // Rethrow - caller (server) will log the error with a context
-      throw err;
-    }
+    adminPasswordHash = await argon2.hash(cfg.adminPasswordPlain);
   }
 
   const basePath = cfg.basePath?.endsWith("/")

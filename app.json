@@ -6,10 +6,5 @@
       "url": "https://github.com/jakeg/heroku-buildpack-bun"
     }
   ],
-  "env": {
-    "BUN_VERSION": {
-      "description": "Pin Bun runtime version used during Heroku builds",
-      "value": "1.3.2"
-    }
-  }
+  "env": {}
 }

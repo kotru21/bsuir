@@ -15,7 +15,7 @@
     "dev:server": "bunx tsx src/index.ts",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "lint": "bunx eslint --ext .ts,.tsx --ignore-path .eslintignore src admin/web/src test",
+    "lint": "bunx eslint --ext .ts,.tsx src admin/web/src test",
     "coverage": "bun test --coverage",
     "coverage:ci": "bun test --coverage",
     "lock:migrate": "bun pm migrate",

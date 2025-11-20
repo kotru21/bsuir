@@ -1,4 +1,4 @@
-import argon2 from "argon2";
+import { password as bunPassword } from "bun";
 // AdminConfig is declared in this module
 
 export type ResolvedAdminConfig = AdminConfig & {
@@ -14,7 +14,7 @@ export async function resolveAdminConfig(
   let adminPasswordHash = cfg.adminPasswordHash;
 
   if (!adminPasswordHash && cfg.adminPasswordPlain) {
-    adminPasswordHash = await argon2.hash(cfg.adminPasswordPlain);
+    adminPasswordHash = await bunPassword.hash(cfg.adminPasswordPlain);
   }
 
   const basePath = cfg.basePath?.endsWith("/")

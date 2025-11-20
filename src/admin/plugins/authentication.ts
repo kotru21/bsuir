@@ -1,5 +1,5 @@
 import fp from "fastify-plugin";
-import argon2 from "argon2";
+import { password as bunPassword } from "bun";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { randomBytes } from "node:crypto";
 import type { AdminConfig } from "../config.js";
@@ -31,7 +31,7 @@ async function verifyCredentials(
   }
 
   try {
-    return await argon2.verify(config.adminPasswordHash, password);
+    return await bunPassword.verify(password, config.adminPasswordHash);
   } catch (err) {
     instance.log.error({ err }, "Failed to verify admin credentials");
     return false;

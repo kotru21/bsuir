@@ -11,7 +11,7 @@ port = 3000
 entrypoints = ["src/index.ts"]
 outdir = "dist"
 target = "bun"
-external = ["@prisma/client", "argon2"]
+external = ["@prisma/client"]
 minify = true
 sourcemap = "external"
 

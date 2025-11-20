@@ -68,8 +68,10 @@ export function SectionModal({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
-      <div className="flex min-h-full items-center justify-center p-4 text-center">
-        <div className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all dark:bg-slate-800">
+      {/* Use items-start so very tall content begins at top and the modal scrolls; center on medium+ screens */}
+      <div className="flex min-h-screen items-start md:items-center justify-center p-6 text-center">
+        {/* Make dialog wider and limit max height so it becomes scrollable when content is large */}
+        <div className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all dark:bg-slate-800 max-h-[calc(100vh-6rem)] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {initialData ? "Редактировать секцию" : "Новая секция"}
@@ -207,7 +209,7 @@ export function SectionModal({
                 {Object.values(goalOptions).map(({ tag, label }) => (
                   <label
                     key={tag}
-                    className="flex items-center space-x-2 cursor-pointer">
+                    className="flex items-center space-x-3 cursor-pointer rounded-md p-2 hover:bg-gray-50 dark:hover:bg-slate-700">
                     <input
                       type="checkbox"
                       checked={formData.focus.includes(tag)}
@@ -220,7 +222,7 @@ export function SectionModal({
                             : prev.focus.filter((t) => t !== tag),
                         }));
                       }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-slate-500 dark:bg-slate-600"
+                      className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-700 accent-sky-600"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       {label}

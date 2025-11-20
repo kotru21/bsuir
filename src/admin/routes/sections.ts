@@ -1,39 +1,48 @@
-import type { FastifyInstance } from "fastify";
 import { getPrismaClient } from "../../infrastructure/prismaClient.js";
+import { invalidateSectionsCache } from "../../recommendation/sectionRepository.js";
 import type { SportSection } from "../../types.js";
 import type { AdminConfig } from "../config.js";
+import type { AdminRouter } from "../http/types.js";
+import { buildAdminApiPath } from "../http/pathUtils.js";
 
 export async function registerSectionsRoutes(
-  app: FastifyInstance,
-  _options: { config: AdminConfig }
+  router: AdminRouter,
+  options: { config: AdminConfig }
 ): Promise<void> {
   const prisma = getPrismaClient();
+  const { config } = options;
+  const sectionsPath = (suffix = "") =>
+    buildAdminApiPath(config.basePath, `/sections${suffix}`);
 
-  app.get("/api/sections", async (req, reply) => {
+  router.get(sectionsPath(""), async (ctx) => {
+    await ctx.requireAdminAuth();
     try {
       const sections = await prisma.sportSection.findMany({
         orderBy: { title: "asc" },
       });
-      return sections;
+      return ctx.json(sections);
     } catch (e) {
-      req.log.error(e);
-      return reply.status(500).send({ error: "Internal Server Error" });
+      ctx.logError(e, "Failed to fetch sections");
+      return ctx.json({ error: "Internal Server Error" }, 500);
     }
   });
 
-  app.get("/api/sections/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
+  router.get(sectionsPath(`/:id`), async (ctx) => {
+    await ctx.requireAdminAuth();
+    const { id } = ctx.params;
     const section = await prisma.sportSection.findUnique({
       where: { id },
     });
     if (!section) {
-      return reply.status(404).send({ error: "Section not found" });
+      return ctx.json({ error: "Section not found" }, 404);
     }
-    return section;
+    return ctx.json(section);
   });
 
-  app.post("/api/sections", async (req, reply) => {
-    const data = req.body as SportSection;
+  router.post(sectionsPath(""), async (ctx) => {
+    await ctx.requireAdminAuth();
+    ctx.verifyAdminCsrfToken();
+    const data = await ctx.readJson<SportSection>();
     // In a real app, validate data with Zod or similar
     try {
       const section = await prisma.sportSection.create({
@@ -54,16 +63,19 @@ export async function registerSectionsRoutes(
           similarityVector: data.similarityVector as object,
         },
       });
-      return section;
+      invalidateSectionsCache();
+      return ctx.json(section, 201);
     } catch (e) {
-      req.log.error(e);
-      return reply.status(400).send({ error: "Failed to create section" });
+      ctx.logError(e, "Failed to create section");
+      return ctx.json({ error: "Failed to create section" }, 400);
     }
   });
 
-  app.put("/api/sections/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const data = req.body as SportSection;
+  router.put(sectionsPath(`/:id`), async (ctx) => {
+    await ctx.requireAdminAuth();
+    ctx.verifyAdminCsrfToken();
+    const { id } = ctx.params;
+    const data = await ctx.readJson<SportSection>();
     try {
       const section = await prisma.sportSection.update({
         where: { id },
@@ -83,23 +95,27 @@ export async function registerSectionsRoutes(
           similarityVector: data.similarityVector as object,
         },
       });
-      return section;
+      invalidateSectionsCache();
+      return ctx.json(section);
     } catch (e) {
-      req.log.error(e);
-      return reply.status(400).send({ error: "Failed to update section" });
+      ctx.logError(e, "Failed to update section");
+      return ctx.json({ error: "Failed to update section" }, 400);
     }
   });
 
-  app.delete("/api/sections/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
+  router.delete(sectionsPath(`/:id`), async (ctx) => {
+    await ctx.requireAdminAuth();
+    ctx.verifyAdminCsrfToken();
+    const { id } = ctx.params;
     try {
       await prisma.sportSection.delete({
         where: { id },
       });
-      return { success: true };
+      invalidateSectionsCache();
+      return ctx.json({ success: true });
     } catch (e) {
-      req.log.error(e);
-      return reply.status(400).send({ error: "Failed to delete section" });
+      ctx.logError(e, "Failed to delete section");
+      return ctx.json({ error: "Failed to delete section" }, 400);
     }
   });
 }

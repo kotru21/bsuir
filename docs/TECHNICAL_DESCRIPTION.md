@@ -4,7 +4,7 @@
 
 Репозиторий [kotru21/bsuir](https://github.com/kotru21/bsuir) представляет собой прототип цифровой платформы маркетинга спортивных услуг БГУИР. Решение объединяет Telegram-бота (Bun 1+, Telegraf) и административную веб-панель (React 19.2, Vite), работающих в едином контуре.
 
-Ключевая особенность системы — гибридная архитектура, где один Node.js процесс обслуживает и long-polling бота, и REST API для админки через Fastify. Это упрощает деплой и обеспечивает общую область памяти для кэширования, при этом данные персистируются в PostgreSQL через Prisma ORM.
+Ключевая особенность системы — гибридная архитектура, где один Bun-процесс обслуживает и long-polling бота, и REST API для админки через Bun.serve. Это упрощает деплой и обеспечивает общую область памяти для кэширования, при этом данные персистируются в PostgreSQL через Prisma ORM.
 
 ## 2. Структура проекта
 
@@ -22,7 +22,7 @@
 │   │   │   └── pages/      # Страницы (Dashboard, Submissions)
 │   │   └── vite.config.ts  # Конфигурация сборки Vite
 │   ├── config.ts           # Конфигурация бэкенда админки
-│   ├── server.ts           # Инициализация Fastify
+│   ├── server.ts           # Bun.serve HTTP сервер
 │   └── routes/             # REST API эндпоинты
 │       ├── auth.ts         # Логин/логаут, CSRF
 │       ├── sections.ts     # CRUD секций
@@ -64,14 +64,14 @@ graph TD
         Web[Admin Browser]
     end
 
-    subgraph "Node.js Process"
+    subgraph "Bun Process"
         subgraph "Telegraf Bot"
             Polling[Long Polling]
             Scenes[Wizard Scenes]
             SessionMW[Prisma Session]
         end
 
-        subgraph "Fastify Server"
+        subgraph "Bun Server"
             API[REST API]
             Static[Static File Server]
             Auth[JWT & CSRF Guard]
@@ -110,7 +110,7 @@ graph TD
 2. **Обработка:** По завершении анкеты `profileAssembler` формирует `UserProfile`.
 3. **Рекомендация:** `recommendation.ts` запрашивает секции из БД (с кэшированием), строит векторы и вычисляет косинусное сходство.
 4. **Сохранение:** Результат (анкета + топ рекомендаций) сохраняется в `SurveySubmission` и `RecommendationSnapshot`.
-5. **Аналитика (Admin):** Админ-панель запрашивает агрегированные данные через REST API. Fastify выполняет сложные SQL-запросы (GROUP BY, COUNT) через Prisma.
+5. **Аналитика (Admin):** Админ-панель запрашивает агрегированные данные через REST API. Bun.serve обрабатывает запросы и делегирует агрегаты Prisma (GROUP BY, COUNT).
 
 ## 4. Детальный анализ компонентов
 
@@ -215,25 +215,24 @@ export function prismaSession(): Middleware<RecommendationContext> {
 }
 ```
 
-### 4.2. Админ-бэкенд (Fastify)
+### 4.2. Админ-бэкенд (Bun.serve)
 
-Используется `Fastify` из-за его производительности и богатой экосистемы плагинов.
+Bun.serve выбран за счёт отсутствия внешних зависимостей, высокой производительности и возможности держать бота с API в одном процессе.
 
 #### Инициализация сервера
 
-Файл [`src/admin/server.ts`](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts) настраивает Fastify инстанс, подключает плагины безопасности (Helmet, JWT) и регистрирует маршруты.
+Файл [`src/admin/server.ts`](https://github.com/kotru21/bsuir/blob/main/src/admin/server.ts) поднимает Bun.serve, реализует минимальный роутер, раздаёт статику Vite и регистрирует REST эндпоинты.
 
 ```typescript
 // src/admin/server.ts
 export async function buildAdminServer(
   options: BuildAdminServerOptions
-): Promise<FastifyInstance> {
-  const instance = fastify({ trustProxy: true });
-  // ...
-  await registerHelmet(instance);
-  await registerCorePlugins(instance);
-  await registerAdminRoutes(instance, { config: resolvedConfig });
-  return instance;
+): Promise<AdminServer> {
+  const resolvedConfig = await resolveAdminConfig(options.config);
+  return new BunAdminServer({
+    config: resolvedConfig,
+    rootDir: options.rootDir ?? process.cwd(),
+  });
 }
 ```
 
@@ -241,7 +240,7 @@ export async function buildAdminServer(
 
 Реализована схема на основе JWT и Double Submit Cookie для защиты от CSRF.
 
-- **JWT:** Хранится в `httpOnly` cookie. Подписывается с использованием `@fastify/jwt`.
+- **JWT:** Хранится в `httpOnly` cookie. Подписывается встроенной реализацией HS256 (crypto.createHmac) без внешних зависимостей.
 - **CSRF:** Токен генерируется сервером и отправляется в `httpOnly: false` cookie. Клиент (React) должен прочитать этот cookie и передать его значение в заголовке `x-csrf-token` при каждом мутирующем запросе (POST, PUT, DELETE).
 - **Валидация:** Все входные данные валидируются с помощью библиотеки `zod`.
 
@@ -465,7 +464,7 @@ _\* Требуется либо `ADMIN_PASSWORD`, либо `ADMIN_PASSWORD_HASH`
 
 1. **Init:** Загрузка переменных окружения.
 2. **DB:** Подключение Prisma Client.
-3. **Admin:** Запуск Fastify сервера на порту 3000.
+3. **Admin:** Запуск Bun.serve на порту 3000.
 4. **Bot:** Запуск Telegraf в режиме Long Polling.
 
 ### 6.3. Тестирование

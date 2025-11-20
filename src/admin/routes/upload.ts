@@ -1,40 +1,54 @@
-import fs from "node:fs";
 import path from "node:path";
-import { pipeline } from "node:stream/promises";
-import type { FastifyInstance } from "fastify";
 import type { AdminConfig } from "../config.js";
+import type { AdminRouter } from "../http/types.js";
+import { buildAdminApiPath } from "../http/pathUtils.js";
+
+type UploadedFile = Blob & { name?: string };
 
 export async function registerUploadRoutes(
-  app: FastifyInstance,
-  _options: { config: AdminConfig }
+  router: AdminRouter,
+  options: { config: AdminConfig }
 ): Promise<void> {
-  app.post("/api/upload", async (req, reply) => {
-    const data = await req.file();
-    if (!data) {
-      return reply.status(400).send({ error: "No file uploaded" });
+  const { config } = options;
+  const uploadPath = buildAdminApiPath(config.basePath, "/upload");
+
+  router.post(uploadPath, async (ctx) => {
+    await ctx.requireAdminAuth();
+    ctx.verifyAdminCsrfToken();
+    const form = await ctx.readFormData();
+    const formValues = [...form.values()] as Array<UploadedFile | string>;
+    const fileEntry = formValues.find(
+      (value): value is UploadedFile => typeof value !== "string"
+    );
+
+    if (!fileEntry) {
+      return ctx.json({ error: "No file uploaded" }, 400);
+    }
+
+    if (!fileEntry.name) {
+      return ctx.json({ error: "Invalid file metadata" }, 400);
     }
 
     const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedMimeTypes.includes(data.mimetype)) {
-      return reply.status(400).send({ error: "Invalid file type" });
+    if (!allowedMimeTypes.includes(fileEntry.type)) {
+      return ctx.json({ error: "Invalid file type" }, 400);
     }
 
-    const uploadDir = path.resolve(process.cwd(), "src/data/images");
-    // Ensure directory exists
-    await fs.promises.mkdir(uploadDir, { recursive: true });
+    if (fileEntry.size > 5 * 1024 * 1024) {
+      return ctx.json({ error: "File too large" }, 400);
+    }
 
-    const filename = `${Date.now()}-${data.filename}`;
+    const uploadDir = path.resolve(process.cwd(), "src", "data", "images");
+    const basename = path.basename(fileEntry.name);
+    const filename = `${Date.now()}-${basename}`;
     const filepath = path.join(uploadDir, filename);
 
-    await pipeline(data.file, fs.createWriteStream(filepath));
+    await Bun.write(filepath, fileEntry, { createPath: true });
 
-    // Return relative path that can be stored in DB
-    // Note: In production you might want to serve these via nginx or upload to S3
-    // For now we assume the bot resolves images from src/data/images
-    return {
+    return ctx.json({
       success: true,
       path: filename,
-      url: `/images/${filename}`, // If we serve them statically
-    };
+      url: `/data/images/${filename}`,
+    });
   });
 }

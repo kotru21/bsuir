@@ -1,6 +1,7 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AdminConfig } from "../config.js";
+import type { AdminRouter } from "../http/types.js";
+import { buildAdminApiPath } from "../http/pathUtils.js";
 import {
   getDemographicStats,
   getOverviewStats,
@@ -24,36 +25,33 @@ const timelineQuerySchema = z
   .transform((data: { rangeDays: number }) => ({ rangeDays: data.rangeDays }));
 
 export async function registerStatsRoutes(
-  app: FastifyInstance,
+  router: AdminRouter,
   options: RegisterStatsRoutesOptions
 ): Promise<void> {
   const { config } = options;
-  const prefix = `${config.basePath}/api/stats`;
+  const statsPath = (suffix: string) =>
+    buildAdminApiPath(config.basePath, `/stats${suffix}`);
 
-  app.get(`${prefix}/overview`, async (request: FastifyRequest) => {
-    await request.requireAdminAuth();
+  router.get(statsPath("/overview"), async (ctx) => {
+    await ctx.requireAdminAuth();
     const data = await getOverviewStats();
-    return data;
+    return ctx.json(data);
   });
 
-  app.get(`${prefix}/demographics`, async (request: FastifyRequest) => {
-    await request.requireAdminAuth();
+  router.get(statsPath("/demographics"), async (ctx) => {
+    await ctx.requireAdminAuth();
     const data = await getDemographicStats();
-    return data;
+    return ctx.json(data);
   });
 
-  app.get(
-    `${prefix}/timeline`,
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      await request.requireAdminAuth();
-      const parseResult = timelineQuerySchema.safeParse(request.query);
-      if (!parseResult.success) {
-        reply.status(400);
-        return { error: "Invalid query parameters" };
-      }
-      const { rangeDays } = parseResult.data;
-      const points = await getTimelineStats(rangeDays);
-      return { points };
+  router.get(statsPath("/timeline"), async (ctx) => {
+    await ctx.requireAdminAuth();
+    const parseResult = timelineQuerySchema.safeParse(ctx.query);
+    if (!parseResult.success) {
+      return ctx.json({ error: "Invalid query parameters" }, 400);
     }
-  );
+    const { rangeDays } = parseResult.data;
+    const points = await getTimelineStats(rangeDays);
+    return ctx.json({ points });
+  });
 }

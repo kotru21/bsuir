@@ -26,12 +26,12 @@
 
 ## 1. О проекте
 
-Проект объединяет Telegram-бота (Telegraf + TypeScript) и веб-панель администратора (React + Fastify). Бот сопровождает абитуриентов, студентов и сотрудников на пути к выбору спортивной секции, а аналитическая панель отображает срезы данных и агрегированные метрики вовлечённости.
+Проект объединяет Telegram-бота (Telegraf + TypeScript) и веб-панель администратора (React + Bun.serve). Бот сопровождает абитуриентов, студентов и сотрудников на пути к выбору спортивной секции, а аналитическая панель отображает срезы данных и агрегированные метрики вовлечённости.
 
 **Ключевые идеи:**
 
 - персонализация рекомендаций через векторную модель с косинусным сходством, учитывающую цели, формат, комфорт по интенсивности, контактность и интерес к соревнованиям;
-- единая инфраструктура Fastify обслуживает и бота, и REST API для SPA;
+- единая инфраструктура Bun.serve обслуживает и бота, и REST API для SPA;
 - Prisma + PostgreSQL сохраняют анкеты, статистику, сессии пользователей и каталог секций;
 - динамическое управление контентом через админ-панель (CRUD секций).
 
@@ -54,7 +54,7 @@ Add-Content .env "BOT_TOKEN=your_token"
 Add-Content .env "DATABASE_URL=postgresql://user:pass@localhost:5432/bsuir"
 Add-Content .env "ADMIN_JWT_SECRET=change_me_please"
 
-# 3. Запустите разработку (бот + Fastify)
+# 3. Запустите разработку (бот + Bun HTTP сервер)
 bun run dev
 ```
 
@@ -87,7 +87,7 @@ bun run dev
 - дашборд KPI: количество анкет, динамика вовлечённости, распределения;
 - таблица анкет с фильтрами и раскрытием рекомендаций;
 - визуализация статистики через Chart.js (распределения, тренды по времени);
-- live-обновление данных напрямую из Fastify API.
+- live-обновление данных напрямую из Bun HTTP API.
 
 <img width="3120" height="2196" alt="bsuir-bot-65f221ed6fd6 herokuapp com_admin_sections" src="https://github.com/user-attachments/assets/0826a658-042d-488d-bf16-952f8cf68e7a" />
 
@@ -97,7 +97,7 @@ bun run dev
 
 ## 4. Архитектура
 
-Высокоуровневая схема отражает взаимодействие пользователя с ботом и админа с веб-панелью через общее Fastify-приложение.
+Высокоуровневая схема отражает взаимодействие пользователя с ботом и админа с веб-панелью через общее Bun-приложение.
 
 ```mermaid
 flowchart LR
@@ -106,7 +106,7 @@ flowchart LR
     Admin[Админ SPA]
   end
 
-  subgraph Backend[Fastify + Telegраф]
+  subgraph Backend[Bun.serve + Telegраф]
     Bot[Telegraf Bot]
     API[REST API]
     Static[Статика Vite]
@@ -152,7 +152,7 @@ bun run build:admin:bun
 ```text
 src/
 ├── bot/            # Telegram-бот, сцены, форматтеры, клавиатуры
-├── admin/          # Fastify API, роуты, сервисы, статическая раздача
+├── admin/          # Bun HTTP API, роуты, сервисы, статическая раздача
 ├── services/       # Общая бизнес-логика (рекомендации, запись ответов)
 ├── data/           # Каталог секций и изображения
 ├── domain/         # Доменные значения и дефолты профиля
@@ -164,9 +164,9 @@ prisma/             # schema.prisma и миграции
 
 ### Технологии
 
-- **Backend:** Bun 1+, Telegraf, Fastify, Prisma, PostgreSQL.
+- **Backend:** Bun 1+, Telegraf, Bun.serve, Prisma, PostgreSQL.
 - **Frontend:** React 19.2, Vite, TanStack Query, Chart.js.
-- **Инфраструктура:** TypeScript (NodeNext/ESM), tsx, dotenv, bun:test.
+- **Инфраструктура:** TypeScript (NodeNext/ESM), tsx, Bun.env, bun:test.
 - **Автоматизация:** Bun scripts (`dev`, `dev:admin`, `build`, `start`, `test`).
 
 [Вернуться к содержанию ↑](#содержание)

@@ -1,6 +1,7 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AdminConfig } from "../config.js";
+import type { AdminRouter } from "../http/types.js";
+import { buildAdminApiPath } from "../http/pathUtils.js";
 import { getSubmissionPage } from "../services/statisticsService.js";
 
 export interface RegisterSubmissionRoutesOptions {
@@ -28,35 +29,32 @@ const paginationSchema = z
   }));
 
 export async function registerSubmissionRoutes(
-  app: FastifyInstance,
+  router: AdminRouter,
   options: RegisterSubmissionRoutesOptions
 ): Promise<void> {
   const { config } = options;
-  const prefix = `${config.basePath}/api`;
+  const submissionsPath = (suffix = "") =>
+    buildAdminApiPath(config.basePath, `/submissions${suffix}`);
 
-  app.get(
-    `${prefix}/submissions`,
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      await request.requireAdminAuth();
-      const parseResult = paginationSchema.safeParse(request.query);
-      if (!parseResult.success) {
-        reply.status(400);
-        return { error: "Invalid pagination parameters" };
-      }
-
-      const { page, pageSize } = parseResult.data;
-      const { items, total } = await getSubmissionPage(page, pageSize);
-      const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-      return {
-        items,
-        pagination: {
-          page,
-          pageSize,
-          total,
-          totalPages,
-        },
-      };
+  router.get(submissionsPath(""), async (ctx) => {
+    await ctx.requireAdminAuth();
+    const parseResult = paginationSchema.safeParse(ctx.query);
+    if (!parseResult.success) {
+      return ctx.json({ error: "Invalid pagination parameters" }, 400);
     }
-  );
+
+    const { page, pageSize } = parseResult.data;
+    const { items, total } = await getSubmissionPage(page, pageSize);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    return ctx.json({
+      items,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+      },
+    });
+  });
 }

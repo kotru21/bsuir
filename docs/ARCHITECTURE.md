@@ -4,7 +4,7 @@
 
 ## Обзор
 
-Проект объединяет Telegram-бота и веб-панель администратора, которые запускаются в одном Node.js процессе: Fastify обслуживает API и статику, а Telegraf работает как отдельный бот-инстанс, разделяющий те же сервисы и базу данных. Разделы ниже содержат детализированные диаграммы и описания, вынесенные из основного README ради лучшей навигации.
+Проект объединяет Telegram-бота и веб-панель администратора, которые запускаются в одном Bun-процессе: Bun.serve обслуживает API и статику, а Telegraf работает как отдельный бот-инстанс, разделяющий те же сервисы и базу данных. Разделы ниже содержат детализированные диаграммы и описания, вынесенные из основного README ради лучшей навигации.
 
 > ℹ️ **Совет:** диаграммы свёрнуты по умолчанию. Нажмите «Развернуть диаграмму», чтобы увидеть схему целиком и сопроводительные пояснения.
 
@@ -26,7 +26,7 @@ flowchart TB
          BotScenes["Wizard сцены"]
       end
 
-      subgraph FastifyApp["Fastify Server"]
+      subgraph BunServer["Bun Server"]
          AdminAPI["REST API /admin/api"]
          StaticFiles["Раздача статики"]
          Sessions["JWT-cookie
@@ -92,7 +92,7 @@ flowchart TB
       Charts["Chart.js виджеты"]
    end
 
-   subgraph Fastify["Сервер Fastify"]
+   subgraph BunServe["Сервер Bun.serve"]
       Auth["Маршруты авторизации"]
       Stats["REST /admin/api/stats"]
       Subs["REST /admin/api/submissions"]
@@ -127,7 +127,7 @@ flowchart TB
   Prisma ==> PG
 
   style Browser fill:#e3f2fd
-  style Fastify fill:#fff3e0
+   style BunServe fill:#fff3e0
   style Services fill:#f3e5f5
   style DataLayer fill:#e8f5e9
 ```
@@ -135,7 +135,7 @@ flowchart TB
 **Примечания:**
 
 - SPA общается с API через httpOnly JWT-cookie; double-submit CSRF проверяется на входе/выходе и других мутациях.
-- Fastify агрегирует статистику и отдаёт статические файлы Vite-сборки.
+- Bun.serve агрегирует статистику и отдаёт статические файлы Vite-сборки.
 
 </details>
 

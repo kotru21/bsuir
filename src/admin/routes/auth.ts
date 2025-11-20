@@ -1,6 +1,7 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AdminConfig } from "../config.js";
+import type { AdminRouter, RouteContext } from "../http/types.js";
+import { buildAdminApiPath } from "../http/pathUtils.js";
 
 export interface RegisterAuthRoutesOptions {
   config: AdminConfig;
@@ -13,99 +14,80 @@ const loginSchema = z.object({
 });
 
 function setCsrfCookie(
-  reply: FastifyReply,
+  ctx: RouteContext,
   config: AdminConfig,
   token: string
 ): void {
-  reply.setCookie(config.csrfCookieName, token, {
+  ctx.setCookie(config.csrfCookieName, token, {
     httpOnly: false,
     sameSite: "lax",
     secure: config.cookieSecure,
-    path: config.basePath,
+    path: config.basePath || "/",
     maxAge: config.jwtTtlSeconds,
   });
 }
 
-function clearCsrfCookie(reply: FastifyReply, config: AdminConfig): void {
-  reply.clearCookie(config.csrfCookieName, {
-    path: config.basePath,
+function clearCsrfCookie(ctx: RouteContext, config: AdminConfig): void {
+  ctx.clearCookie(config.csrfCookieName, {
+    path: config.basePath || "/",
   });
 }
 
 export async function registerAuthRoutes(
-  app: FastifyInstance,
+  router: AdminRouter,
   options: RegisterAuthRoutesOptions
 ): Promise<void> {
   const { config } = options;
-  const prefix = `${config.basePath}/api`;
+  const apiPath = (suffix: string) =>
+    buildAdminApiPath(config.basePath, suffix);
 
-  app.get(`${prefix}/health`, async () => ({ status: "ok" }));
+  router.get(apiPath("/health"), async (ctx) => ctx.json({ status: "ok" }));
 
-  app.get(
-    `${prefix}/csrf`,
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      // If an admin session exists, reuse its XSRF token so it stays
-      // consistent with the JWT payload. Generating a fresh token here
-      // while a session exists would make the token in the cookie differ
-      // from the token stored in the JWT and trigger a stale-token
-      // rejection on stateful operations like logout.
-      const session = await request.getAdminSession();
-      const token = session?.xsrfToken ?? request.issueAdminCsrfToken();
-      setCsrfCookie(reply, config, token);
-      return { token };
-    }
-  );
-
-  app.get(`${prefix}/session`, async (request: FastifyRequest) => {
-    const session = await request.getAdminSession();
-    return {
-      authenticated: Boolean(session),
-      username: session?.username ?? null,
-    };
+  router.get(apiPath("/csrf"), async (ctx) => {
+    const session = await ctx.getAdminSession();
+    const token = session?.xsrfToken ?? ctx.issueAdminCsrfToken();
+    setCsrfCookie(ctx, config, token);
+    return ctx.json({ token });
   });
 
-  app.post(
-    `${prefix}/login`,
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const parseResult = loginSchema.safeParse(request.body);
-      if (!parseResult.success) {
-        reply.status(400);
-        return { success: false, error: "Invalid payload" };
-      }
+  router.get(apiPath("/session"), async (ctx) => {
+    const session = await ctx.getAdminSession();
+    return ctx.json({
+      authenticated: Boolean(session),
+      username: session?.username ?? null,
+    });
+  });
 
-      const { username, password, csrfToken } = parseResult.data;
-      const cookieToken = request.cookies?.[config.csrfCookieName];
-      if (!cookieToken || cookieToken !== csrfToken) {
-        reply.status(403);
-        return { success: false, error: "Invalid CSRF token" };
-      }
-
-      const valid = await request.server.verifyAdminCredentials(
-        username,
-        password
-      );
-
-      if (!valid) {
-        reply.status(401);
-        return { success: false, error: "Invalid credentials" };
-      }
-
-      const freshToken = request.issueAdminCsrfToken();
-      await reply.setAdminSession(username, freshToken);
-      setCsrfCookie(reply, config, freshToken);
-
-      return { success: true };
+  router.post(apiPath("/login"), async (ctx) => {
+    const body = await ctx.readJson<unknown>();
+    const parseResult = loginSchema.safeParse(body);
+    if (!parseResult.success) {
+      return ctx.json({ success: false, error: "Invalid payload" }, 400);
     }
-  );
 
-  app.post(
-    `${prefix}/logout`,
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      await request.requireAdminAuth();
-      request.verifyAdminCsrfToken();
-      reply.clearAdminSession();
-      clearCsrfCookie(reply, config);
-      return { success: true };
+    const { username, password, csrfToken } = parseResult.data;
+    const cookieToken = ctx.getCookie(config.csrfCookieName);
+    if (!cookieToken || cookieToken !== csrfToken) {
+      return ctx.json({ success: false, error: "Invalid CSRF token" }, 403);
     }
-  );
+
+    const valid = await ctx.verifyAdminCredentials(username, password);
+    if (!valid) {
+      return ctx.json({ success: false, error: "Invalid credentials" }, 401);
+    }
+
+    const freshToken = ctx.issueAdminCsrfToken();
+    await ctx.setAdminSession(username, freshToken);
+    setCsrfCookie(ctx, config, freshToken);
+
+    return ctx.json({ success: true });
+  });
+
+  router.post(apiPath("/logout"), async (ctx) => {
+    await ctx.requireAdminAuth();
+    ctx.verifyAdminCsrfToken();
+    ctx.clearAdminSession();
+    clearCsrfCookie(ctx, config);
+    return ctx.json({ success: true });
+  });
 }

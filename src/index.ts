@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import { Telegraf } from "telegraf";
 import type { RecommendationContext } from "./bot/session.js";
 import { configureBot } from "./bot/app.js";
@@ -9,8 +8,6 @@ import {
   disconnectPrisma,
 } from "./infrastructure/prismaClient.js";
 import { resolveAiConfig } from "./services/aiSummary.js";
-
-dotenv.config();
 
 type NodeProcessLike = {
   env?: Record<string, string | undefined>;
@@ -23,7 +20,10 @@ const nodeProcess = (
   globalThis as typeof globalThis & { process?: NodeProcessLike }
 ).process;
 
-const BOT_TOKEN = nodeProcess?.env?.BOT_TOKEN;
+const runtimeEnv =
+  (typeof Bun !== "undefined" ? Bun.env : nodeProcess?.env) ?? {};
+
+const BOT_TOKEN = runtimeEnv.BOT_TOKEN;
 
 if (!BOT_TOKEN) {
   console.error(
@@ -33,9 +33,9 @@ if (!BOT_TOKEN) {
 }
 
 const bot = new Telegraf<RecommendationContext>(BOT_TOKEN);
-const adminConfig = loadAdminConfig(nodeProcess?.env ?? {});
-const hasDatabase = Boolean(nodeProcess?.env?.DATABASE_URL);
-const aiConfig = resolveAiConfig(nodeProcess?.env ?? {});
+const adminConfig = loadAdminConfig(runtimeEnv);
+const hasDatabase = Boolean(runtimeEnv.DATABASE_URL);
+const aiConfig = resolveAiConfig(runtimeEnv);
 
 if (aiConfig) {
   console.log(`AI summary enabled with model ${aiConfig.model}.`);
@@ -72,11 +72,10 @@ async function start(): Promise<void> {
   try {
     adminServer = await buildAdminServer({
       config: adminConfig,
-      trustProxy: true,
     });
 
-    const port = Number(nodeProcess?.env?.PORT ?? 3000);
-    await adminServer.listen({ port, host: "0.0.0.0" });
+    const port = Number(runtimeEnv.PORT ?? 3000);
+    await adminServer.start({ port, hostname: "0.0.0.0" });
     console.log(`Админ-панель доступна по порту ${port}.`);
   } catch (err) {
     console.error("Failed to start admin server:", err);
@@ -92,7 +91,7 @@ async function start(): Promise<void> {
     console.error("Failed to launch Telegram bot:", err);
     if (adminServer) {
       try {
-        await adminServer.close();
+        await adminServer.stop();
       } catch (closeErr) {
         console.error(
           "Failed to close admin server after bot launch failure:",
@@ -115,7 +114,7 @@ async function shutdown(signal: string): Promise<void> {
 
   if (adminServer) {
     try {
-      await adminServer.close();
+      await adminServer.stop();
     } catch (err) {
       console.error("Failed to close admin server:", err);
     }

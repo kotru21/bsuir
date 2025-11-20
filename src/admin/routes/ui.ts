@@ -1,7 +1,7 @@
-import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { AdminConfig } from "../config.js";
+import type { AdminRouter, RouteContext } from "../http/types.js";
+import { buildAdminPath } from "../http/pathUtils.js";
 
 export interface RegisterUiRoutesOptions {
   config: AdminConfig;
@@ -10,57 +10,71 @@ export interface RegisterUiRoutesOptions {
 
 async function loadIndex(staticRoot: string): Promise<string | null> {
   const indexPath = path.join(staticRoot, "index.html");
-  try {
-    return await fs.readFile(indexPath, "utf8");
-  } catch (_err) {
+  const file = Bun.file(indexPath);
+  if (!(await file.exists())) {
     console.warn(`Admin UI index not found at ${indexPath}`);
     return null;
   }
+  return await file.text();
+}
+
+function respondWithIndex(
+  ctx: RouteContext,
+  getIndex: () => Promise<string | null>
+): Promise<Response> {
+  return (async () => {
+    const html = await getIndex();
+    if (!html) {
+      return ctx.json(
+        { error: "Admin UI is not built yet. Run bun run build:admin." },
+        503
+      );
+    }
+    return ctx.html(html, 200, {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+    });
+  })();
 }
 
 export async function registerUiRoutes(
-  app: FastifyInstance,
+  router: AdminRouter,
   options: RegisterUiRoutesOptions
 ): Promise<void> {
   const { config, staticRoot } = options;
   let cachedIndex: string | null = null;
 
-  async function serveIndex(reply: FastifyReply): Promise<void> {
+  async function getCachedIndex(): Promise<string | null> {
     if (!cachedIndex) {
       cachedIndex = await loadIndex(staticRoot);
     }
-    if (!cachedIndex) {
-      reply.code(503).type("application/json").send({
-        error: "Admin UI is not built yet. Run bun run build:admin.",
-      });
-      return;
-    }
-
-    reply.type("text/html").send(cachedIndex);
+    return cachedIndex;
   }
 
-  app.get(
-    `${config.basePath}`,
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      await serveIndex(reply);
-    }
+  const basePath = buildAdminPath(config.basePath, "");
+  const trailingPath = basePath ? `${basePath}/` : "/";
+  const wildcardPath = buildAdminPath(config.basePath, "/*") || "/*";
+
+  router.get(basePath || "/", async (ctx) =>
+    respondWithIndex(ctx, getCachedIndex)
   );
 
-  app.setNotFoundHandler(
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const acceptHeader = request.headers["accept"] ?? "";
-      const url = request.url ?? "";
-      const isHtmlRequest =
-        typeof acceptHeader === "string" && acceptHeader.includes("text/html");
-      if (isHtmlRequest && url.startsWith(config.basePath)) {
-        await serveIndex(reply);
-        return;
-      }
+  router.get(trailingPath, async (ctx) =>
+    respondWithIndex(ctx, getCachedIndex)
+  );
 
-      reply.code(404).type("application/json").send({
+  router.get(wildcardPath, async (ctx) => {
+    const acceptHeader = ctx.getHeader("accept") ?? "";
+    const urlPath = ctx.url.pathname ?? "";
+    const isHtmlRequest = acceptHeader.includes("text/html");
+    if (isHtmlRequest && urlPath.startsWith(basePath ?? "")) {
+      return respondWithIndex(ctx, getCachedIndex);
+    }
+    return ctx.json(
+      {
         status: "not-found",
-        path: url,
-      });
-    }
-  );
+        path: urlPath,
+      },
+      404
+    );
+  });
 }

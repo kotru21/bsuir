@@ -8,7 +8,7 @@
     "build:admin": "vite build --config admin/web/vite.config.ts",
     "build:bot": "tsc",
     "heroku-postbuild": "npm run build",
-    "migrate:deploy": "prisma migrate deploy",
+    "migrate:deploy": "prisma migrate deploy && prisma db seed",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:admin": "vite dev --config admin/web/vite.config.ts",
@@ -18,6 +18,9 @@
     "lint": "eslint --ext .ts,.tsx src admin/web/src test",
     "coverage": "c8 --reporter=text --reporter=lcov npm test",
     "coverage:ci": "c8 --reporter=lcov --reporter=text npm test"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

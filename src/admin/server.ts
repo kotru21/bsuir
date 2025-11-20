@@ -6,6 +6,7 @@ import fastifyHelmet from "@fastify/helmet";
 import fastifyJwt from "@fastify/jwt";
 import argon2 from "argon2";
 import fastifySensible from "@fastify/sensible";
+import fastifyMultipart from "@fastify/multipart";
 import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import type { AdminConfig } from "./config.js";
 import authenticationPlugin from "./plugins/authentication.js";
@@ -80,6 +81,11 @@ export async function buildAdminServer(
   });
 
   await instance.register(fastifySensible);
+  await instance.register(fastifyMultipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB
+    },
+  });
 
   if (!resolvedConfig.enabled) {
     instance.log.warn(

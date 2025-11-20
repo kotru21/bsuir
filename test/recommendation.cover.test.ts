@@ -1,9 +1,19 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   recommendSections,
   fallbackSection,
   listAllSections,
 } from "../src/recommendation.js";
+import { sportSections } from "../prisma/data/sections.js";
+
+vi.mock("../src/infrastructure/prismaClient.js", () => ({
+  getPrismaClient: () => ({
+    sportSection: {
+      findMany: vi.fn().mockResolvedValue(sportSections),
+    },
+  }),
+}));
+
 import {
   escapeMarkdown,
   renderRecommendationSummary,
@@ -12,8 +22,8 @@ import {
 import type { UserProfile } from "../src/types.js";
 
 describe("recommendation engine coverage", () => {
-  it("listAllSections returns sections and contains expected ids", () => {
-    const all = listAllSections();
+  it("listAllSections returns sections and contains expected ids", async () => {
+    const all = await listAllSections();
     expect(Array.isArray(all)).toBe(true);
     // expect some known ids from data/sections.ts
     const ids = all.map((s) => s.id);
@@ -21,7 +31,7 @@ describe("recommendation engine coverage", () => {
     expect(ids).toContain("wrestling");
   });
 
-  it("avoidContact true excludes fullContact sections from recommendations", () => {
+  it("avoidContact true excludes fullContact sections from recommendations", async () => {
     const profile: UserProfile = {
       age: 25,
       gender: "unspecified",
@@ -32,14 +42,14 @@ describe("recommendation engine coverage", () => {
       interestedInCompetition: false,
     };
 
-    const recs = recommendSections(profile, 20);
+    const recs = await recommendSections(profile, 20);
     // none of the returned sections should be fullContact
     for (const r of recs) {
       expect(r.section.contactLevel).not.toBe("fullContact");
     }
   });
 
-  it("interestedInCompetition and desiredGoals=competition surfaces competition-focused sections", () => {
+  it("interestedInCompetition and desiredGoals=competition surfaces competition-focused sections", async () => {
     const profile: UserProfile = {
       age: 21,
       gender: "unspecified",
@@ -50,7 +60,7 @@ describe("recommendation engine coverage", () => {
       interestedInCompetition: true,
     };
 
-    const recs = recommendSections(profile, 5);
+    const recs = await recommendSections(profile, 5);
     expect(Array.isArray(recs)).toBe(true);
     const anyCompetition = recs.some(
       (r) =>
@@ -63,7 +73,7 @@ describe("recommendation engine coverage", () => {
     expect(anyCompetition).toBe(true);
   });
 
-  it("preferredFormats individual surfaces individual-format sections (e.g., special-medical)", () => {
+  it("preferredFormats individual surfaces individual-format sections (e.g., special-medical)", async () => {
     const profile: UserProfile = {
       age: 30,
       gender: "unspecified",
@@ -74,13 +84,13 @@ describe("recommendation engine coverage", () => {
       interestedInCompetition: false,
     };
 
-    const recs = recommendSections(profile, 10);
+    const recs = await recommendSections(profile, 10);
     const ids = recs.map((r) => r.section.id);
     // special-medical is listed as individual in data
     expect(ids).toContain("special-medical");
   });
 
-  it("fallbackSection returns a result (or null) safely for a profile", () => {
+  it("fallbackSection returns a result (or null) safely for a profile", async () => {
     const profile: UserProfile = {
       age: 40,
       gender: "unspecified",
@@ -91,7 +101,7 @@ describe("recommendation engine coverage", () => {
       interestedInCompetition: false,
     };
 
-    const fb = fallbackSection(profile);
+    const fb = await fallbackSection(profile);
     // either null (no eligible) or an object with section
     if (fb !== null) {
       expect(fb).toHaveProperty("section");
@@ -109,8 +119,8 @@ describe("formatters", () => {
     expect(escaped.includes("\\_") || escaped.includes("\\*")).toBe(true);
   });
 
-  it("renderRecommendationSummary/detail return non-empty strings", () => {
-    const all = listAllSections();
+  it("renderRecommendationSummary/detail return non-empty strings", async () => {
+    const all = await listAllSections();
     const first = all[0];
     const fakeRec: import("../src/types.js").RecommendationResult = {
       section: first,

@@ -4,6 +4,8 @@ import { registerAuthRoutes } from "./auth.js";
 import { registerStatsRoutes } from "./stats.js";
 import { registerSubmissionRoutes } from "./submissions.js";
 import { registerUiRoutes } from "./ui.js";
+import { registerSectionsRoutes } from "./sections.js";
+import { registerUploadRoutes } from "./upload.js";
 
 export interface AdminRouteOptions {
   config: AdminConfig;
@@ -18,6 +20,8 @@ export async function registerAdminRoutes(
 
   await registerAuthRoutes(app, { config });
   await registerStatsRoutes(app, { config });
+  await registerSectionsRoutes(app, { config });
+  await registerUploadRoutes(app, { config });
   await registerSubmissionRoutes(app, { config });
   await registerUiRoutes(app, { config, staticRoot });
 

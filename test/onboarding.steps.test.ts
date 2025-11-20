@@ -1,5 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
+import { sportSections } from "../prisma/data/sections.js";
+
+vi.mock("../src/infrastructure/prismaClient.js", () => ({
+  getPrismaClient: () => ({
+    sportSection: {
+      findMany: vi.fn().mockResolvedValue(sportSections),
+    },
+  }),
+}));
+
 import { formatStep } from "../src/bot/scenes/onboarding/steps/formatStep.js";
 import { goalStep } from "../src/bot/scenes/onboarding/steps/goalStep.js";
 import { goalPriorityStep } from "../src/bot/scenes/onboarding/steps/goalPriorityStep.js";

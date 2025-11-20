@@ -1,9 +1,18 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { recommendSections } from "../src/recommendation.js";
 import type { UserProfile } from "../src/types.js";
+import { sportSections } from "../prisma/data/sections.js";
+
+vi.mock("../src/infrastructure/prismaClient.js", () => ({
+  getPrismaClient: () => ({
+    sportSection: {
+      findMany: vi.fn().mockResolvedValue(sportSections),
+    },
+  }),
+}));
 
 describe("recommendSections", () => {
-  it("returns an array of RecommendationResult for valid profile", () => {
+  it("returns an array of RecommendationResult for valid profile", async () => {
     const profile: UserProfile = {
       age: 20,
       gender: "unspecified",
@@ -14,7 +23,7 @@ describe("recommendSections", () => {
       interestedInCompetition: false,
     };
 
-    const results = recommendSections(profile, 3);
+    const results = await recommendSections(profile, 3);
     expect(Array.isArray(results)).toBe(true);
     // If there are sections defined, ensure each result has required shape
     if (results.length > 0) {

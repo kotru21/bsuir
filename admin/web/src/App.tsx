@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { DashboardPage } from "./pages/DashboardPage";
 import { SubmissionsPage } from "./pages/SubmissionsPage";
+import { SectionsPage } from "./pages/SectionsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { Layout } from "./components/Layout";
 import { FullscreenSpinner } from "./components/FullscreenSpinner";
@@ -48,6 +49,7 @@ export default function App(): React.JSX.Element {
           }>
           <Route index element={<DashboardPage />} />
           <Route path="submissions" element={<SubmissionsPage />} />
+          <Route path="sections" element={<SectionsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="login" element={<LoginPage />} />

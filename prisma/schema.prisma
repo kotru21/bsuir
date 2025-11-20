@@ -41,3 +41,28 @@ model RecommendationSnapshot {
   @@index([submissionId, rank])
   @@index([sectionId])
 }
+
+model Session {
+  key   String @id
+  value String
+}
+
+model SportSection {
+  id              String   @id
+  title           String
+  summary         String
+  focus           String[]
+  format          String
+  contactLevel    String
+  intensity       String
+  recommendedFor  Json
+  expectedResults Json
+  extraBenefits   String[]
+  prerequisites   String?
+  imagePath       String?
+  locationHint    String?
+  similarityVector Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

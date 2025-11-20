@@ -102,7 +102,7 @@ export function registerSectionHandlers(
         return;
       }
       const index = Number(payload);
-      const sections = listAllSections();
+      const sections = await listAllSections();
       if (Number.isNaN(index) || index < 0 || index >= sections.length) {
         await ctx.answerCbQuery?.("Неправильный индекс.", { show_alert: true });
         return;
@@ -155,7 +155,7 @@ export function registerSectionHandlers(
       if (recIndex !== -1) {
         recommendationToShow = recommendations[recIndex];
       } else {
-        const all = listAllSections();
+        const all = await listAllSections();
         const fallback = all.find((s) => s.id === sectionId) ?? null;
         if (fallback) {
           recommendationToShow = buildCatalogRecommendation(fallback);

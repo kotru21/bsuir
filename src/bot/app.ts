@@ -1,6 +1,7 @@
-import { Scenes, Telegraf, session } from "telegraf";
+import { Scenes, Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
 import type { RecommendationContext } from "./session.js";
+import { prismaSession } from "./prismaSession.js";
 import { onboardingScene } from "./scenes/onboarding.js";
 import { registerCoreCommands } from "./handlers/commands.js";
 import { registerSectionHandlers } from "./handlers/sections.js";
@@ -9,7 +10,7 @@ import { wrapBotHandler } from "./utils/safeHandler.js";
 
 export function configureBot(bot: Telegraf<RecommendationContext>): void {
   const stage = new Scenes.Stage<RecommendationContext>([onboardingScene]);
-  bot.use(session());
+  bot.use(prismaSession());
   bot.use(stage.middleware());
 
   registerCoreCommands(bot);

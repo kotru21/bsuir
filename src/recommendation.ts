@@ -1,15 +1,55 @@
-import { sportSections } from "./data/sections.js";
+import { getPrismaClient } from "./infrastructure/prismaClient.js";
 import type {
+  ContactLevel,
   FitnessLevel,
   GoalTag,
   RecommendationReason,
   RecommendationResult,
+  SectionTimeline,
   SimilarityVector,
   SportSection,
   TrainingFormat,
   UserProfile,
   VectorKey,
 } from "./types.js";
+
+// Cache for sections to avoid DB hits on every request
+let sectionsCache: SportSection[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function getAllSections(): Promise<SportSection[]> {
+  const now = Date.now();
+  if (sectionsCache && now - cacheTimestamp < CACHE_TTL_MS) {
+    return sectionsCache;
+  }
+
+  const prisma = getPrismaClient();
+  try {
+    const sections = await prisma.sportSection.findMany();
+
+    const mapped = sections.map((s) => ({
+      ...s,
+      focus: s.focus as GoalTag[],
+      format: s.format as TrainingFormat,
+      contactLevel: s.contactLevel as ContactLevel,
+      intensity: s.intensity as FitnessLevel,
+      recommendedFor: s.recommendedFor as unknown as Array<{
+        fitnessLevel?: FitnessLevel;
+        note: string;
+      }>,
+      expectedResults: s.expectedResults as unknown as SectionTimeline,
+      similarityVector: s.similarityVector as unknown as SimilarityVector,
+    }));
+
+    sectionsCache = mapped;
+    cacheTimestamp = now;
+    return mapped;
+  } catch (e) {
+    console.error("Failed to fetch sections from DB", e);
+    return [];
+  }
+}
 
 const INTENSITY_LEVELS: FitnessLevel[] = ["low", "medium", "high"];
 const ALL_FORMATS: TrainingFormat[] = ["individual", "group", "mixed"];
@@ -337,7 +377,27 @@ function scoreSection(
   };
 }
 
+function applyStrictFilters(
+  section: SportSection,
+  profile: UserProfile
+): boolean {
+  // Strict contact filter
+  if (profile.avoidContact && section.contactLevel !== "nonContact") {
+    return false;
+  }
+
+  // Strict format filter
+  if (profile.preferredFormats?.length > 0) {
+    if (!profile.preferredFormats.includes(section.format)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function scoreSections(
+  sections: SportSection[],
   profile: UserProfile,
   includeZero = false
 ): RecommendationResult[] {
@@ -347,7 +407,7 @@ function scoreSections(
     return [];
   }
 
-  return sportSections
+  return sections
     .map((section) =>
       scoreSection(section, profile, userVector, normalizedUser, {
         includeZero,
@@ -357,17 +417,19 @@ function scoreSections(
     .sort((a, b) => b.score - a.score);
 }
 
-export function recommendSections(
+export async function recommendSections(
   profile: UserProfile,
   limit = 3
-): RecommendationResult[] {
+): Promise<RecommendationResult[]> {
   if (!profile || typeof profile !== "object") {
     console.error("recommendSections: invalid profile", profile);
     return [];
   }
 
   try {
-    const scored = scoreSections(profile);
+    const allSections = await getAllSections();
+    const filtered = allSections.filter((s) => applyStrictFilters(s, profile));
+    const scored = scoreSections(filtered, profile);
     return scored.slice(0, limit);
   } catch (err) {
     console.error("recommendSections error:", err);
@@ -375,16 +437,18 @@ export function recommendSections(
   }
 }
 
-export function fallbackSection(
+export async function fallbackSection(
   profile: UserProfile
-): RecommendationResult | null {
+): Promise<RecommendationResult | null> {
   if (!profile || typeof profile !== "object") {
     console.error("fallbackSection: invalid profile", profile);
     return null;
   }
 
   try {
-    const scored = scoreSections(profile, true);
+    const allSections = await getAllSections();
+    const filtered = allSections.filter((s) => applyStrictFilters(s, profile));
+    const scored = scoreSections(filtered, profile, true);
     return scored[0] ?? null;
   } catch (err) {
     console.error("fallbackSection error:", err);
@@ -392,9 +456,9 @@ export function fallbackSection(
   }
 }
 
-export function listAllSections(): SportSection[] {
+export async function listAllSections(): Promise<SportSection[]> {
   try {
-    return sportSections;
+    return await getAllSections();
   } catch (err) {
     console.error("listAllSections error:", err);
     return [];

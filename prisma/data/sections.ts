@@ -1,4 +1,4 @@
-import { SportSection } from "../types.js";
+import { SportSection } from "../../src/types.js";
 
 export const sportSections: SportSection[] = [
   {

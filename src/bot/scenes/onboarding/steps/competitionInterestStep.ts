@@ -61,7 +61,7 @@ export async function competitionInterestStep(
   try {
     let recommendations: RecommendationResult[] = [];
     try {
-      recommendations = recommendSections(profile, 3);
+      recommendations = await recommendSections(profile, 3);
     } catch (err) {
       console.error("recommendSections error:", err);
     }
@@ -71,7 +71,7 @@ export async function competitionInterestStep(
     if (!finalRecommendations.length) {
       let fallback: RecommendationResult | null = null;
       try {
-        fallback = fallbackSection(profile);
+        fallback = await fallbackSection(profile);
       } catch (err) {
         console.error("fallbackSection error:", err);
       }

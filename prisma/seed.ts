@@ -1,8 +1,5 @@
 import { PrismaClient } from "../src/generated/client.js";
-import type { PrismaPg as PrismaPgType } from "@prisma/adapter-pg";
-// Use explicit ESM entry to avoid Bun/Heroku resolving to missing CJS path
-// @ts-ignore: runtime-only import — types are imported above
-import { PrismaPg } from "@prisma/adapter-pg/dist/index.mjs";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { sportSections } from "./data/sections.js";
 
 const connectionString = process.env.DATABASE_URL;

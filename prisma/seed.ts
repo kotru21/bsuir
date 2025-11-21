@@ -3,11 +3,14 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { sportSections } from "./data/sections.js";
 
 const connectionString = process.env.DATABASE_URL;
-if (connectionString) {
-  process.env.DATABASE_URL = connectionString;
+
+if (!connectionString) {
+  console.error("DATABASE_URL is not set");
+  process.exit(1);
 }
 
-const adapterConfig = connectionString ? { connectionString } : {};
+// Heroku Postgres URLs may already have SSL params, don't duplicate
+const adapterConfig = { connectionString };
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg(adapterConfig),
@@ -15,43 +18,81 @@ const prisma = new PrismaClient({
 
 async function main() {
   console.log("Start seeding ...");
-  for (const section of sportSections) {
-    await prisma.sportSection.upsert({
-      where: { id: section.id },
-      update: {
-        title: section.title,
-        summary: section.summary,
-        focus: section.focus,
-        format: section.format,
-        contactLevel: section.contactLevel,
-        intensity: section.intensity,
-        recommendedFor: section.recommendedFor as object,
-        expectedResults: section.expectedResults as object,
-        extraBenefits: section.extraBenefits,
-        prerequisites: section.prerequisites,
-        imagePath: section.imagePath,
-        locationHint: section.locationHint,
-        similarityVector: section.similarityVector as object,
-      },
-      create: {
-        id: section.id,
-        title: section.title,
-        summary: section.summary,
-        focus: section.focus,
-        format: section.format,
-        contactLevel: section.contactLevel,
-        intensity: section.intensity,
-        recommendedFor: section.recommendedFor as object,
-        expectedResults: section.expectedResults as object,
-        extraBenefits: section.extraBenefits,
-        prerequisites: section.prerequisites,
-        imagePath: section.imagePath,
-        locationHint: section.locationHint,
-        similarityVector: section.similarityVector as object,
-      },
-    });
+  console.log(`Total sections to seed: ${sportSections.length}`);
+
+  // Test database connection first
+  try {
+    await prisma.$connect();
+    console.log("Database connection established");
+  } catch (error) {
+    console.error("Failed to connect to database:", error);
+    throw error;
   }
-  console.log("Seeding finished.");
+
+  // Check if sections already exist
+  const existingCount = await prisma.sportSection.count();
+  console.log(`Found ${existingCount} existing sections`);
+
+  if (existingCount >= sportSections.length) {
+    console.log("Database already seeded, skipping...");
+    return;
+  }
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  // Seed sections one by one for better error handling
+  for (const section of sportSections) {
+    try {
+      await prisma.sportSection.upsert({
+        where: { id: section.id },
+        update: {
+          title: section.title,
+          summary: section.summary,
+          focus: section.focus,
+          format: section.format,
+          contactLevel: section.contactLevel,
+          intensity: section.intensity,
+          recommendedFor: section.recommendedFor as object,
+          expectedResults: section.expectedResults as object,
+          extraBenefits: section.extraBenefits,
+          prerequisites: section.prerequisites,
+          imagePath: section.imagePath,
+          locationHint: section.locationHint,
+          similarityVector: section.similarityVector as object,
+        },
+        create: {
+          id: section.id,
+          title: section.title,
+          summary: section.summary,
+          focus: section.focus,
+          format: section.format,
+          contactLevel: section.contactLevel,
+          intensity: section.intensity,
+          recommendedFor: section.recommendedFor as object,
+          expectedResults: section.expectedResults as object,
+          extraBenefits: section.extraBenefits,
+          prerequisites: section.prerequisites,
+          imagePath: section.imagePath,
+          locationHint: section.locationHint,
+          similarityVector: section.similarityVector as object,
+        },
+      });
+      successCount++;
+      console.log(`✓ Seeded: ${section.title}`);
+    } catch (error) {
+      errorCount++;
+      console.error(`✗ Failed to seed ${section.title}:`, error);
+    }
+  }
+
+  console.log(
+    `Seeding finished: ${successCount} successful, ${errorCount} failed`
+  );
+
+  if (errorCount > 0 && successCount === 0) {
+    throw new Error("All sections failed to seed");
+  }
 }
 
 main()

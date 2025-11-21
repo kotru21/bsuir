@@ -1,6 +1,6 @@
 export const MOBILE_BREAKPOINT_PX = 1024;
 
-export const MOBILE_LABEL_BREAKPOINT_PX = 420;
+export const MOBILE_LABEL_BREAKPOINT_PX = 550;
 
 export default {
   MOBILE_BREAKPOINT_PX,

@@ -1,7 +1,12 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { sportSections } from "./data/sections.js";
 
-const prisma = new PrismaClient();
+const prisma = process.env.DATABASE_URL
+  ? new PrismaClient({
+      adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+    })
+  : new PrismaClient();
 
 async function main() {
   console.log("Start seeding ...");

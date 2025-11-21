@@ -1,4 +1,5 @@
 import { PrismaClient } from "../generated/client.js";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 let prisma: PrismaClient | null = null;
 
@@ -10,13 +11,13 @@ function ensurePrisma(): PrismaClientInstance {
 
     if (connectionString) {
       process.env.DATABASE_URL = connectionString;
-      prisma = new PrismaClient(
-        {} as unknown as ConstructorParameters<typeof PrismaClient>[0]
-      );
+      prisma = new PrismaClient({
+        adapter: new PrismaPg({ connectionString }),
+      } as unknown as ConstructorParameters<typeof PrismaClient>[0]);
     } else {
-      prisma = new PrismaClient(
-        {} as unknown as ConstructorParameters<typeof PrismaClient>[0]
-      );
+      prisma = new PrismaClient({
+        adapter: new PrismaPg({}),
+      } as unknown as ConstructorParameters<typeof PrismaClient>[0]);
     }
   }
   return prisma;

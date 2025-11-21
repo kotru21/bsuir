@@ -1,5 +1,4 @@
 import { PrismaClient } from "../generated/client.js";
-import { PrismaPg } from "@prisma/adapter-pg";
 
 let prisma: PrismaClient | null = null;
 
@@ -8,13 +7,13 @@ export type PrismaClientInstance = PrismaClient;
 function ensurePrisma(): PrismaClientInstance {
   if (!prisma) {
     const connectionString = process.env.DATABASE_URL;
+
     if (connectionString) {
-      const adapter = new PrismaPg({ connectionString });
-      prisma = new PrismaClient({ adapter });
+      process.env.DATABASE_URL = connectionString;
+      prisma = new PrismaClient(
+        {} as unknown as ConstructorParameters<typeof PrismaClient>[0]
+      );
     } else {
-      // Fallback: create PrismaClient without adapter for tests/environments without DB.
-      // Use the proper Prisma type instead of `any` to satisfy lint/type checks.
-      // Use constructor param type to satisfy typing without forcing an explicit `any`.
       prisma = new PrismaClient(
         {} as unknown as ConstructorParameters<typeof PrismaClient>[0]
       );

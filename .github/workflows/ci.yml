@@ -22,6 +22,8 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Generate Prisma client
         run: bunx prisma generate
+      - name: Run Prisma seed
+        run: bunx prisma db seed
       - name: Type check (noEmit)
         run: bunx tsc --noEmit
       - name: Build (bun)

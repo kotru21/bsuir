@@ -1,13 +1,14 @@
 import { PrismaClient } from "../src/generated/client.js";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { sportSections } from "./data/sections.js";
 
 const connectionString = process.env.DATABASE_URL;
-const prisma = connectionString
-  ? new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
-  : new PrismaClient(
-      {} as unknown as ConstructorParameters<typeof PrismaClient>[0]
-    );
+if (connectionString) {
+  process.env.DATABASE_URL = connectionString;
+}
+
+const prisma = new PrismaClient(
+  {} as unknown as ConstructorParameters<typeof PrismaClient>[0]
+);
 
 async function main() {
   console.log("Start seeding ...");

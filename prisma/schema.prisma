@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url is configured via prisma.config.ts for Prisma v7+ (see prisma/prisma.config.ts)
+  url      = env("DATABASE_URL")
 }
 
 model SurveySubmission {

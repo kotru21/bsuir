@@ -9,11 +9,19 @@ if (!connectionString) {
   process.exit(1);
 }
 
-// Heroku Postgres URLs may already have SSL params, don't duplicate
-const adapterConfig = { connectionString };
+// Heroku Postgres requires sslmode=no-verify for adapter-pg
+const isRemoteDb =
+  !connectionString.includes("@127.0.0.1") &&
+  !connectionString.includes("@localhost");
+const dbUrl =
+  isRemoteDb && !connectionString.includes("sslmode=")
+    ? `${connectionString}${
+        connectionString.includes("?") ? "&" : "?"
+      }sslmode=no-verify`
+    : connectionString;
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg(adapterConfig),
+  adapter: new PrismaPg({ connectionString: dbUrl }),
 } as unknown as ConstructorParameters<typeof PrismaClient>[0]);
 
 async function main() {

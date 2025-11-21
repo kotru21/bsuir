@@ -10,9 +10,20 @@ function ensurePrisma(): PrismaClientInstance {
     const connectionString = process.env.DATABASE_URL;
 
     if (connectionString) {
-      process.env.DATABASE_URL = connectionString;
+      // Heroku Postgres requires sslmode=no-verify for adapter-pg
+      const isRemoteDb =
+        !connectionString.includes("@127.0.0.1") &&
+        !connectionString.includes("@localhost");
+      const dbUrl =
+        isRemoteDb && !connectionString.includes("sslmode=")
+          ? `${connectionString}${
+              connectionString.includes("?") ? "&" : "?"
+            }sslmode=no-verify`
+          : connectionString;
+
+      process.env.DATABASE_URL = dbUrl;
       prisma = new PrismaClient({
-        adapter: new PrismaPg({ connectionString }),
+        adapter: new PrismaPg({ connectionString: dbUrl }),
       } as unknown as ConstructorParameters<typeof PrismaClient>[0]);
     } else {
       prisma = new PrismaClient({

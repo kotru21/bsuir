@@ -14,12 +14,14 @@
 > - Провайдер клиентского генератора теперь — `prisma-client` (в `prisma/schema.prisma`) и требуется явно указывать `output` (в этом репозитории клиент генерируется в `src/generated`).
 > - Строки подключения больше не задаются в `schema.prisma` — вместо этого используйте `prisma.config.ts` (project root) и указывайте `datasource.url` через `env()`.
 > - Prisma v7 требует драйверный адаптер для каждой СУБД — для Postgres используйте `@prisma/adapter-pg` и передавайте адаптер в конструктор `PrismaClient`.
+> - **Важно:** `@prisma/adapter-pg` требует установки драйвера `pg` (node-postgres): `bun add pg` и `bun add @types/pg --dev`.
 >
 > Примерный набор команд для миграции/генерации клиента после обновления зависимостей:
 >
 > ```powershell
-> # установить адаптер Postgres (если ещё не установлен)
-> bun add @prisma/adapter-pg@7
+> # установить адаптер Postgres и драйвер (если ещё не установлены)
+> bun add @prisma/adapter-pg@7 pg
+> bun add @types/pg --dev
 >
 > # сгенерировать клиент (в Prisma v7 генерация использует prisma.config.ts и schema.prisma)
 > bunx prisma generate
@@ -159,11 +161,12 @@ Heroku по умолчанию ставит только Node.js, поэтому
 
 > **⚠️ Важно для Prisma v7 + Heroku Postgres:**
 >
-> - `prisma.config.ts` использует команду `bun prisma/seed.ts` (не `tsx`) для совместимости с Bun runtime.
-> - `Procfile` содержит `|| echo "Seed failed, continuing anyway"` для resilience - если seed упадет, деплой продолжится.
-> - Seed скрипт проверяет наличие данных перед повторной вставкой и использует `upsert` для идемпотентности.
-> - Если возникают проблемы с правами доступа к БД, убедитесь, что DATABASE_URL содержит корректные SSL параметры (Heroku добавляет их автоматически).
-> - В случае ошибки "User was denied access", проверьте права пользователя БД через `heroku pg:credentials:url DATABASE`.
+> - **Драйвер pg:** Убедитесь, что пакет `pg` установлен (`bun add pg`), так как `@prisma/adapter-pg` требует его для работы.
+> - **SSL подключение:** Код автоматически добавляет `?sslmode=no-verify` к DATABASE_URL для удаленных БД (согласно рекомендациям Heroku), чтобы избежать ошибки `P1010 DriverAdapterError: DatabaseAccessDenied`.
+> - **Seed команда:** `prisma.config.ts` использует `bun prisma/seed.ts` (не `tsx`) для совместимости с Bun runtime.
+> - **Resilience:** `Procfile` содержит `|| echo "Seed failed, continuing anyway"` - если seed упадет, деплой продолжится.
+> - **Идемпотентность:** Seed скрипт проверяет наличие данных перед повторной вставкой и использует `upsert`.
+> - Если возникают проблемы с правами доступа, проверьте `heroku pg:credentials:url DATABASE`.
 
 ### SPA fallback при хостинге админки
 

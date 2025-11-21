@@ -18,6 +18,8 @@ jobs:
           bun-version: latest
       - name: Install dependencies (bun)
         run: bun install --frozen-lockfile
+      - name: Generate Prisma client
+        run: bunx prisma generate
       - name: Type check (noEmit)
         run: bunx tsc --noEmit
       - name: Build (bun)

@@ -7,53 +7,24 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Gender {
-  male
-  female
-  unspecified
-}
-
-enum FitnessLevel {
-  low
-  medium
-  high
-}
-
-enum TrainingFormat {
-  individual
-  group
-  mixed
-}
-
-enum ContactLevel {
-  nonContact
-  lightContact
-  fullContact
-}
-
 model SurveySubmission {
   id                       String                     @id @default(cuid())
   telegramUserId           String?
   chatId                   String?
   age                      Int
-  gender                   Gender
-  fitnessLevel             FitnessLevel
-  preferredFormats         TrainingFormat[]
+  gender                   String
+  fitnessLevel             String
+  preferredFormats         String[]
   desiredGoals             String[]
   avoidContact             Boolean
   interestedInCompetition  Boolean
   aiSummary                String?
   createdAt                DateTime                   @default(now())
-  deletedAt                DateTime?
   recommendations          RecommendationSnapshot[]
 
   @@index([createdAt])
   @@index([gender])
   @@index([fitnessLevel])
-  @@index([gender, fitnessLevel])
-  @@index([createdAt, gender])
-  @@index([telegramUserId])
-  @@index([deletedAt])
 }
 
 model RecommendationSnapshot {
@@ -69,8 +40,6 @@ model RecommendationSnapshot {
 
   @@index([submissionId, rank])
   @@index([sectionId])
-  @@index([sectionId, score])
-  @@index([createdAt])
 }
 
 model Session {
@@ -79,29 +48,21 @@ model Session {
 }
 
 model SportSection {
-  id                   String          @id
-  title                String
-  summary              String
-  focus                String[]
-  format               TrainingFormat
-  contactLevel         ContactLevel
-  intensity            FitnessLevel
-  recommendedFor       Json
-  expectedResults      Json
-  extraBenefits        String[]
-  prerequisites        String?
-  imagePath            String?
-  locationHint         String?
-  similarityVector     Json?
-  recommendationCount  Int             @default(0)
-  averageScore         Float?
-  lastRecommendedAt    DateTime?
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
-  deletedAt            DateTime?
-
-  @@index([format, intensity])
-  @@index([contactLevel])
-  @@index([deletedAt])
-  @@index([recommendationCount])
+  id              String   @id
+  title           String
+  summary         String
+  focus           String[]
+  format          String
+  contactLevel    String
+  intensity       String
+  recommendedFor  Json
+  expectedResults Json
+  extraBenefits   String[]
+  prerequisites   String?
+  imagePath       String?
+  locationHint    String?
+  similarityVector Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

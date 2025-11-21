@@ -1,10 +1,4 @@
-// Re-export Prisma enums for consistency
-export type {
-  Gender,
-  FitnessLevel,
-  TrainingFormat,
-  ContactLevel,
-} from "./generated/client.js";
+export type FitnessLevel = "low" | "medium" | "high";
 
 export type GoalTag =
   | "strength"
@@ -21,16 +15,16 @@ export type GoalTag =
   | "aesthetics"
   | "competition";
 
+export type TrainingFormat = "individual" | "group" | "mixed";
+
+export type ContactLevel = "nonContact" | "lightContact" | "fullContact";
+
 export type GoalPriorityMap = Partial<Record<GoalTag, number>>;
-export type FormatPreferenceMap = Partial<
-  Record<import("./generated/client.js").TrainingFormat, number>
->;
+export type FormatPreferenceMap = Partial<Record<TrainingFormat, number>>;
 
 export type VectorGoalKey = `goal:${GoalTag}`;
-export type VectorFormatKey =
-  `format:${import("./generated/client.js").TrainingFormat}`;
-export type VectorIntensityKey =
-  `intensity:${import("./generated/client.js").FitnessLevel}`;
+export type VectorFormatKey = `format:${TrainingFormat}`;
+export type VectorIntensityKey = `intensity:${FitnessLevel}`;
 export type VectorKey =
   | VectorGoalKey
   | VectorFormatKey
@@ -51,11 +45,11 @@ export interface SportSection {
   title: string;
   summary: string;
   focus: GoalTag[];
-  format: import("./generated/client.js").TrainingFormat;
-  contactLevel: import("./generated/client.js").ContactLevel;
-  intensity: import("./generated/client.js").FitnessLevel;
+  format: TrainingFormat;
+  contactLevel: ContactLevel;
+  intensity: FitnessLevel;
   recommendedFor: Array<{
-    fitnessLevel?: import("./generated/client.js").FitnessLevel;
+    fitnessLevel?: FitnessLevel;
     note: string;
   }>;
   expectedResults: SectionTimeline;
@@ -68,9 +62,9 @@ export interface SportSection {
 
 export interface UserProfile {
   age: number;
-  gender: import("./generated/client.js").Gender;
-  fitnessLevel: import("./generated/client.js").FitnessLevel;
-  preferredFormats: import("./generated/client.js").TrainingFormat[];
+  gender: "male" | "female" | "unspecified";
+  fitnessLevel: FitnessLevel;
+  preferredFormats: TrainingFormat[];
   desiredGoals: GoalTag[];
   avoidContact: boolean;
   interestedInCompetition: boolean;
@@ -86,13 +80,13 @@ export type RecommendationReason =
   | { kind: "similarity-goal"; tags: GoalTag[]; contribution: number }
   | {
       kind: "similarity-format";
-      formats: import("./generated/client.js").TrainingFormat[];
+      formats: TrainingFormat[];
       contribution: number;
     }
   | {
       kind: "similarity-intensity";
-      profileLevel: import("./generated/client.js").FitnessLevel;
-      sectionLevel: import("./generated/client.js").FitnessLevel;
+      profileLevel: FitnessLevel;
+      sectionLevel: FitnessLevel;
       contribution: number;
     }
   | {

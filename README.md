@@ -135,7 +135,7 @@ flowchart LR
 
 1. Установите зависимости: `bun install`.
 2. Скопируйте `.env.example` → `.env` и заполните ключевые переменные. При необходимости добавьте `INFERENCE_KEY`, `INFERENCE_MODEL_ID` и `INFERENCE_URL`, чтобы включить AI-пояснение.
-3. Примените схему данных: `bunx prisma migrate deploy`.
+3. Примените схему данных: `bun run migrate:dev` (загрузит `.env`, выполнит миграции и пересоберёт Prisma Client).
 4. Запустите сервер и бота: `bun run dev` (использует `tsx`).
 5. Для SPA админки — отдельный `bun run dev:admin` (Vite). Для эксперимента можно собрать UI с помощью Bun bundler:
 
@@ -191,7 +191,7 @@ prisma/             # schema.prisma и миграции
 ## 7. Тестирование
 
 - Юнит-тесты: `bun run test` (bun test runner).
-- Проверка типов: `bunx tsc --noEmit`.
+- Проверка типов: `bun x tsc --noEmit`.
 - ESLint: `bun run lint`.
 - Ручной сценарий: `/start` → анкета → выдача рекомендаций → `/sections` → проверка админ-панели.
 

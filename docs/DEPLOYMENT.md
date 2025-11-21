@@ -5,24 +5,27 @@
 - Bun 1.0+
 - PostgreSQL 14+ (локально или в облаке)
 - Доступ к токену Telegram-бота (BotFather)
-- Утилита `bunx prisma` (ставится вместе с зависимостями)
+- Prisma CLI 7 (устанавливается зависимостями; запускается через `bun run migrate:*`)
 
 ## Переменные окружения
 
-| Переменная              | Назначение                                                                |
-| ----------------------- | ------------------------------------------------------------------------- |
-| `BOT_TOKEN`             | Токен Telegram-бота                                                       |
-| `DATABASE_URL`          | Строка подключения к PostgreSQL                                           |
-| `ADMIN_USERNAME`        | Имя пользователя для входа в админ-панель                                 |
-| `ADMIN_PASSWORD`        | Пароль администратора (не используется, если задан `ADMIN_PASSWORD_HASH`) |
-| `ADMIN_PASSWORD_HASH`   | Готовый Argon2-хэш пароля (можно получить через `Bun.password.hash`)      |
-| `ADMIN_JWT_SECRET`      | Секрет для подписи JWT (минимум 32 символа)                               |
-| `ADMIN_JWT_TTL_SECONDS` | Время жизни админ-токена в секундах (по умолчанию 86400 = 24 часа)        |
-| `ADMIN_JWT_COOKIE`      | Имя httpOnly cookie с JWT                                                 |
-| `ADMIN_JWT_ISSUER`      | Значение `iss` для токена                                                 |
-| `ADMIN_JWT_AUDIENCE`    | Значение `aud` для токена                                                 |
-| `ADMIN_CSRF_COOKIE`     | Имя читаемой CSRF-cookie (double-submit)                                  |
-| `PORT` _(опционально)_  | Порт Bun.serve (по умолчанию 3000)                                        |
+| Переменная                                  | Назначение                                                                |
+| ------------------------------------------- | ------------------------------------------------------------------------- |
+| `BOT_TOKEN`                                 | Токен Telegram-бота                                                       |
+| `DATABASE_URL`                              | Строка подключения к PostgreSQL                                           |
+| `ADMIN_USERNAME`                            | Имя пользователя для входа в админ-панель                                 |
+| `ADMIN_PASSWORD`                            | Пароль администратора (не используется, если задан `ADMIN_PASSWORD_HASH`) |
+| `ADMIN_PASSWORD_HASH`                       | Готовый Argon2-хэш пароля (можно получить через `Bun.password.hash`)      |
+| `ADMIN_JWT_SECRET`                          | Секрет для подписи JWT (минимум 32 символа)                               |
+| `ADMIN_JWT_TTL_SECONDS`                     | Время жизни админ-токена в секундах (по умолчанию 86400 = 24 часа)        |
+| `ADMIN_JWT_COOKIE`                          | Имя httpOnly cookie с JWT                                                 |
+| `ADMIN_JWT_ISSUER`                          | Значение `iss` для токена                                                 |
+| `ADMIN_JWT_AUDIENCE`                        | Значение `aud` для токена                                                 |
+| `ADMIN_CSRF_COOKIE`                         | Имя читаемой CSRF-cookie (double-submit)                                  |
+| `PRISMA_ACCELERATE_URL` _(опц.)_            | Endpoint Prisma Accelerate (включает connection pooling и кэш Prisma)     |
+| `DATABASE_SSL` _(опц.)_                     | Включение SSL для `@prisma/adapter-pg` (`true/false`)                     |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` _(опц.)_ | Управляет проверкой сертификата при SSL (по умолчанию `true`)             |
+| `PORT` _(опционально)_                      | Порт Bun.serve (по умолчанию 3000)                                        |
 
 > ⚠️ **Важно:** никогда не коммитьте `.env` в репозиторий. Используйте менеджеры секретов при деплое в облако.
 
@@ -46,7 +49,7 @@
 4. Примените миграции:
 
    ```powershell
-   bunx prisma migrate deploy
+   bun run migrate:dev
    ```
 
 5. Запустите сервер и бота:
@@ -72,7 +75,7 @@
 2. Примените миграции в прод-среде:
 
    ```powershell
-   bunx prisma migrate deploy
+   bun run migrate:deploy
    ```
 
 3. Запустите приложение:

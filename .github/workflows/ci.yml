@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy: {}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install Bun
         uses: oven-sh/setup-bun@v2.0.2
         with:
@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies (bun)
         run: bun install --frozen-lockfile
       - name: Type check (noEmit)
-        run: bunx tsc --noEmit
+        run: bun x tsc --noEmit
       - name: Build (bun)
         run: bun run build
       - name: Lint

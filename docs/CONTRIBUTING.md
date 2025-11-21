@@ -4,7 +4,7 @@
 
 1. Форкните репозиторий и создайте новую ветку от `main`.
 2. Убедитесь, что установлены Bun 1+, PostgreSQL и зависимости (`bun install`).
-3. Настройте `.env` и примените миграции (`bunx prisma migrate deploy`).
+3. Настройте `.env` и примените миграции (`bun run migrate:dev`).
 
 ## Стиль кода
 
@@ -20,7 +20,7 @@
 ```powershell
 bun run lint
 bun run test
-bunx tsc --noEmit
+bun x tsc --noEmit
 ```
 
 > ⚠️ **Важно:** PR с падающими тестами или ошибками типизации не принимаются.

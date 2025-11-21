@@ -1,4 +1,8 @@
 import { PrismaClient } from "../generated/client.js";
+// Import the ESM build explicitly to avoid runtime resolution of a missing CJS
+// entry (some environments like Bun/tsx can attempt to resolve CJS entrypoints
+// which may not be present in the package distribution). Using the dist ESM
+// entry prevents the "Cannot find module './cjs/index.cjs'" error.
 import { PrismaPg } from "@prisma/adapter-pg";
 
 let prisma: PrismaClient | null = null;

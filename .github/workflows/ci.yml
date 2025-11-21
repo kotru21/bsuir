@@ -10,7 +10,21 @@ jobs:
   typecheck-and-build:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: "file:./dev.db"
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy: {}
     steps:
       - uses: actions/checkout@v6
@@ -22,6 +36,19 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Generate Prisma client
         run: bunx prisma generate
+      - name: Wait for Postgres to be ready
+        run: |
+          # wait up to 30s for Postgres port to open
+          for i in $(seq 1 30); do
+            if timeout 1 bash -c "cat < /dev/tcp/localhost/5432" >/dev/null 2>&1; then
+              echo "Postgres is accepting connections"
+              break
+            fi
+            echo "Waiting for Postgres... ($i/30)"
+            sleep 1
+          done
+      - name: Push Prisma schema to DB
+        run: bunx prisma db push --accept-data-loss
       - name: Run Prisma seed
         run: bunx prisma db seed
       - name: Type check (noEmit)

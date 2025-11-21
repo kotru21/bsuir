@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { apiFetch } from "../api/client";
+import { useAuth } from "../auth/AuthProvider";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { SectionModal, SectionData } from "../components/SectionModal";
@@ -11,10 +13,11 @@ export function SectionsPage(): React.JSX.Element {
     undefined
   );
 
+  const auth = useAuth();
+
   const fetchSections = useCallback(() => {
     setLoading(true);
-    fetch("/api/sections")
-      .then((res) => res.json())
+    void apiFetch<SectionData[]>("/sections")
       .then((data) => {
         if (Array.isArray(data)) {
           setSections(data);
@@ -44,21 +47,15 @@ export function SectionsPage(): React.JSX.Element {
 
   const handleSave = async (data: SectionData) => {
     const method = editingSection ? "PUT" : "POST";
-    const url = editingSection
-      ? `/api/sections/${editingSection.id}`
-      : "/api/sections";
+    const url = editingSection ? `/sections/${editingSection.id}` : "/sections";
 
     try {
-      const res = await fetch(url, {
+      await apiFetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: data,
+        csrfToken: auth.csrfToken ?? undefined,
       });
-      if (res.ok) {
-        fetchSections();
-      } else {
-        console.error("Failed to save section");
-      }
+      fetchSections();
     } catch (e) {
       console.error(e);
     }
@@ -67,10 +64,11 @@ export function SectionsPage(): React.JSX.Element {
   const handleDelete = async (id: string) => {
     if (!confirm("Вы уверены, что хотите удалить эту секцию?")) return;
     try {
-      const res = await fetch(`/api/sections/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        fetchSections();
-      }
+      await apiFetch(`/sections/${id}`, {
+        method: "DELETE",
+        csrfToken: auth.csrfToken ?? undefined,
+      });
+      fetchSections();
     } catch (e) {
       console.error(e);
     }

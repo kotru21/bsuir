@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "./Button";
+import { apiFetch } from "../api/client";
+import { useAuth } from "../auth/AuthProvider";
 import { goalOptions } from "../constants/goals";
 
 interface SectionModalProps {
@@ -31,6 +33,7 @@ export function SectionModal({
   onSave,
   initialData,
 }: SectionModalProps): React.JSX.Element | null {
+  const auth = useAuth();
   const [formData, setFormData] = useState<SectionData>(
     initialData || {
       id: "",
@@ -248,12 +251,15 @@ export function SectionModal({
                     formData.append("file", file);
 
                     try {
-                      const res = await fetch("/api/upload", {
+                      const data = await apiFetch<{
+                        success: boolean;
+                        path: string;
+                      }>("/upload", {
                         method: "POST",
                         body: formData,
+                        csrfToken: auth.csrfToken ?? undefined,
                       });
-                      const data = await res.json();
-                      if (data.success) {
+                      if (data?.success) {
                         setFormData((prev) => ({
                           ...prev,
                           imagePath: data.path,

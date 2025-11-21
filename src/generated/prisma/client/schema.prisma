@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model SurveySubmission {
+  id                      String                   @id @default(cuid())
+  telegramUserId          String?
+  chatId                  String?
+  age                     Int
+  gender                  Gender
+  fitnessLevel            FitnessLevel
+  preferredFormats        TrainingFormat[]
+  desiredGoals            GoalTag[]
+  avoidContact            Boolean
+  interestedInCompetition Boolean
+  aiSummary               String?
+  createdAt               DateTime                 @default(now())
+  recommendations         RecommendationSnapshot[]
+
+  @@index([createdAt])
+  @@index([gender])
+  @@index([fitnessLevel])
+  @@index([desiredGoals], type: Gin)
+  @@index([preferredFormats], type: Gin)
+}
+
+model RecommendationSnapshot {
+  id           String           @id @default(cuid())
+  submission   SurveySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
+  sectionId    String
+  sectionName  String
+  score        Float
+  rank         Int
+  reasons      Json?
+  createdAt    DateTime         @default(now())
+
+  @@index([submissionId, rank])
+  @@index([sectionId])
+}
+
+model Session {
+  key   String @id
+  value String
+}
+
+model SportSection {
+  id               String         @id
+  title            String
+  summary          String
+  focus            GoalTag[]
+  format           TrainingFormat
+  contactLevel     ContactLevel
+  intensity        FitnessLevel
+  recommendedFor   Json
+  expectedResults  Json
+  extraBenefits    String[]
+  prerequisites    String?
+  imagePath        String?
+  locationHint     String?
+  similarityVector Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([format])
+  @@index([contactLevel])
+  @@index([intensity])
+  @@index([focus], type: Gin)
+}
+
+enum Gender {
+  male
+  female
+  unspecified
+}
+
+enum FitnessLevel {
+  low
+  medium
+  high
+}
+
+enum TrainingFormat {
+  individual
+  group
+  mixed
+}
+
+enum GoalTag {
+  strength
+  endurance
+  flexibility
+  teamwork
+  martialArts
+  ballSports
+  aquatic
+  dance
+  coordination
+  rehabilitation
+  weightManagement
+  aesthetics
+  competition
+}
+
+enum ContactLevel {
+  nonContact
+  lightContact
+  fullContact
+}

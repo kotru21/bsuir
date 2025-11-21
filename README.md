@@ -137,7 +137,6 @@ flowchart LR
 2. Скопируйте `.env.example` → `.env` и заполните ключевые переменные. При необходимости добавьте `INFERENCE_KEY`, `INFERENCE_MODEL_ID` и `INFERENCE_URL`, чтобы включить AI-пояснение.
 3. Примените схему данных: `bunx prisma migrate deploy`.
 4. При обновлении до Prisma v7: обновите зависимости `prisma` и `@prisma/client` в `package.json` и выполните `bunx prisma generate`.
-   В Prisma v7 URL дата-сорса больше нельзя хранить в `schema.prisma`. Вместо этого добавьте `prisma.config.ts` в корень проекта — он используется для `prisma generate`/`prisma migrate` и должен прочитать `DATABASE_URL` из окружения. Файл `prisma.config.ts` уже присутствует в репозитории.
 5. Запустите сервер и бота: `bun run dev` (использует `tsx`).
 6. Для SPA админки — отдельный `bun run dev:admin` (Vite). Для эксперимента можно собрать UI с помощью Bun bundler:
 

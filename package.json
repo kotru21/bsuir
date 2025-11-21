@@ -36,9 +36,6 @@
     "telegraf": "^4.16.3",
     "zod": "^4.1.12"
   },
-  "optionalDependencies": {
-    "@prisma/adapter-pg": "^7.0.0"
-  },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@happy-dom/global-registrator": "^20.0.10",

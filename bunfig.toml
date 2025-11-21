@@ -11,7 +11,7 @@ port = 3000
 entrypoints = ["src/index.ts"]
 outdir = "dist"
 target = "bun"
-external = ["@prisma/client"]
+external = ["@prisma/client", "@prisma/adapter-pg"]
 # Avoid bundling node packages to keep Prisma generated client (.prisma) resolvable at runtime.
 # This prevents bundlers from trying to inline internal .prisma paths such as ".prisma/client/default".
 packages = "external"

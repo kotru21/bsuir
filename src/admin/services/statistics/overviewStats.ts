@@ -74,16 +74,16 @@ export async function getOverviewStats(): Promise<OverviewStats> {
         orderBy: { createdAt: "desc" },
       }),
       prisma.$queryRaw<{ format: string | null; count: bigint }[]>`
-        SELECT lower(format::text) AS format, COUNT(*)::bigint AS count
+        SELECT lower(format) AS format, COUNT(*)::bigint AS count
         FROM "SurveySubmission", LATERAL unnest("preferredFormats") AS format
-        GROUP BY lower(format::text)
+        GROUP BY lower(format)
         ORDER BY COUNT(*) DESC
         LIMIT 5
       `,
       prisma.$queryRaw<{ goal: string | null; count: bigint }[]>`
-        SELECT lower(goal::text) AS goal, COUNT(*)::bigint AS count
+        SELECT lower(goal) AS goal, COUNT(*)::bigint AS count
         FROM "SurveySubmission", LATERAL unnest("desiredGoals") AS goal
-        GROUP BY lower(goal::text)
+        GROUP BY lower(goal)
         ORDER BY COUNT(*) DESC
         LIMIT 5
       `,

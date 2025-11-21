@@ -1,25 +1,7 @@
-import { PrismaClient } from "../src/generated/prisma/client/index.js";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 import { sportSections } from "./data/sections.js";
 
-const runtimeEnv =
-  (
-    globalThis as typeof globalThis & {
-      Bun?: { env?: Record<string, string | undefined> };
-    }
-  ).Bun?.env ??
-  process.env ??
-  {};
-
-const connectionString = runtimeEnv.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL must be set before running the seed script");
-}
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString }),
-});
+const prisma = new PrismaClient();
 
 async function main() {
   console.log("Start seeding ...");

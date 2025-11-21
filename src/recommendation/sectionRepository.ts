@@ -17,30 +17,22 @@ async function fetchSections(): Promise<SportSection[]> {
   const prisma = getPrismaClient();
   try {
     const sections = await prisma.sportSection.findMany();
-    return sections.map(
-      (section) =>
-        ({
-          id: section.id,
-          title: section.title,
-          summary: section.summary,
-          focus: section.focus as GoalTag[],
-          format: section.format as TrainingFormat,
-          contactLevel: section.contactLevel as ContactLevel,
-          intensity: section.intensity as FitnessLevel,
-          recommendedFor: section.recommendedFor as unknown as Array<{
-            fitnessLevel?: FitnessLevel;
-            note: string;
-          }>,
-          expectedResults:
-            section.expectedResults as unknown as SectionTimeline,
-          extraBenefits: section.extraBenefits ?? undefined,
-          prerequisites: section.prerequisites ?? undefined,
-          imagePath: section.imagePath ?? undefined,
-          locationHint: section.locationHint ?? undefined,
-          similarityVector:
-            section.similarityVector as unknown as SimilarityVector,
-        } satisfies SportSection)
-    );
+    return sections.map((section) => ({
+      ...(section as unknown as SportSection),
+      focus: section.focus as GoalTag[],
+      format: section.format as TrainingFormat,
+      contactLevel: section.contactLevel as ContactLevel,
+      intensity: section.intensity as FitnessLevel,
+      recommendedFor: section.recommendedFor as unknown as Array<{
+        fitnessLevel?: FitnessLevel;
+        note: string;
+      }>,
+      expectedResults: section.expectedResults as unknown as SectionTimeline,
+      similarityVector: section.similarityVector as unknown as SimilarityVector,
+      prerequisites: section.prerequisites ?? undefined,
+      imagePath: section.imagePath ?? undefined,
+      locationHint: section.locationHint ?? undefined,
+    }));
   } catch (error) {
     console.error("Failed to fetch sections from DB", error);
     return [];

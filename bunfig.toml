@@ -12,6 +12,9 @@ entrypoints = ["src/index.ts"]
 outdir = "dist"
 target = "bun"
 external = ["@prisma/client"]
+# Avoid bundling node packages to keep Prisma generated client (.prisma) resolvable at runtime.
+# This prevents bundlers from trying to inline internal .prisma paths such as ".prisma/client/default".
+packages = "external"
 minify = true
 sourcemap = "external"
 

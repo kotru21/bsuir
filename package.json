@@ -4,9 +4,10 @@
   "description": "Telegram bot prototype for recommending educational sports sections based on user preferences and physical data.",
   "type": "module",
   "scripts": {
-    "build": "bun run build:admin && bun run build:bot",
+    "build": "bun x prisma generate && bun run build:admin && bun run build:bot",
     "build:admin": "bun x vite build --config admin/web/vite.config.ts",
-    "build:bot": "bun build src/index.ts --target bun --outfile dist/server.js",
+    "build:bot": "bun x prisma generate && bun build src/index.ts --target bun --outfile dist/server.js",
+    "postinstall": "bun x prisma generate",
     "heroku-postbuild": "bun run build",
     "migrate:deploy": "bun x prisma db push && bun x prisma db seed",
     "start": "bun dist/server.js",

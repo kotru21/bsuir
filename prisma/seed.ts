@@ -1,8 +1,5 @@
 import { PrismaClient } from "../src/generated/client.js";
-// Prisma v7 distribution may provide both CJS and ESM entrypoints.
-// Import the ESM build explicitly to avoid resolution attempts of a missing CJS entry
-// when executing the seed script under Bun/tsx on some platforms.
-import { PrismaPg } from "@prisma/adapter-pg/dist/index.js";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { sportSections } from "./data/sections.js";
 
 const connectionString = process.env.DATABASE_URL;

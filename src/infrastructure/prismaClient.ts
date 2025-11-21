@@ -10,10 +10,14 @@ function ensurePrisma(): PrismaClientInstance {
   if (!prisma) {
     // Prisma v7 requires passing an adapter (e.g., PrismaPg) for PostgreSQL.
     // Use DATABASE_URL from environment and pass the adapter to PrismaClient.
-    const adapter = new PrismaPg({
+    // allow adapter to be typed as any — Prisma v7 adapter types may differ
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adapter: any = new PrismaPg({
       connectionString: process.env.DATABASE_URL,
     });
-    const base = new PrismaClient({ adapter });
+    // Prisma v7 expects an adapter; cast to any for type compatibility in this repo
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const base = new PrismaClient({ adapter: adapter as any });
 
     prisma = base.$extends(sessionExtension) as unknown as PrismaClient;
   }

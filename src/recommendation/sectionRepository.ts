@@ -16,22 +16,30 @@ let cacheTimestamp = 0;
 async function fetchSections(): Promise<SportSection[]> {
   const prisma = getPrismaClient();
   try {
-    const sections = await prisma.sportSection.findMany();
+    const sections = await prisma.sportSection.findMany({
+      where: { deletedAt: null }, // Only active sections
+    });
+
     return sections.map((section) => ({
-      ...(section as unknown as SportSection),
+      id: section.id,
+      title: section.title,
+      summary: section.summary,
       focus: section.focus as GoalTag[],
-      format: section.format as TrainingFormat,
-      contactLevel: section.contactLevel as ContactLevel,
-      intensity: section.intensity as FitnessLevel,
-      recommendedFor: section.recommendedFor as unknown as Array<{
+      format: section.format,
+      contactLevel: section.contactLevel,
+      intensity: section.intensity,
+      recommendedFor: section.recommendedFor as Array<{
         fitnessLevel?: FitnessLevel;
         note: string;
       }>,
       expectedResults: section.expectedResults as unknown as SectionTimeline,
-      similarityVector: section.similarityVector as unknown as SimilarityVector,
+      similarityVector: section.similarityVector as unknown as
+        | SimilarityVector
+        | undefined,
       prerequisites: section.prerequisites ?? undefined,
       imagePath: section.imagePath ?? undefined,
       locationHint: section.locationHint ?? undefined,
+      extraBenefits: section.extraBenefits,
     }));
   } catch (error) {
     console.error("Failed to fetch sections from DB", error);

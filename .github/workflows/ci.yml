@@ -9,9 +9,11 @@ on:
 jobs:
   typecheck-and-build:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "file:./dev.db"
     strategy: {}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install Bun
         uses: oven-sh/setup-bun@v2.0.2
         with:

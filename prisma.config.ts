@@ -12,6 +12,6 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
     // seed script moved under migrations to match PrismaConfig typings
-    seed: "tsx prisma/seed.ts",
+    seed: "bun prisma/seed.ts",
   },
 });

@@ -47,14 +47,14 @@ describe("useResponsiveLayout", () => {
 
   it("shows logout text at threshold", () => {
     Object.defineProperty(window, "innerWidth", {
-      value: 420,
+      value: 550,
       writable: true,
       configurable: true,
     });
     window.dispatchEvent(new Event("resize"));
     render(<TestComponent />);
-    // On desktop (1200px) we are not in mobile view — labels should be
-    // visible and hide==0.
+    // At 550px we hit the mobile label threshold — we're in mobile view but
+    // labels should be visible (showMobileLabels=true), so hide==0.
     expect(screen.getByTestId("hide").textContent).toBe("0");
   });
 

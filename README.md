@@ -1,6 +1,6 @@
 # Прототип системы цифрового маркетинга образовательно-спортивных услуг БГУИР
 
-![Bun 1.0+](https://img.shields.io/badge/Bun-1.0%2B-brightgreen.svg)
+![Bun 1.0+](https://img.shields.io/badge/Bun-1.3%2B-brightgreen.svg)
 ![TypeScript ESM](https://img.shields.io/badge/TypeScript-ESM-blue.svg)
 ![Status Prototype](https://img.shields.io/badge/Status-Prototype-orange.svg)
 
@@ -58,7 +58,7 @@ Add-Content .env "ADMIN_JWT_SECRET=change_me_please"
 bun run dev
 ```
 
-> ℹ️ Требуется Bun 1+ (см. `package.json` → `packageManager`).
+> ℹ️ Требуется Bun 1.3+ (см. `package.json` → `packageManager`).
 
 ✅ Готово! Подключите бота в Telegram и откройте <http://localhost:3000> для проверки живости API.
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach, afterEach } from "bun:test";
+import { describe, it, vi, beforeEach, afterEach } from "bun:test";
 
 describe("submissionRecorder", () => {
   let originalEnv: string | undefined;

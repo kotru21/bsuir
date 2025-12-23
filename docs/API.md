@@ -31,14 +31,14 @@ API работает под базовым путём `/admin/api` (параме
 | `GET` | `/stats/overview`              | Сводные показатели (количество анкет, вовлечённость и т.д.) |
 | `GET` | `/stats/demographics`          | Распределения по полу, возрасту, подготовке                 |
 | `GET` | `/stats/timeline?rangeDays=30` | Таймлайн анкет за выбранный период (1–365 дней)             |
-| `GET` | `/stats/export?format=json|csv|xlsx` | Экспорт сводных статистик в формате JSON/CSV/XLSX |
+| `GET` | `/stats/export?format=json,csv,xlsx` | Экспорт сводных статистик в формате JSON/CSV/XLSX |
 
 ## Анкеты
 
 | Метод | Путь                              | Описание                                     |
 | ----- | --------------------------------- | -------------------------------------------- |
 | `GET` | `/submissions?page=1&pageSize=25` | Пагинированный список анкет с рекомендациями |
-| `GET` | `/submissions/export?format=json|csv|xlsx` | Экспорт анкет в формате JSON/CSV/XLSX |
+| `GET` | `/submissions/export?format=json,csv,xlsx` | Экспорт анкет в формате JSON/CSV/XLSX |
 
 ### Формат ответа `/submissions`
 

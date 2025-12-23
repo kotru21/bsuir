@@ -68,11 +68,7 @@ export function DashboardPage(): ReactElement {
   const [exportOpen, setExportOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // genderDistribution, topFormat and topGoals computed in useOverviewStats
 
-  // topFormats and topGoals computed in useOverviewStats
-
-  // loading derived in hook
 
   if (loading) {
     return <FullscreenSpinner message="Загружаем статистику..." />;
@@ -113,7 +109,7 @@ export function DashboardPage(): ReactElement {
             {isExporting ? "Экспорт..." : "Экспорт"}
           </Button>
           {exportOpen ? (
-            <div className="absolute right-0 mt-2 w-40 rounded-md bg-white p-2 shadow-md z-20">
+            <div className="absolute right-0 mt-2 w-40 rounded-md border-slate-200/70 bg-white/90 shadow-elevated backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/70 p-2 shadow-md z-20">
               <button
                 className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
                 onClick={() => {

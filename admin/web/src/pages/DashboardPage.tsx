@@ -137,7 +137,7 @@ export function DashboardPage(): ReactElement {
                 JSON
               </button>
               <button
-                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100/20"
                 onClick={() => {
                   void (async () => {
                     setExportOpen(false);
@@ -163,7 +163,7 @@ export function DashboardPage(): ReactElement {
                 CSV
               </button>
               <button
-                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100/20"
                 onClick={() => {
                   void (async () => {
                     setExportOpen(false);

@@ -167,7 +167,7 @@ export function SubmissionsPage(): ReactElement {
                   JSON
                 </button>
                 <button
-                  className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                  className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100/20"
                   onClick={() => {
                     void (async () => {
                       setExportOpen(false);
@@ -193,7 +193,7 @@ export function SubmissionsPage(): ReactElement {
                   CSV
                 </button>
                 <button
-                  className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                  className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100/200"
                   onClick={() => {
                     void (async () => {
                       setExportOpen(false);

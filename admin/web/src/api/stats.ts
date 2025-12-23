@@ -33,3 +33,65 @@ export function fetchSubmissions(
   });
   return apiFetch<SubmissionListResponse>(`/submissions?${params.toString()}`);
 }
+
+export async function exportSubmissions(
+  format: "json" | "csv" | "xlsx"
+): Promise<{ blob: Blob; filename: string | null; contentType: string | null }> {
+  const params = new URLSearchParams({ format });
+  const res = await fetch(`/admin/api/submissions/export?${params.toString()}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    let payload: unknown = null;
+    try {
+      payload = await res.json();
+    } catch (_err) {
+      payload = await res.text();
+    }
+    const e = new Error("Export failed") as Error & { status?: number; payload?: unknown };
+    e.status = res.status;
+    e.payload = payload;
+    throw e;
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition");
+  let filename: string | null = null;
+  if (disposition) {
+    const match = /filename\*?=(?:UTF-8''|")?([^;"]+)/i.exec(disposition);
+    if (match) filename = decodeURIComponent(match[1]);
+  }
+  return { blob, filename, contentType: res.headers.get("Content-Type") };
+}
+
+export async function exportOverview(
+  format: "json" | "csv" | "xlsx"
+): Promise<{ blob: Blob; filename: string | null; contentType: string | null }> {
+  const params = new URLSearchParams({ format });
+  const res = await fetch(`/admin/api/stats/export?${params.toString()}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    let payload: unknown = null;
+    try {
+      payload = await res.json();
+    } catch (_err) {
+      payload = await res.text();
+    }
+    const e = new Error("Export failed") as Error & { status?: number; payload?: unknown };
+    e.status = res.status;
+    e.payload = payload;
+    throw e;
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition");
+  let filename: string | null = null;
+  if (disposition) {
+    const match = /filename\*?=(?:UTF-8''|")?([^;"]+)/i.exec(disposition);
+    if (match) filename = decodeURIComponent(match[1]);
+  }
+  return { blob, filename, contentType: res.headers.get("Content-Type") };
+}

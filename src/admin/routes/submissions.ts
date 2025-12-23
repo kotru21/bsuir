@@ -57,4 +57,37 @@ export async function registerSubmissionRoutes(
       },
     });
   });
+
+  // Export all submissions in requested format
+  router.get(submissionsPath("/export"), async (ctx) => {
+    await ctx.requireAdminAuth();
+    const querySchema = z
+      .object({ format: z.enum(["json", "csv", "xlsx"]).optional() })
+      .transform((d) => ({ format: d.format ?? "json" }));
+
+    const parseResult = querySchema.safeParse(ctx.query);
+    if (!parseResult.success) {
+      return ctx.json({ error: "Invalid format parameter" }, 400);
+    }
+
+    const { format } = parseResult.data;
+
+    try {
+      const { exportSubmissions } = await import("../services/statisticsService.js");
+      const { buffer, filename, contentType } = await exportSubmissions(format);
+      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      const body = new Uint8Array(arrayBuffer as ArrayBuffer);
+
+      return new Response(body, {
+        status: 200,
+        headers: {
+          "Content-Type": contentType,
+          "Content-Disposition": `attachment; filename="${filename}"`,
+        },
+      });
+    } catch (err) {
+      ctx.logError(err, "Failed to export submissions");
+      return ctx.json({ error: "Failed to export submissions" }, 500);
+    }
+  });
 }

@@ -22,6 +22,7 @@ const TimelineChart = lazy(() =>
 );
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
 import { Button } from "../components/Button";
+import { exportOverview } from "../api/stats";
 import { Card } from "../components/Card";
 // translation logic moved to hook
 
@@ -64,6 +65,9 @@ export function DashboardPage(): ReactElement {
     refetchAll,
   } = useOverviewStats(rangeDays);
 
+  const [exportOpen, setExportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
   // genderDistribution, topFormat and topGoals computed in useOverviewStats
 
   // topFormats and topGoals computed in useOverviewStats
@@ -92,6 +96,107 @@ export function DashboardPage(): ReactElement {
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Статистика</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Обзор по опросам</p>
+        </div>
+        <div className="relative">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setExportOpen((v) => !v)}
+            aria-expanded={exportOpen}
+            aria-haspopup="menu"
+            disabled={isExporting}
+          >
+            {isExporting ? "Экспорт..." : "Экспорт"}
+          </Button>
+          {exportOpen ? (
+            <div className="absolute right-0 mt-2 w-40 rounded-md bg-white p-2 shadow-md z-20">
+              <button
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                onClick={() => {
+                  void (async () => {
+                    setExportOpen(false);
+                    setIsExporting(true);
+                    try {
+                      const { blob, filename } = await exportOverview("json");
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename ?? "overview.json";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch (_err) {
+                      void alert("Не удалось экспортировать статистику. Попробуйте позже.");
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  })();
+                }}
+              >
+                JSON
+              </button>
+              <button
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                onClick={() => {
+                  void (async () => {
+                    setExportOpen(false);
+                    setIsExporting(true);
+                    try {
+                      const { blob, filename } = await exportOverview("csv");
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename ?? "overview.csv";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch (_err) {
+                      void alert("Не удалось экспортировать статистику. Попробуйте позже.");
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  })();
+                }}
+              >
+                CSV
+              </button>
+              <button
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                onClick={() => {
+                  void (async () => {
+                    setExportOpen(false);
+                    setIsExporting(true);
+                    try {
+                      const { blob, filename } = await exportOverview("xlsx");
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename ?? "overview.xlsx";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch (_err) {
+                      void alert("Не удалось экспортировать статистику. Попробуйте позже.");
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  })();
+                }}
+              >
+                XLSX
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <MetricCard
           title="Всего опросов"

@@ -54,4 +54,38 @@ export async function registerStatsRoutes(
     const points = await getTimelineStats(rangeDays);
     return ctx.json({ points });
   });
+
+  // Export overview stats
+  router.get(statsPath("/export"), async (ctx) => {
+    await ctx.requireAdminAuth();
+    const querySchema = z
+      .object({ format: z.enum(["json", "csv", "xlsx"]).optional() })
+      .transform((d) => ({ format: d.format ?? "json" }));
+
+    const parseResult = querySchema.safeParse(ctx.query);
+    if (!parseResult.success) {
+      return ctx.json({ error: "Invalid format parameter" }, 400);
+    }
+
+    const { format } = parseResult.data;
+
+    try {
+      const data = await getOverviewStats();
+      const { exportOverview } = await import("../services/statisticsService.js");
+      const { buffer, filename, contentType } = await exportOverview(format, data);
+      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      const body = new Uint8Array(arrayBuffer as ArrayBuffer);
+
+      return new Response(body, {
+        status: 200,
+        headers: {
+          "Content-Type": contentType,
+          "Content-Disposition": `attachment; filename="${filename}"`,
+        },
+      });
+    } catch (err) {
+      ctx.logError(err, "Failed to export overview stats");
+      return ctx.json({ error: "Failed to export overview stats" }, 500);
+    }
+  });
 }

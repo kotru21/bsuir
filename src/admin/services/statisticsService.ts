@@ -2,6 +2,7 @@
 export { getDemographicStats } from "./statistics/demographicStats.js";
 export { getTimelineStats } from "./statistics/timelineStats.js";
 export { getSubmissionPage } from "./statistics/submissionPage.js";
+export { exportSubmissions, exportOverview } from "./statistics/exportService.js";
 
 export type {
   OverviewStats,

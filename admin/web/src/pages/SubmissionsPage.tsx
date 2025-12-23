@@ -11,7 +11,7 @@ import Modal from "../components/Modal";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { useQuery } from "@tanstack/react-query";
-import { fetchSubmissions } from "../api/stats";
+import { fetchSubmissions, exportSubmissions } from "../api/stats";
 import { FullscreenSpinner } from "../components/FullscreenSpinner";
 import { ErrorCard } from "../components/ErrorCard";
 import type { SubmissionListItem } from "../types/stats";
@@ -65,6 +65,8 @@ export function SubmissionsPage(): ReactElement {
     prevPage,
     setTotalPages,
   } = usePagination();
+  const [exportOpen, setExportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [modalContent, setModalContent] = useState<string | null>(null);
   const closeModal = useCallback(() => setModalContent(null), []);
   const modalTitleId = useId();
@@ -116,7 +118,113 @@ export function SubmissionsPage(): ReactElement {
   }
 
   if (!data || !data.items.length) {
-    return <p>Ответы опросов пока отсутствуют.</p>;
+    return (
+      <Card className="flex flex-col gap-6">
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-1">
+            <h2>Ответы пользователей</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              История поданных анкет с ключевыми параметрами и пояснениями AI
+            </p>
+          </div>
+          <div className="relative">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setExportOpen((v) => !v)}
+              aria-expanded={exportOpen}
+              aria-haspopup="menu"
+              disabled={isExporting}
+            >
+              {isExporting ? "Экспорт..." : "Экспорт"}
+            </Button>
+            {exportOpen ? (
+              <div className="absolute right-0 mt-2 w-40 rounded-md bg-white p-2 shadow-md">
+                <button
+                  className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                  onClick={() => {
+                    void (async () => {
+                      setExportOpen(false);
+                      setIsExporting(true);
+                      try {
+                        const { blob, filename } = await exportSubmissions("json");
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = filename ?? "submissions.json";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                      } catch (_err) {
+                        void alert("Не удалось экспортировать ответы. Попробуйте позже.");
+                      } finally {
+                        setIsExporting(false);
+                      }
+                    })();
+                  }}
+                >
+                  JSON
+                </button>
+                <button
+                  className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                  onClick={() => {
+                    void (async () => {
+                      setExportOpen(false);
+                      setIsExporting(true);
+                      try {
+                        const { blob, filename } = await exportSubmissions("csv");
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = filename ?? "submissions.csv";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                      } catch (_err) {
+                        void alert("Не удалось экспортировать ответы. Попробуйте позже.");
+                      } finally {
+                        setIsExporting(false);
+                      }
+                    })();
+                  }}
+                >
+                  CSV
+                </button>
+                <button
+                  className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                  onClick={() => {
+                    void (async () => {
+                      setExportOpen(false);
+                      setIsExporting(true);
+                      try {
+                        const { blob, filename } = await exportSubmissions("xlsx");
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = filename ?? "submissions.xlsx";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                      } catch (_err) {
+                        void alert("Не удалось экспортировать ответы. Попробуйте позже.");
+                      } finally {
+                        setIsExporting(false);
+                      }
+                    })();
+                  }}
+                >
+                  XLSX
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <p>Ответы опросов пока отсутствуют.</p>
+      </Card>
+    );
   }
 
   const { pagination } = data;
@@ -124,11 +232,107 @@ export function SubmissionsPage(): ReactElement {
 
   return (
     <Card className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h2>Ответы пользователей</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          История поданных анкет с ключевыми параметрами и пояснениями AI
-        </p>
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-1">
+          <h2>Ответы пользователей</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            История поданных анкет с ключевыми параметрами и пояснениями AI
+          </p>
+        </div>
+        <div className="relative">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setExportOpen((v) => !v)}
+            aria-expanded={exportOpen}
+            aria-haspopup="menu"
+            disabled={isExporting}
+          >
+            {isExporting ? "Экспорт..." : "Экспорт"}
+          </Button>
+          {exportOpen ? (
+            <div className="absolute right-0 mt-2 w-40 rounded-md bg-white p-2 shadow-md">
+              <button
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                onClick={() => {
+                  void (async () => {
+                    setExportOpen(false);
+                    setIsExporting(true);
+                    try {
+                      const { blob, filename } = await exportSubmissions("json");
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename ?? "submissions.json";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch (_err) {
+                      void alert("Не удалось экспортировать ответы. Попробуйте позже.");
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  })();
+                }}
+              >
+                JSON
+              </button>
+              <button
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                onClick={() => {
+                  void (async () => {
+                    setExportOpen(false);
+                    setIsExporting(true);
+                    try {
+                      const { blob, filename } = await exportSubmissions("csv");
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename ?? "submissions.csv";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch (_err) {
+                      void alert("Не удалось экспортировать ответы. Попробуйте позже.");
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  })();
+                }}
+              >
+                CSV
+              </button>
+              <button
+                className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+                onClick={() => {
+                  void (async () => {
+                    setExportOpen(false);
+                    setIsExporting(true);
+                    try {
+                      const { blob, filename } = await exportSubmissions("xlsx");
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename ?? "submissions.xlsx";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch (_err) {
+                      void alert("Не удалось экспортировать ответы. Попробуйте позже.");
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  })();
+                }}
+              >
+                XLSX
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
       {transientError ? (
         <div>
@@ -152,7 +356,7 @@ export function SubmissionsPage(): ReactElement {
       ) : null}
       <div className="-mx-4 overflow-x-auto lg:-mx-6">
         <table
-          className="min-w-[720px] w-full border-collapse text-sm"
+          className="min-w-180 w-full border-collapse text-sm"
           aria-describedby="submissionsTableCaption">
           <caption id="submissionsTableCaption" className="sr-only">
             История анкет с параметрами профиля и пояснениями AI

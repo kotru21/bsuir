@@ -139,7 +139,7 @@ export function SubmissionsPage(): ReactElement {
               {isExporting ? "Экспорт..." : "Экспорт"}
             </Button>
             {exportOpen ? (
-              <div className="absolute right-0 mt-2 w-40 rounded-md bg-white/90 shadow-elevated backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/70 p-2 shadow-md">
+              <div className="absolute right-0 mt-2 w-40 rounded-md border-slate-200/70 bg-white/90 shadow-elevated backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/70 p-2 shadow-md z-20">
                 <button
                   className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100/20"
                   onClick={() => {

@@ -20,7 +20,7 @@ flowchart TB
    User["Клиент Telegram"]
    AdminBrowser["Браузер администратора"]
 
-   subgraph Backend["Node.js Backend"]
+   subgraph Backend["Backend (Bun)"]
       subgraph Telegraf["Telegraf Bot"]
          BotHandlers["Обработчики команд"]
          BotScenes["Wizard сцены"]
@@ -217,7 +217,7 @@ erDiagram
       string[] desiredGoals
       boolean avoidContact
       boolean interestedInCompetition
-      string aiSummary? "опциональное AI-пояснение"
+      string aiSummary
       timestamp createdAt
    }
 
@@ -240,12 +240,18 @@ erDiagram
       string contactLevel
       string intensity
       string[] focus
+      json recommendedFor
+      json expectedResults
+      string[] extraBenefits
+      string prerequisites
+      string imagePath
+      json similarityVector
    }
 ```
 
-**Что важно:** в текущей версии БД сохраняет только агрегированную анкету и снимки рекомендаций, а данные секций подгружаются из статического каталога `src/data/sections.ts`; таблицы с покомпонентными ответами и событиями интереса остаются в дорожной карте.
-
 </details>
+
+**Что важно:** в текущей версии секции хранятся в таблице `SportSection` в БД (seed — `prisma/data/sections.ts`) и загружаются из БД во время работы сервиса; для ускорения поиска может использоваться поле `similarityVector`. Таблицы с покомпонентными ответами и событиями интереса всё ещё в дорожной карте.
 
 ---
 

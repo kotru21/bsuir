@@ -31,12 +31,14 @@ API работает под базовым путём `/admin/api` (параме
 | `GET` | `/stats/overview`              | Сводные показатели (количество анкет, вовлечённость и т.д.) |
 | `GET` | `/stats/demographics`          | Распределения по полу, возрасту, подготовке                 |
 | `GET` | `/stats/timeline?rangeDays=30` | Таймлайн анкет за выбранный период (1–365 дней)             |
+| `GET` | `/stats/export?format=json|csv|xlsx` | Экспорт сводных статистик в формате JSON/CSV/XLSX |
 
 ## Анкеты
 
 | Метод | Путь                              | Описание                                     |
 | ----- | --------------------------------- | -------------------------------------------- |
 | `GET` | `/submissions?page=1&pageSize=25` | Пагинированный список анкет с рекомендациями |
+| `GET` | `/submissions/export?format=json|csv|xlsx` | Экспорт анкет в формате JSON/CSV/XLSX |
 
 ### Формат ответа `/submissions`
 
@@ -100,15 +102,22 @@ API работает под базовым путём `/admin/api` (параме
 {
   "id": "volleyball",
   "title": "Волейбол",
-  "summary": "Командная игра...",
-  "focus": ["teamwork", "agility"],
+  "summary": "Командная игра для развития реакции и прыжковой подготовки.",
+  "focus": ["teamwork", "coordination"],
   "format": "group",
-  "contactLevel": "medium",
-  "intensity": "high",
-  "recommendedFor": { "fitness": ["medium", "high"] },
-  "expectedResults": { "3months": "Basic skills" },
-  "extraBenefits": ["Socializing"],
-  "imagePath": "images/volleyball.jpg"
+  "contactLevel": "nonContact",
+  "intensity": "medium",
+  "recommendedFor": [
+    { "fitnessLevel": "low", "note": "Подходит новичкам при регулярных занятиях." },
+    { "fitnessLevel": "medium", "note": "Позволяет улучшить прыжок и реакцию." }
+  ],
+  "expectedResults": {
+    "shortTerm": "Улучшите владение мячом и базовые навыки.",
+    "midTerm": "Укрепите прыжковую подготовку.",
+    "longTerm": "Сможете играть на выбранной позиции."
+  },
+  "extraBenefits": ["Командный дух"],
+  "imagePath": "./data/images/volleyball.jpg"
 }
 ```
 
@@ -124,7 +133,7 @@ API работает под базовым путём `/admin/api` (параме
 {
   "success": true,
   "path": "1732100000000-image.jpg",
-  "url": "/images/1732100000000-image.jpg"
+  "url": "/data/images/1732100000000-image.jpg"
 }
 ```
 

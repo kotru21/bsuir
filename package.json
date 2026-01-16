@@ -1,6 +1,6 @@
 {
   "name": "bsuir-sport-marketing-bot",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Telegram bot prototype for recommending educational sports sections based on user preferences and physical data.",
   "type": "module",
   "scripts": {
@@ -74,5 +74,5 @@
     "typescript-eslint": "^8.53.0",
     "vite": "^7.3.1"
   },
-  "packageManager": "bun@1.3.5"
+  "packageManager": "bun@1.3.6"
 }
